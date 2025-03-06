@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Хедер -->
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Головна</a></li>
+                <li><a href="/contact">Контакти</a></li>
+                <li><a href="/impressum">Impressum</a></li>
+                <li><a href="/privacy">Політика конфіденційності</a></li>
+                <li>
+                    <select id="language-switcher" onchange="changeLanguage()">
+                        <option value="uk" selected>🇺🇦 Українська</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="en">🇬🇧 English</option>
+                    </select>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Основний контент -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Футер -->
+    <footer>
+        <p>&copy; 2025 Мій сайт. Всі права захищені.</p>
+        <p>
+            <a href="/privacy">Політика конфіденційності</a> | 
+            <a href="/impressum">Impressum</a>
+        </p>
+        <p>
+            <a href="https://linkedin.com" target="_blank">LinkedIn</a> |
+            <a href="https://t.me" target="_blank">Telegram</a> |
+            <a href="https://wa.me" target="_blank">WhatsApp</a>
+        </p>
+    </footer>
+
+    <script>
+        function changeLanguage() {
+            const lang = document.getElementById("language-switcher").value;
+            window.location.href = `/${lang}`;
+        }
+    </script>
+</body>
+</html>
