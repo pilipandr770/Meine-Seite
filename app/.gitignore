@@ -4,4 +4,7 @@
 .env.development
 .env.production
 .env.test
+# Игнорируем файлы Python-проекта
+__init__.py
+requirements.txt
 
