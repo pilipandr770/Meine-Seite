@@ -7,27 +7,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <!-- Хедер -->
+
+
     <header>
-        <nav>
-            <ul>
-                <li><a href="/">Головна</a></li>
-                <li><a href="/contact">Контакти</a></li>
-                <li><a href="/impressum">Impressum</a></li>
-                <li><a href="/privacy">Політика конфіденційності</a></li>
-                <li>
-                    <select id="language-switcher" onchange="changeLanguage()">
-                        <option value="uk" selected>🇺🇦 Українська</option>
-                        <option value="de">🇩🇪 Deutsch</option>
-                        <option value="en">🇬🇧 English</option>
-                    </select>
-                </li>
-            </ul>
+        <nav class="header-nav">
+            <a href="/" class="home-link">Головна</a>
+            <div class="social-icons">
+                <a href="https://www.linkedin.com" target="_blank">
+                    <img src="/static/icons/LinkedIn_logo_initials.png" alt="LinkedIn">
+                </a>
+                <a href="https://t.me/yourtelegram" target="_blank">
+                    <img src="/static/icons/Telegram_logo.svg" alt="Telegram">
+                </a>
+                <a href="https://wa.me/yourwhatsapp" target="_blank">
+                    <img src="/static/icons/whatsapp.svg" alt="WhatsApp">
+                </a>
+            </div>
         </nav>
     </header>
 
+
     <!-- Основний контент -->
-    <main>
+    <main class="container">
         {% block content %}{% endblock %}
     </main>
 
@@ -35,21 +36,42 @@
     <footer>
         <p>&copy; 2025 Мій сайт. Всі права захищені.</p>
         <p>
-            <a href="/privacy">Політика конфіденційності</a> | 
-            <a href="/impressum">Impressum</a>
+            <a href="/privacy">{% if lang == 'uk' %}Політика конфіденційності{% elif lang == 'de' %}Datenschutz{% else %}Privacy Policy{% endif %}</a> | 
+            <a href="/impressum">Impressum</a> | 
+            <a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a>
         </p>
-        <p>
-            <a href="https://linkedin.com" target="_blank">LinkedIn</a> |
-            <a href="https://t.me" target="_blank">Telegram</a> |
-            <a href="https://wa.me" target="_blank">WhatsApp</a>
-        </p>
+
+        <!-- Кругла кнопка перемикання мови -->
+        <div class="language-switcher">
+            <select id="language-switcher" onchange="changeLanguage()">
+                <option value="uk" {% if lang == 'uk' %}selected{% endif %}>🇺🇦</option>
+                <option value="de" {% if lang == 'de' %}selected{% endif %}>🇩🇪</option>
+                <option value="en" {% if lang == 'en' %}selected{% endif %}>🇬🇧</option>
+            </select>
+        </div>
     </footer>
 
     <script>
         function changeLanguage() {
             const lang = document.getElementById("language-switcher").value;
-            window.location.href = `/${lang}`;
+            document.cookie = "lang=" + lang + "; path=/";
+            location.reload();
         }
+    </script>
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+    const symbols = ["0", "1", "{", "}", "(", ")", ";", "if", "else", "return"];
+    const body = document.body;
+    
+    for (let i = 0; i < 50; i++) {
+        let codeLine = document.createElement("div");
+        codeLine.classList.add("code-line");
+        codeLine.style.left = Math.random() * 100 + "vw";
+        codeLine.style.animationDuration = Math.random() * 3 + 2 + "s";
+        codeLine.innerText = symbols.sort(() => 0.5 - Math.random()).slice(0, 10).join(" ");
+        body.appendChild(codeLine);
+    }
+});
     </script>
 </body>
 </html>

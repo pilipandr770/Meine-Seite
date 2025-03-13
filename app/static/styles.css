@@ -1,142 +1,566 @@
+/* --- Основні стилі --- */
 body {
     font-family: Arial, sans-serif;
     text-align: center;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
-}
-
-header, footer {
-    background-color: #333;
+    background-color: #1E1E2E;
     color: white;
-    padding: 15px 0;
-    text-align: center;
+    position: relative;
+    overflow-x: hidden;
 }
 
-nav ul {
-    list-style: none;
-    padding: 0;
-}
-
-nav ul li {
-    display: inline;
-    margin: 0 15px;
-}
-
-nav ul li a {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.chat-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-}
-
-.messages {
-    text-align: left;
-    max-height: 300px;
-    overflow-y: auto;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    background: #fff;
-}
-
-.input-container {
-    display: flex;
-}
-
-input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-button {
-    padding: 10px;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease-in-out;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-video {
-    width: 100%;
-    max-width: 800px;
-    margin: 20px auto;
-    display: block;
-    border-radius: 10px;
-}
-
-.services-container {
+/* --- Виправлення контейнерів чату і форми ТЗ --- */
+.content-wrapper {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: 20px;
-    margin-top: 20px;
-}
-
-.service-card {
-    padding: 15px 20px;
-    background: #007BFF;
-    color: white;
-    text-decoration: none;
-    border-radius: 10px;
-    font-weight: bold;
-    transition: background 0.3s;
-}
-
-.service-card:hover {
-    background: #0056b3;
-}
-
-.task-form-container {
-    width: 48%;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 1000px;
+    margin: auto;
     padding: 20px;
-    background: white;
+}
+
+/* --- Вирівнювання форм чату та ТЗ --- */
+.chat-container,
+.task-form-container {
+    flex: 1;
+    max-width: 500px;
+    min-width: 300px; /* Знижено з 400px для кращої адаптації на мобільних пристроях */
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
     border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 5px;
-}
-
-input, textarea, select {
+/* --- Поля введення у формах --- */
+.chat-container input,
+.task-form-container input,
+.task-form-container textarea,
+.task-form-container select {
     width: 100%;
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 14px;
-    margin-bottom: 5px;
+    background: white;
+    color: black;
+    box-sizing: border-box;
 }
 
-textarea {
-    min-height: 80px;
+/* --- Виправлення кнопки "Відправити" у чаті і формі ТЗ --- */
+.chat-container button,
+.task-form-container button {
+    width: 100%;
+    padding: 12px;
+    background: #06B6D4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
 }
 
-small {
-    display: block;
-    color: #666;
-    font-size: 12px;
-    margin-top: -5px;
+.chat-container button:hover,
+.task-form-container button:hover {
+    background: #C026D3;
+}
+
+/* --- Контейнер повідомлень у чаті --- */
+.chat-container .messages {
+    flex-grow: 1;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: white;
+    color: black;
+    border-radius: 5px;
+}
+
+/* --- Контейнер для вводу повідомлення у чаті --- */
+.chat-container .input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* --- Виправлення шапки сайту --- */
+nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px 0;
+}
+
+nav ul li {
+    display: inline;
+}
+
+nav ul li a {
+    color: white;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover {
+    color: #06B6D4;
+}
+
+/* --- Виправлення футера --- */
+footer {
+    text-align: center;
+    padding: 20px 0;
+    background: rgba(255, 255, 255, 0.1);
+    margin-top: 40px;
+}
+
+footer a {
+    color: #06B6D4;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* --- Кругла кнопка перемикання мови --- */
+.language-switcher {
+    margin-top: 10px;
+}
+
+#language-switcher {
+    border-radius: 50%;
+    padding: 5px 10px;
+    font-size: 16px;
+    background: white;
+    border: 1px solid #06B6D4;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+#language-switcher:hover {
+    background: #06B6D4;
+    color: white;
+}
+
+/* --- Адаптація для мобільних пристроїв --- */
+@media (max-width: 768px) {
+    .content-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .chat-container,
+    .task-form-container {
+        max-width: 100%;
+        min-width: auto;
+    }
+}
+
+@keyframes matrixRain {
+    from {
+        transform: translateY(-100%);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+body {
+    background-color: black;
+    overflow: hidden;
+}
+
+.matrix {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    font-family: monospace;
+    font-size: 20px;
+    color: lime;
+    opacity: 0.8;
+    animation: matrixRain linear infinite;
+}
+
+/* Создаём несколько строк кода */
+@keyframes matrixFall {
+    from {
+        transform: translateY(-100vh);
+    }
+    to {
+        transform: translateY(100vh);
+    }
+}
+.code-line {
+    position: absolute;
+    color: lime;
+    font-family: monospace;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0.7;
+    animation: matrixFall linear infinite;
+}
+
+/* --- Вирівнювання кнопок на головній сторінці --- */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 800px;
+    margin: 20px auto;
+    justify-content: center;
+}
+
+/* --- Оформлення кнопок входу до розділів --- */
+.service-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, #06B6D4, #C026D3);
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 20px;
+    border-radius: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+    height: 100px;
+}
+
+.service-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.4);
+}
+
+/* --- Адаптація під мобільні пристрої --- */
+@media (max-width: 768px) {
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* --- Забезпечення прокрутки сторінки до кінця --- */
+html, body {
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* --- Виправлення контейнера контенту --- */
+.content-wrapper {
+    min-height: 80vh;  /* Робимо контейнер достатньо високим */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* --- Гарантія, що блок ТЗ не обрізається --- */
+.task-form-container {
+    flex: 1;
+    max-width: 500px;
+    min-width: 400px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.2);
+    min-height: 500px;  /* Забезпечення мінімальної висоти */
+}
+
+/* --- Додаткове вирівнювання форми ТЗ --- */
+.task-form-container .form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.task-form-container input,
+.task-form-container textarea,
+.task-form-container select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    background: white;
+    color: black;
+    box-sizing: border-box;
+}
+
+/* --- Центрування чату на головній сторінці --- */
+.home-chat-container {
+    max-width: 800px;  /* Робимо ширину як у кнопок */
+    min-width: 600px;
+    height: 200px;  /* Робимо висоту як у кнопок */
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 20px auto;  /* Вирівнюємо чат по центру */
+}
+
+/* --- Зона повідомлень у чаті --- */
+.home-chat-container .messages {
+    flex-grow: 1;
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+/* --- Поле введення повідомлення --- */
+.home-chat-container input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: white;
+    color: black;
+}
+
+/* --- Кнопка "Відправити" у чаті --- */
+.home-chat-container button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    background: #06B6D4;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.home-chat-container button:hover {
+    background: #C026D3;
+}
+
+/* --- Адаптація для мобільних пристроїв --- */
+@media (max-width: 768px) {
+    .home-chat-container {
+        max-width: 90%;
+        min-width: auto;
+        height: 180px;
+    }
+
+    .home-chat-container .messages {
+        max-height: 100px;
+    }
+}
+
+/* --- Хедер з соцмережами --- */
+.header-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.home-link {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+}
+
+.home-link:hover {
+    color: #06B6D4;
+}
+
+/* --- Стилі для іконок соцмереж --- */
+.social-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.social-icons a {
+    display: inline-block;
+}
+
+.social-icons img {
+    width: 30px;
+    height: 30px;
+    transition: transform 0.3s;
+}
+
+.social-icons img:hover {
+    transform: scale(1.1);
+}
+
+/* --- Чат на головній сторінці (адаптивний) --- */
+.home-chat-container {
+    max-width: 800px;  /* Робимо ширину як у кнопок */
+    min-width: 600px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 20px auto;  /* Вирівнюємо чат по центру */
+}
+
+/* --- Динамічне збільшення блоку повідомлень --- */
+.home-chat-container .messages {
+    max-height: 400px; /* Чат не буде займати всю сторінку */
+    overflow-y: auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    font-size: 18px;
+    line-height: 1.5;
+    transition: max-height 0.3s ease-in-out;
+}
+
+/* --- Збільшення чату при додаванні нових повідомлень --- */
+.home-chat-container.expanded .messages {
+    max-height: 600px; /* Якщо багато повідомлень, чат збільшується */
+}
+
+/* --- Поле введення повідомлення --- */
+.home-chat-container input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: white;
+    color: black;
+}
+
+/* --- Кнопка "Відправити" --- */
+.home-chat-container button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    background: #06B6D4;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.home-chat-container button:hover {
+    background: #C026D3;
+}
+
+/* --- Адаптація для мобільних пристроїв --- */
+@media (max-width: 768px) {
+    .home-chat-container {
+        max-width: 95%;
+        min-width: auto;
+    }
+
+    .home-chat-container .messages {
+        max-height: 300px;
+    }
+}
+
+/* --- Збільшений чат тільки на головній сторінці --- */
+.home-chat-container {
+    max-width: 800px;  /* Ширина така ж, як у кнопок вибору напрямку */
+    min-width: 600px;
+    height: 300px;  /* Початкова висота */
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 30px auto;  /* Центруємо */
+}
+
+/* --- Автоматичне розширення чату при додаванні повідомлень --- */
+.home-chat-container.expanded {
+    height: 450px;  /* Якщо є багато повідомлень, чат розширюється */
+}
+
+/* --- Стилі для блоку повідомлень --- */
+.home-chat-container .messages {
+    flex-grow: 1;
+    max-height: 250px; /* Початковий розмір */
+    overflow-y: auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    font-size: 18px;
+    line-height: 1.5;
+    transition: max-height 0.3s ease-in-out;
+}
+
+/* --- Поле вводу повідомлення --- */
+.home-chat-container input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: white;
+    color: black;
+}
+
+/* --- Кнопка "Відправити" та мікрофон --- */
+.home-chat-container button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    background: #06B6D4;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.home-chat-container button:hover {
+    background: #C026D3;
+}
+
+/* --- Адаптація для мобільних пристроїв --- */
+@media (max-width: 768px) {
+    .home-chat-container {
+        max-width: 95%;
+        min-width: auto;
+        height: 280px;
+    }
+
+    .home-chat-container.expanded {
+        height: 400px;
+    }
+
+    .home-chat-container .messages {
+        max-height: 200px;
+    }
 }
