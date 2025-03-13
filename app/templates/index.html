@@ -1,27 +1,32 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Ласкаво просимо на мій сайт!</h1>
-    <p>Оберіть напрямок роботи:</p>
+    <h1>
+        {% if lang == "uk" %}Ласкаво просимо на мій сайт!{% elif lang == "de" %}Willkommen auf meiner Website!{% else %}Welcome to my website!{% endif %}
+    </h1>
+    <p>
+        {% if lang == "uk" %}Оберіть напрямок роботи:{% elif lang == "de" %}Wählen Sie Ihre Arbeitsrichtung:{% else %}Choose your work direction:{% endif %}
+    </p>
 
-    <div class="services-container">
-        <a href="/web-dev" class="service-card">🌍 Веб-розробка</a>
-        <a href="/chatbots" class="service-card">🤖 Розробка ботів</a>
-        <a href="/automation" class="service-card">⚙ Автоматизація бізнесу</a>
-        <a href="/ai-ml" class="service-card">🧠 AI та машинне навчання</a>
-        <a href="/media-buying" class="service-card">📢 Медіабаїнг</a>
-        <a href="/databases" class="service-card">💾 Бази даних</a>
+    <h2>Обрати напрямок роботи:</h2>
+    <div class="services-grid">
+        <a href="/web-dev" class="service-button">Веб-розробка</a>
+        <a href="/chatbots" class="service-button">Розробка ботів</a>
+        <a href="/automation" class="service-button">Автоматизація</a>
+        <a href="/ai-ml" class="service-button">AI та ML</a>
+        <a href="/media-buying" class="service-button">Медіабаїнг</a>
+        <a href="/databases" class="service-button">Бази даних</a>
     </div>
 
     <hr>
-
-    <p>Спілкуйтеся з розумним помічником:</p>
     
-    <div class="chat-container">
+    <!-- Updated chat container with added "home-chat-container" class -->
+    <div class="chat-container home-chat-container">
         <div class="messages" id="messages"></div>
         <div class="input-container">
             <input type="text" id="userInput" placeholder="Введіть повідомлення...">
             <button onclick="sendMessage()">Відправити</button>
+            <button id="recordButton">🎤</button>
         </div>
     </div>
 
@@ -29,27 +34,46 @@
         async function sendMessage() {
             const userInput = document.getElementById("userInput");
             const messagesDiv = document.getElementById("messages");
-            
+
             if (!userInput.value.trim()) return;
-            
+
             messagesDiv.innerHTML += `<p><strong>Ви:</strong> ${userInput.value}</p>`;
             const userMessage = userInput.value;
             userInput.value = "";
-            
+
             try {
                 const response = await fetch("/chatbot", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: userMessage })
                 });
-
                 const data = await response.json();
                 messagesDiv.innerHTML += `<p><strong>Бот:</strong> ${data.response || "Помилка!"}</p>`;
             } catch (error) {
                 messagesDiv.innerHTML += `<p><strong>Помилка:</strong> Не вдалося отримати відповідь.</p>`;
             }
+
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
     </script>
 
+    <!-- New script to automatically expand chat container -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const chatContainer = document.querySelector(".home-chat-container");
+            const messagesDiv = document.getElementById("messages");
+            
+            function checkChatSize() {
+                if (messagesDiv.scrollHeight > 400) {
+                    chatContainer.classList.add("expanded");
+                } else {
+                    chatContainer.classList.remove("expanded");
+                }
+            }
+            
+            // Observe changes in the messages container to adjust chat expansion accordingly
+            const observer = new MutationObserver(checkChatSize);
+            observer.observe(messagesDiv, { childList: true, subtree: true });
+        });
+    </script>
 {% endblock %}
