@@ -564,3 +564,24 @@ html, body {
         max-height: 200px;
     }
 }
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    flex: 1; /* Робить контент гнучким і змушує його займати весь вільний простір */
+}
+
+.footer {
+    background-color: #222; /* Колір фону футера */
+    color: white; /* Колір тексту */
+    text-align: center;
+    padding: 10px;
+    position: relative;
+    width: 100%;
+}

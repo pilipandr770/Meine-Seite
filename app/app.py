@@ -1,6 +1,6 @@
 from flask import Flask
-from app.routes import register_routes
-from app.models.client import db
+from app.routes import register_routes  # Changed back to absolute import
+from app.models.client import db        # Changed back to absolute import
 
 def create_app():
     app = Flask(__name__)

@@ -1,9 +1,17 @@
 from flask import Blueprint, request, jsonify
 from app.models.client import db, Client, ClientRequest
+import requests
+
+TELEGRAM_BOT_TOKEN = "7572478553:AAEJxJ9Il80zrHAjcD7ZcQnht3EP-sHYrjs"
+TELEGRAM_CHAT_ID = "7444992311"  # Отримати можна через @userinfobot
+
+def send_telegram_message(text):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    data = {"chat_id": TELEGRAM_CHAT_ID, "text": text, "parse_mode": "HTML"}
+    requests.post(url, data=data)
 
 crm_bp = Blueprint("crm", __name__)
 
-# Додавання клієнта в базу (цей маршрут залишимо для зручності, якщо ти будеш його використовувати)
 @crm_bp.route("/clients", methods=["POST"])
 def add_client():
     data = request.json
@@ -20,12 +28,11 @@ def add_client():
 
     return jsonify({"message": "Клієнт доданий", "client": new_client.to_dict()}), 201
 
-# Виправлений маршрут для збереження ТЗ
 @crm_bp.route("/submit_task", methods=["POST"])
 def submit_task():
     data = request.json
     
-    # Отримуємо всі дані, які передаються формою
+    # Отримуємо всі дані
     project_type = data.get("project_type")
     project_name = data.get("project_name")
     task_description = data.get("task_description")
@@ -36,23 +43,19 @@ def submit_task():
     timeline = data.get("timeline")
     integrations = data.get("integrations")
     contact_method = data.get("contact_method")
-    contact_info = data.get("contact_info")
+    contact_info = data.get("contact_info", "Анонімно")
 
     # Перевірка обов'язкових полів
     required_fields = [project_type, project_name, task_description, contact_method]
     if not all(required_fields):
         return jsonify({"error": "Будь ласка, заповніть всі обов'язкові поля."}), 400
 
-    # Видаляємо контактну інформацію, якщо анонімно
-    if contact_method.lower() == "анонімно":
-        contact_info = None
-
     # Створюємо новий запис ТЗ
     new_request = ClientRequest(
         project_type=project_type,
         task_description=task_description,
         contact_method=contact_method,
-        contact_info=contact_info
+        contact_info=contact_info if contact_method.lower() != "анонімно" else None
     )
 
     # Додаємо всі додаткові поля
@@ -67,5 +70,17 @@ def submit_task():
     # Зберігаємо в базу
     db.session.add(new_request)
     db.session.commit()
+
+    # Відправляємо повідомлення в Telegram
+    message = f"📩 <b>Нова заявка</b>\n"
+    message += f"🔹 <b>Проєкт:</b> {project_type}\n"
+    message += f"📝 <b>Назва:</b> {project_name}\n"
+    message += f"📝 <b>Опис:</b> {task_description}\n"
+    message += f"📞 <b>Контакт:</b> {contact_info if contact_info != 'Анонімно' else 'Немає'}"
+    
+    try:
+        send_telegram_message(message)
+    except Exception as e:
+        print(f"Failed to send Telegram notification: {str(e)}")
 
     return jsonify({"message": "Заявка прийнята", "request": new_request.to_dict()}), 201

@@ -3,97 +3,110 @@
 {% block content %}
     <h1>{{ service_title }}</h1>
     <p>{{ service_description }}</p>
-
     <hr>
 
-    <div class="content-wrapper">
-        <!-- Блок з чатом -->
-        <div class="chat-container">
-            <h3>Чат із помічником</h3>
-            <div class="messages" id="messages"></div>
-            
-            <!-- Оновлений блок з інпутом і кнопкою -->
-            <div class="input-container">
-                <input type="text" id="userInput" placeholder="Напишіть питання або уточнення до ТЗ...">
-                <button type="button" onclick="sendMessage('{{ chat_endpoint }}')">Відправити</button>
+    <div class="page-layout">
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- Chat Container -->
+            <div class="chat-container">
+                <h3>Чат із помічником</h3>
+                <div class="messages" id="messages"></div>
+                <div class="input-container">
+                    <input type="text" id="userInput" placeholder="Напишіть питання або уточнення до ТЗ...">
+                    <button type="button" onclick="sendMessage('{{ chat_endpoint }}')">Відправити</button>
+                </div>
+            </div>
+
+            <!-- Info Block under chat -->
+            <div class="info-block">
+                <p>
+                    На цій сторінці ви можете відправити технічне завдання для нашої компанії. 
+                    Якщо вам потрібна додаткова інформація, порада або приклад для заповнення — 
+                    зверніться до нашого розумного асистента вище. Як тільки ви відправите форму з ТЗ, 
+                    ми миттєво отримаємо ваш запит та оперативно зв'яжемося з вами, використовуючи вказаний вами метод зв'язку, 
+                    для обговорення подальших дій. Дякуємо за довіру та вітаємо вас на шляху до успішної реалізації вашого проєкту!
+                </p>
             </div>
         </div>
 
-        <!-- Блок з формою ТЗ -->
-        <div class="task-form-container">
-            <h3>Заповніть технічне завдання</h3>
-            
-            <form id="task-form">
-                <div class="form-group">
-                    <label for="project_name">1. Назва проєкту:</label>
-                    <input type="text" id="project_name" placeholder="Наприклад, 'Сайт для продажу авто'" required>
-                    <small>Як називається ваш проєкт?</small>
-                </div>
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Task Form Container -->
+            <div class="task-form-container">
+                <h3>Заповніть технічне завдання</h3>
+                <form id="task-form">
+                    <div class="form-group">
+                        <label for="project_name">1. Назва проєкту:</label>
+                        <input type="text" id="project_name" placeholder="Наприклад, 'Сайт для продажу авто'" required>
+                        <small>Як називається ваш проєкт?</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="task_description">2. Загальний опис проєкту:</label>
-                    <textarea id="task_description" placeholder="Опишіть, що потрібно реалізувати..." required></textarea>
-                    <small>Коротко розкажіть про вашу ідею.</small>
-                </div>
+                    <div class="form-group">
+                        <label for="task_description">2. Загальний опис проєкту:</label>
+                        <textarea id="task_description" placeholder="Опишіть, що потрібно реалізувати..." required></textarea>
+                        <small>Коротко розкажіть про вашу ідею.</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="key_features">3. Основні функції:</label>
-                    <textarea id="key_features" placeholder="Наприклад: каталог, фільтри, реєстрація..." required></textarea>
-                    <small>Які ключові можливості має мати проєкт?</small>
-                </div>
+                    <div class="form-group">
+                        <label for="key_features">3. Основні функції:</label>
+                        <textarea id="key_features" placeholder="Наприклад: каталог, фільтри, реєстрація..." required></textarea>
+                        <small>Які ключові можливості має мати проєкт?</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="design_preferences">4. Бажаний стиль дизайну:</label>
-                    <input type="text" id="design_preferences" placeholder="Мінімалістичний, темний, корпоративний..." required>
-                    <small>Опишіть стиль, який вам подобається.</small>
-                </div>
+                    <div class="form-group">
+                        <label for="design_preferences">4. Бажаний стиль дизайну:</label>
+                        <input type="text" id="design_preferences" placeholder="Мінімалістичний, темний, корпоративний..." required>
+                        <small>Опишіть стиль, який вам подобається.</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="platform">5. Де має працювати сервіс?</label>
-                    <select id="platform" required>
-                        <option value="Web">Web</option>
-                        <option value="Android/iOS">Android/iOS</option>
-                        <option value="Telegram">Telegram</option>
-                        <option value="Багатоплатформений">Багатоплатформений</option>
-                    </select>
-                    <small>Виберіть основну платформу.</small>
-                </div>
+                    <div class="form-group">
+                        <label for="platform">5. Де має працювати сервіс?</label>
+                        <select id="platform" required>
+                            <option value="Web">Web</option>
+                            <option value="Android/iOS">Android/iOS</option>
+                            <option value="Telegram">Telegram</option>
+                            <option value="Багатоплатформений">Багатоплатформений</option>
+                        </select>
+                        <small>Виберіть основну платформу.</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="budget">6. Бюджет:</label>
-                    <input type="text" id="budget" placeholder="Приблизний бюджет у $ або €">
-                    <small>Якщо у вас є приблизний бюджет, вкажіть його.</small>
-                </div>
+                    <div class="form-group">
+                        <label for="budget">6. Бюджет:</label>
+                        <input type="text" id="budget" placeholder="Приблизний бюджет у $ або €">
+                        <small>Якщо у вас є приблизний бюджет, вкажіть його.</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="timeline">7. Термін виконання:</label>
-                    <input type="text" id="timeline" placeholder="1 місяць, 3 тижні тощо">
-                    <small>Коли вам потрібен готовий продукт?</small>
-                </div>
+                    <div class="form-group">
+                        <label for="timeline">7. Термін виконання:</label>
+                        <input type="text" id="timeline" placeholder="1 місяць, 3 тижні тощо">
+                        <small>Коли вам потрібен готовий продукт?</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="integrations">8. Інтеграції:</label>
-                    <textarea id="integrations" placeholder="Які API, CRM чи платіжні системи потрібно підключити?"></textarea>
-                    <small>Наприклад, Stripe, Google Maps, CRM Bitrix24 тощо.</small>
-                </div>
+                    <div class="form-group">
+                        <label for="integrations">8. Інтеграції:</label>
+                        <textarea id="integrations" placeholder="Які API, CRM чи платіжні системи потрібно підключити?"></textarea>
+                        <small>Наприклад, Stripe, Google Maps, CRM Bitrix24 тощо.</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="contact_method">9. Спосіб зв’язку:</label>
-                    <select id="contact_method">
-                        <option>Email</option>
-                        <option>Telegram</option>
-                    </select>
-                    <small>Як з вами зв’язатися?</small>
-                </div>
+                    <div class="form-group">
+                        <label for="contact_method">9. Спосіб зв’язку:</label>
+                        <select id="contact_method">
+                            <option>Email</option>
+                            <option>Telegram</option>
+                        </select>
+                        <small>Як з вами зв’язатися?</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="contact_info">10. Контактні дані (необов’язково, якщо анонімно):</label>
-                    <input type="text" id="contact_info" placeholder="Ваш Email або Telegram">
-                    <small>Вкажіть ваш контакт для зворотного зв’язку.</small>
-                </div>
+                    <div class="form-group">
+                        <label for="contact_info">10. Контактні дані (необов’язково, якщо анонімно):</label>
+                        <input type="text" id="contact_info" placeholder="Ваш Email або Telegram">
+                        <small>Вкажіть ваш контакт для зворотного зв’язку.</small>
+                    </div>
 
-                <button type="button" onclick="submitTask('{{ submit_endpoint }}', '{{ service_name }}')">Надіслати ТЗ</button>
-            </form>
+                    <button type="button" onclick="submitTask('{{ submit_endpoint }}', '{{ service_name }}')">Надіслати ТЗ</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -163,19 +176,54 @@
     </script>
 
     <style>
+        .page-layout {
+            display: flex;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .left-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-column {
+            flex: 1;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .info-block {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            font-size: 16px;
+            line-height: 1.6;
+            color: #ddd;
+        }
+
+        .task-form-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
         .content-wrapper {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             justify-content: space-between;
-        }
-
-        .chat-container, .task-form-container {
-            width: 48%;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
 
         .messages {
@@ -214,6 +262,21 @@
 
         .input-container button:hover {
             background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            .page-layout {
+                flex-direction: column;
+            }
+            
+            .left-column, .right-column {
+                width: 100%;
+            }
+
+            .info-block {
+                padding: 15px;
+                font-size: 14px;
+            }
         }
     </style>
 {% endblock %}
