@@ -121,6 +121,8 @@ footer {
     padding: 20px 0;
     background: rgba(255, 255, 255, 0.1);
     margin-top: 40px;
+    width: 100%;
+    margin-top: auto; /* Pushes footer to bottom */
 }
 
 footer a {
@@ -180,7 +182,8 @@ footer a:hover {
 
 body {
     background-color: black;
-    overflow: hidden;
+    overflow-x: hidden; /* блокувати горизонтальну прокрутку */
+    overflow-y: auto; /* дозволити вертикальну прокрутку */
 }
 
 .matrix {
@@ -583,5 +586,35 @@ html, body {
     text-align: center;
     padding: 10px;
     position: relative;
+    width: 100%;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Ensures content spreads to use available space */
+}
+
+/* Вимкнення matrix-анімації на певних сторінках */
+body.no-animation .code-line {
+    display: none;
+}
+
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1 0 auto;
+}
+
+.site-footer {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px 0;
+    margin-top: auto;
     width: 100%;
 }

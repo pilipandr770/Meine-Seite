@@ -6,51 +6,49 @@
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
+<body class="{% if title in ['Політика конфіденційності', 'Контакти', 'Impressum'] %}no-animation{% endif %}">
+    <div class="page-wrapper">
+        <header>
+            <nav class="header-nav">
+                <a href="/" class="home-link">Головна</a>
+                <div class="social-icons">
+                    <a href="https://www.linkedin.com" target="_blank">
+                        <img src="/static/icons/LinkedIn_logo_initials.png" alt="LinkedIn">
+                    </a>
+                    <a href="https://t.me/yourtelegram" target="_blank">
+                        <img src="/static/icons/Telegram_logo.svg" alt="Telegram">
+                    </a>
+                    <a href="https://wa.me/yourwhatsapp" target="_blank">
+                        <img src="/static/icons/whatsapp.svg" alt="WhatsApp">
+                    </a>
+                </div>
+            </nav>
+        </header>
 
+        <!-- Основний контент -->
+        <main class="container">
+            {% block content %}{% endblock %}
+        </main>
 
-    <header>
-        <nav class="header-nav">
-            <a href="/" class="home-link">Головна</a>
-            <div class="social-icons">
-                <a href="https://www.linkedin.com" target="_blank">
-                    <img src="/static/icons/LinkedIn_logo_initials.png" alt="LinkedIn">
-                </a>
-                <a href="https://t.me/yourtelegram" target="_blank">
-                    <img src="/static/icons/Telegram_logo.svg" alt="Telegram">
-                </a>
-                <a href="https://wa.me/yourwhatsapp" target="_blank">
-                    <img src="/static/icons/whatsapp.svg" alt="WhatsApp">
-                </a>
+        <!-- Футер -->
+        <footer class="site-footer">
+            <p>&copy; 2025 Мій сайт. Всі права захищені.</p>
+            <p>
+                <a href="/privacy">{% if lang == 'uk' %}Політика конфіденційності{% elif lang == 'de' %}Datenschutz{% else %}Privacy Policy{% endif %}</a> | 
+                <a href="/impressum">Impressum</a> | 
+                <a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a>
+            </p>
+
+            <!-- Кругла кнопка перемикання мови -->
+            <div class="language-switcher">
+                <select id="language-switcher" onchange="changeLanguage()">
+                    <option value="uk" {% if lang == 'uk' %}selected{% endif %}>🇺🇦</option>
+                    <option value="de" {% if lang == 'de' %}selected{% endif %}>🇩🇪</option>
+                    <option value="en" {% if lang == 'en' %}selected{% endif %}>🇬🇧</option>
+                </select>
             </div>
-        </nav>
-    </header>
-
-
-    <!-- Основний контент -->
-    <main class="container">
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- Футер -->
-    <footer>
-        <p>&copy; 2025 Мій сайт. Всі права захищені.</p>
-        <p>
-            <a href="/privacy">{% if lang == 'uk' %}Політика конфіденційності{% elif lang == 'de' %}Datenschutz{% else %}Privacy Policy{% endif %}</a> | 
-            <a href="/impressum">Impressum</a> | 
-            <a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a>
-        </p>
-
-        <!-- Кругла кнопка перемикання мови -->
-        <div class="language-switcher">
-            <select id="language-switcher" onchange="changeLanguage()">
-                <option value="uk" {% if lang == 'uk' %}selected{% endif %}>🇺🇦</option>
-                <option value="de" {% if lang == 'de' %}selected{% endif %}>🇩🇪</option>
-                <option value="en" {% if lang == 'en' %}selected{% endif %}>🇬🇧</option>
-            </select>
-        </div>
-    </footer>
-
+        </footer>
+    </div>
     <script>
         function changeLanguage() {
             const lang = document.getElementById("language-switcher").value;
