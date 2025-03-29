@@ -1,282 +1,206 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>{{ service_title }}</h1>
-    <p>{{ service_description }}</p>
-    <hr>
+<h1>{% if lang == 'uk' %}{{ service_title }}{% elif lang == 'de' %}{{ service_title_de }}{% else %}{{ service_title_en }}{% endif %}</h1>
+<p>{% if lang == 'uk' %}{{ service_description }}{% elif lang == 'de' %}{{ service_description_de }}{% else %}{{ service_description_en }}{% endif %}</p>
+<hr>
 
-    <div class="page-layout">
-        <!-- Left Column -->
-        <div class="left-column">
-            <!-- Chat Container -->
-            <div class="chat-container">
-                <h3>Чат із помічником</h3>
-                <div class="messages" id="messages"></div>
-                <div class="input-container">
-                    <input type="text" id="userInput" placeholder="Напишіть питання або уточнення до ТЗ...">
-                    <button type="button" onclick="sendMessage('{{ chat_endpoint }}')">Відправити</button>
-                </div>
-            </div>
-
-            <!-- Info Block under chat -->
-            <div class="info-block">
-                <p>
-                    На цій сторінці ви можете відправити технічне завдання для нашої компанії. 
-                    Якщо вам потрібна додаткова інформація, порада або приклад для заповнення — 
-                    зверніться до нашого розумного асистента вище. Як тільки ви відправите форму з ТЗ, 
-                    ми миттєво отримаємо ваш запит та оперативно зв'яжемося з вами, використовуючи вказаний вами метод зв'язку, 
-                    для обговорення подальших дій. Дякуємо за довіру та вітаємо вас на шляху до успішної реалізації вашого проєкту!
-                </p>
+<div class="page-layout">
+    <!-- Left Column (чат і текст) -->
+    <div class="left-column">
+        <div class="chat-container">
+            <h3>{% if lang == 'uk' %}Чат із помічником{% elif lang == 'de' %}Chat mit Assistent{% else %}Chat with Assistant{% endif %}</h3>
+            <div class="messages" id="messages"></div>
+            <div class="input-container">
+                <input type="text" id="userInput" placeholder="{% if lang == 'uk' %}Напишіть питання або уточнення до ТЗ...{% elif lang == 'de' %}Frage oder Hinweis zur Aufgabe eingeben...{% else %}Type a question or clarification...{% endif %}">
+                <button type="button" onclick="sendMessage('{{ chat_endpoint }}')">{% if lang == 'uk' %}Відправити{% elif lang == 'de' %}Senden{% else %}Send{% endif %}</button>
             </div>
         </div>
-
-        <!-- Right Column -->
-        <div class="right-column">
-            <!-- Task Form Container -->
-            <div class="task-form-container">
-                <h3>Заповніть технічне завдання</h3>
-                <form id="task-form">
-                    <div class="form-group">
-                        <label for="project_name">1. Назва проєкту:</label>
-                        <input type="text" id="project_name" placeholder="Наприклад, 'Сайт для продажу авто'" required>
-                        <small>Як називається ваш проєкт?</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="task_description">2. Загальний опис проєкту:</label>
-                        <textarea id="task_description" placeholder="Опишіть, що потрібно реалізувати..." required></textarea>
-                        <small>Коротко розкажіть про вашу ідею.</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="key_features">3. Основні функції:</label>
-                        <textarea id="key_features" placeholder="Наприклад: каталог, фільтри, реєстрація..." required></textarea>
-                        <small>Які ключові можливості має мати проєкт?</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="design_preferences">4. Бажаний стиль дизайну:</label>
-                        <input type="text" id="design_preferences" placeholder="Мінімалістичний, темний, корпоративний..." required>
-                        <small>Опишіть стиль, який вам подобається.</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="platform">5. Де має працювати сервіс?</label>
-                        <select id="platform" required>
-                            <option value="Web">Web</option>
-                            <option value="Android/iOS">Android/iOS</option>
-                            <option value="Telegram">Telegram</option>
-                            <option value="Багатоплатформений">Багатоплатформений</option>
-                        </select>
-                        <small>Виберіть основну платформу.</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="budget">6. Бюджет:</label>
-                        <input type="text" id="budget" placeholder="Приблизний бюджет у $ або €">
-                        <small>Якщо у вас є приблизний бюджет, вкажіть його.</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="timeline">7. Термін виконання:</label>
-                        <input type="text" id="timeline" placeholder="1 місяць, 3 тижні тощо">
-                        <small>Коли вам потрібен готовий продукт?</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="integrations">8. Інтеграції:</label>
-                        <textarea id="integrations" placeholder="Які API, CRM чи платіжні системи потрібно підключити?"></textarea>
-                        <small>Наприклад, Stripe, Google Maps, CRM Bitrix24 тощо.</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="contact_method">9. Спосіб зв’язку:</label>
-                        <select id="contact_method">
-                            <option>Email</option>
-                            <option>Telegram</option>
-                        </select>
-                        <small>Як з вами зв’язатися?</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="contact_info">10. Контактні дані (необов’язково, якщо анонімно):</label>
-                        <input type="text" id="contact_info" placeholder="Ваш Email або Telegram">
-                        <small>Вкажіть ваш контакт для зворотного зв’язку.</small>
-                    </div>
-
-                    <button type="button" onclick="submitTask('{{ submit_endpoint }}', '{{ service_name }}')">Надіслати ТЗ</button>
-                </form>
-            </div>
+        <div class="info-block">
+            <p>
+                {% if lang == 'uk' %}
+                    На цій сторінці ви можете відправити технічне завдання для нашої компанії...
+                {% elif lang == 'de' %}
+                    Auf dieser Seite können Sie Ihre technische Aufgabenstellung...
+                {% else %}
+                    On this page, you can submit a project brief to our company...
+                {% endif %}
+            </p>
         </div>
     </div>
 
-    <script>
-        async function sendMessage(endpoint) {
-            // Use the endpoint exactly as provided from the server
-            console.log('Using endpoint:', endpoint);
-            
-            const userInput = document.getElementById("userInput");
-            const messagesDiv = document.getElementById("messages");
+    <!-- Right Column (форма ТЗ) -->
+    <div class="right-column">
+        <div class="task-form-container">
+            <h3>{% if lang == 'uk' %}Заповніть технічне завдання{% elif lang == 'de' %}Technische Aufgabe ausfüllen{% else %}Fill out the project brief{% endif %}</h3>
+            <form id="task-form">
+                <div class="form-group">
+                    <label for="project_name">1. {% if lang == 'uk' %}Назва проєкту{% elif lang == 'de' %}Projektname{% else %}Project Name{% endif %}:</label>
+                    <input type="text" id="project_name" placeholder="Наприклад, 'Сайт для продажу авто'" required>
+                </div>
+                <div class="form-group">
+                    <label for="task_description">2. {% if lang == 'uk' %}Загальний опис{% elif lang == 'de' %}Projektbeschreibung{% else %}Description{% endif %}:</label>
+                    <textarea id="task_description" placeholder="Опишіть, що потрібно реалізувати..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="key_features">3. {% if lang == 'uk' %}Основні функції{% elif lang == 'de' %}Hauptfunktionen{% else %}Key Features{% endif %}:</label>
+                    <textarea id="key_features" placeholder="Каталог, фільтри, реєстрація..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="design_preferences">4. {% if lang == 'uk' %}Стиль дизайну{% elif lang == 'de' %}Designstil{% else %}Design Style{% endif %}:</label>
+                    <input type="text" id="design_preferences" placeholder="Мінімалістичний, темний..." required>
+                </div>
+                <div class="form-group">
+                    <label for="platform">5. {% if lang == 'uk' %}Платформа{% elif lang == 'de' %}Plattform{% else %}Platform{% endif %}:</label>
+                    <select id="platform">
+                        <option value="Web">Web</option>
+                        <option value="Mobile">Android / iOS</option>
+                        <option value="Telegram">Telegram</option>
+                        <option value="Other">Інше</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="budget">6. {% if lang == 'uk' %}Бюджет{% elif lang == 'de' %}Budget{% else %}Budget{% endif %}:</label>
+                    <input type="text" id="budget" placeholder="200-1000€, 5000$, тощо">
+                </div>
+                <div class="form-group">
+                    <label for="timeline">7. {% if lang == 'uk' %}Термін виконання{% elif lang == 'de' %}Zeitplan{% else %}Timeline{% endif %}:</label>
+                    <input type="text" id="timeline" placeholder="2 тижні, 1 місяць...">
+                </div>
+                <div class="form-group">
+                    <label for="integrations">8. {% if lang == 'uk' %}Інтеграції{% elif lang == 'de' %}Integrationen{% else %}Integrations{% endif %}:</label>
+                    <textarea id="integrations" placeholder="API, CRM, Stripe, Telegram..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="contact_method">9. {% if lang == 'uk' %}Спосіб зв'язку{% elif lang == 'de' %}Kontaktmethode{% else %}Contact Method{% endif %}:</label>
+                    <select id="contact_method">
+                        <option>Email</option>
+                        <option>Telegram</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="contact_info">10. {% if lang == 'uk' %}Контактна інформація{% elif lang == 'de' %}Kontaktdaten{% else %}Contact Info{% endif %}:</label>
+                    <input type="text" id="contact_info" placeholder="Ваш Email або Telegram">
+                </div>
+                <button type="button" onclick="submitTask('{{ submit_endpoint }}', '{{ service_name }}')">{% if lang == 'uk' %}Надіслати{% elif lang == 'de' %}Absenden{% else %}Submit{% endif %}</button>
+            </form>
+        </div>
+    </div>
+</div>
 
-            if (!userInput.value.trim()) return;
-
-            try {
-                messagesDiv.innerHTML += `<p><strong>Ви:</strong> ${userInput.value}</p>`;
-                const userMessage = userInput.value;
-                userInput.value = "";
-
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: userMessage })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                messagesDiv.innerHTML += `<p><strong>Бот:</strong> ${data.response || "Помилка!"}</p>`;
-            } catch (error) {
-                console.error('Error:', error);
-                messagesDiv.innerHTML += `<p><strong>Помилка:</strong> ${error.message}</p>`;
-            }
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+<script>
+    async function sendMessage(endpoint) {
+        const userInput = document.getElementById("userInput");
+        const messagesDiv = document.getElementById("messages");
+        if (!userInput.value.trim()) return;
+        try {
+            messagesDiv.innerHTML += `<p><strong>Ви:</strong> ${userInput.value}</p>`;
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userInput.value })
+            });
+            const data = await response.json();
+            messagesDiv.innerHTML += `<p><strong>Бот:</strong> ${data.response || "Помилка!"}</p>`;
+        } catch (error) {
+            messagesDiv.innerHTML += `<p><strong>Помилка:</strong> Не вдалося отримати відповідь.</p>`;
         }
+        userInput.value = "";
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
 
-        async function submitTask(endpoint, service) {
-            const formData = {
-                project_type: service,
-                project_name: document.getElementById("project_name").value,
-                task_description: document.getElementById("task_description").value,
-                key_features: document.getElementById("key_features").value,
-                design_preferences: document.getElementById("design_preferences").value,
-                platform: document.getElementById("platform").value,
-                budget: document.getElementById("budget").value,
-                timeline: document.getElementById("timeline").value,
-                integrations: document.getElementById("integrations").value,
-                contact_method: document.getElementById("contact_method").value,
-                contact_info: document.getElementById("contact_info").value
-            };
-
-            try {
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(formData)
-                });
-
-                const data = await response.json();
-                alert(data.message);
-                document.getElementById("task-form").reset();
-            } catch (error) {
-                alert("Помилка! Не вдалося відправити заявку.");
-            }
+    async function submitTask(endpoint, service) {
+        const formData = {
+            project_type: service,
+            project_name: document.getElementById("project_name").value,
+            task_description: document.getElementById("task_description").value,
+            key_features: document.getElementById("key_features").value,
+            design_preferences: document.getElementById("design_preferences").value,
+            platform: document.getElementById("platform").value,
+            budget: document.getElementById("budget").value,
+            timeline: document.getElementById("timeline").value,
+            integrations: document.getElementById("integrations").value,
+            contact_method: document.getElementById("contact_method").value,
+            contact_info: document.getElementById("contact_info").value
+        };
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            alert(data.message || "Запит надіслано успішно.");
+            document.getElementById("task-form").reset();
+        } catch (error) {
+            alert("Помилка при надсиланні форми.");
         }
-    </script>
+    }
+</script>
 
-    <style>
+<style>
+    .page-layout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-left: 3cm;
+        padding-right: 3cm;
+    }
+
+    .left-column,
+    .right-column {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .task-form-container {
+        background: rgba(255,255,255,0.08);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .task-form-container button {
+        width: 100%;
+        padding: 10px;
+        background-color: #00aaff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .task-form-container button:hover {
+        background-color: #0088cc;
+    }
+
+    @media (max-width: 768px) {
         .page-layout {
-            display: flex;
-            gap: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
-
-        .left-column {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .right-column {
-            flex: 1;
-        }
-
-        .chat-container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-        }
-
-        .info-block {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-            font-size: 16px;
-            line-height: 1.6;
-            color: #ddd;
-        }
-
-        .task-form-container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-        }
-
-        .content-wrapper {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: space-between;
-        }
-
-        .messages {
-            text-align: left;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            background: #fff;
-        }
-
-        .input-container {
-            display: flex;
-            flex-direction: column; /* Поле вводу тепер над кнопкою */
-            gap: 10px;
-        }
-
-        .input-container input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .input-container button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s ease-in-out;
-        }
-
-        .input-container button:hover {
-            background-color: #0056b3;
-        }
-
-        @media (max-width: 768px) {
-            .page-layout {
-                flex-direction: column;
-            }
-            
-            .left-column, .right-column {
-                width: 100%;
-            }
-
-            .info-block {
-                padding: 15px;
-                font-size: 14px;
-            }
-        }
-    </style>
+    }
+</style>
 {% endblock %}

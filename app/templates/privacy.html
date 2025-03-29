@@ -1,6 +1,61 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <h1>Політика конфіденційності</h1>
-    <p>Ця сторінка описує, як ми збираємо та використовуємо дані відповідно до законодавства ЄС.</p>
+<h1>Політика конфіденцiйностi / Datenschutzerklärung</h1>
+
+<p><strong>{% if lang == 'uk' %}Останнє оновлення{% elif lang == 'de' %}Letzte Aktualisierung{% else %}Last updated{% endif %}:</strong> 29 березня 2025</p>
+
+<h2>1. {% if lang == 'uk' %}Загальна інформація{% elif lang == 'de' %}Allgemeine Hinweise{% else %}General Information{% endif %}</h2>
+<p>
+{% if lang == 'uk' %}
+Ми серйозно ставимось до захисту ваших персональних даних. Ця політика пояснює, які дані ми збираємо, з якою метою та як ми їх захищаємо.
+{% elif lang == 'de' %}
+Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Diese Datenschutzerklärung erläutert, welche Daten wir erheben, zu welchem Zweck und wie wir sie schützen.
+{% else %}
+We take the protection of your personal data seriously. This policy explains what data we collect, for what purpose, and how we protect it.
+{% endif %}
+</p>
+
+<h2>2. {% if lang == 'uk' %}Відповідальна сторона{% elif lang == 'de' %}Verantwortliche Stelle{% else %}Responsible Entity{% endif %}</h2>
+<p>
+ROZOOM — приватний розробник Пилипчук Андрій, Німеччина<br>
+Email: info@rozoom.de<br>
+{% if lang == 'uk' %}Контакт через{% elif lang == 'de' %}Kontakt via{% else %}Contact via{% endif %} <a href="/contact">{% if lang == 'uk' %}форму зворотного зв’язку{% elif lang == 'de' %}Kontaktformular{% else %}contact form{% endif %}</a>
+</p>
+
+<h2>3. {% if lang == 'uk' %}Збір даних{% elif lang == 'de' %}Datenerfassung{% else %}Data Collection{% endif %}</h2>
+<ul>
+    <li><strong>{% if lang == 'uk' %}Що ми збираємо{% elif lang == 'de' %}Was wir erfassen{% else %}What we collect{% endif %}:</strong> демографічні дані, запити у формі ТЗ, голосові повідомлення (не зберігаються після обробки), IP-адреса для безпеки.</li>
+    <li><strong>{% if lang == 'uk' %}Що НЕ збирається{% elif lang == 'de' %}Was wir NICHT erfassen{% else %}What we DON'T collect{% endif %}:</strong> персональні дані без згоди, cookies для трекінгу, маркетингові ідентифікатори.</li>
+</ul>
+
+<h2>4. {% if lang == 'uk' %}Використання даних{% elif lang == 'de' %}Zweck der Datennutzung{% else %}Data Usage{% endif %}</h2>
+<ul>
+    <li>{% if lang == 'uk' %}Обробка запитів (наприклад, заповнення ТЗ){% elif lang == 'de' %}Bearbeitung Ihrer Anfragen (z. B. Projektbriefing){% else %}Processing your requests (e.g., project brief submission){% endif %}</li>
+    <li>{% if lang == 'uk' %}Покращення сервісу{% elif lang == 'de' %}Verbesserung des Dienstes{% else %}Improving the service{% endif %}</li>
+    <li>{% if lang == 'uk' %}Відповіді чат-бота (через OpenAI API){% elif lang == 'de' %}Antworten des Chatbots (via OpenAI API){% else %}Chatbot replies (via OpenAI API){% endif %}</li>
+</ul>
+
+<h2>5. {% if lang == 'uk' %}Зберігання{% elif lang == 'de' %}Speicherung{% else %}Storage{% endif %}</h2>
+<p>{% if lang == 'uk' %}Дані зберігаються в зашифрованій базі на європейських серверах і видаляються через 90 днів або після обробки.{% elif lang == 'de' %}Die Daten werden in verschlüsselter Form auf europäischen Servern gespeichert und nach 90 Tagen oder nach Bearbeitung gelöscht.{% else %}Data is stored in encrypted form on European servers and deleted after 90 days or once processed.{% endif %}</p>
+
+<h2>6. {% if lang == 'uk' %}Передача третім сторонам{% elif lang == 'de' %}Weitergabe an Dritte{% else %}Sharing with Third Parties{% endif %}</h2>
+<ul>
+    <li>OpenAI (для чат-бота)</li>
+    <li>Хостинг-провайдер (для роботи сайту)</li>
+</ul>
+<p>{% if lang == 'uk' %}Усі сторонні сервіси відповідають GDPR.{% elif lang == 'de' %}Alle Drittanbieter entsprechen der DSGVO.{% else %}All third parties comply with GDPR.{% endif %}</p>
+
+<h2>7. {% if lang == 'uk' %}Ваші права{% elif lang == 'de' %}Ihre Rechte{% else %}Your Rights{% endif %}</h2>
+<ul>
+    <li>{% if lang == 'uk' %}Доступ до даних{% elif lang == 'de' %}Auskunft u00fcber Daten{% else %}Access to data{% endif %}</li>
+    <li>{% if lang == 'uk' %}Видалення або зміна{% elif lang == 'de' %}Löschung oder Korrektur{% else %}Deletion or correction{% endif %}</li>
+    <li>{% if lang == 'uk' %}Обмеження обробки{% elif lang == 'de' %}Einschränkung der Verarbeitung{% else %}Restriction of processing{% endif %}</li>
+    <li>{% if lang == 'uk' %}Відкликання згоди{% elif lang == 'de' %}Widerruf der Einwilligung{% else %}Withdrawal of consent{% endif %}</li>
+</ul>
+
+<h2>8. {% if lang == 'uk' %}Безпека{% elif lang == 'de' %}Sicherheit{% else %}Security{% endif %}</h2>
+<p>{% if lang == 'uk' %}Ми використовуємо HTTPS, обмежений доступ і постійне оновлення захисту.{% elif lang == 'de' %}Wir verwenden HTTPS, Zugangskontrollen und laufende Sicherheitsupdates.{% else %}We use HTTPS, access controls, and continuous updates.{% endif %}</p>
+
+<h2>9. {% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</h2>
+<p>{% if lang == 'uk' %}Зв'яжіться з нами через{% elif lang == 'de' %}Kontaktieren Sie uns über{% else %}Contact us via{% endif %} <a href="/contact">{% if lang == 'uk' %}форму{% elif lang == 'de' %}das Formular{% else %}the form{% endif %}</a>.</p>
 {% endblock %}

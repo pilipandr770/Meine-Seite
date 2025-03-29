@@ -1,9 +1,11 @@
 from flask import Flask
+from config import Config  # Нове: імпорт класу конфігурації
 from app.routes import register_routes  # Changed back to absolute import
 from app.models.client import db        # Changed back to absolute import
 
 def create_app():
     app = Flask(__name__)
+    app.config.from_object(Config)  # Завантаження конфігурації (секретний ключ та ін.)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///clients.db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 

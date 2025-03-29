@@ -5,12 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        #code-bg {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100%); opacity: 0; }
+            100% { transform: translateY(100vh); opacity: 1; }
+        }
+    </style>
 </head>
 <body class="{% if title in ['Політика конфіденційності', 'Контакти', 'Impressum'] %}no-animation{% endif %}">
+
+    <!-- Контейнер для коду на фоні -->
+    <div id="code-bg"></div>
+
     <div class="page-wrapper">
         <header>
             <nav class="header-nav">
-                <a href="/" class="home-link">Головна</a>
+                <a href="/" class="home-link">{% if lang == 'uk' %}Головна{% elif lang == 'de' %}Startseite{% else %}Home{% endif %}</a>
                 <div class="social-icons">
                     <a href="https://www.linkedin.com" target="_blank">
                         <img src="/static/icons/LinkedIn_logo_initials.png" alt="LinkedIn">
@@ -25,21 +53,17 @@
             </nav>
         </header>
 
-        <!-- Основний контент -->
         <main class="container">
             {% block content %}{% endblock %}
         </main>
 
-        <!-- Футер -->
         <footer class="site-footer">
             <p>&copy; 2025 Мій сайт. Всі права захищені.</p>
             <p>
-                <a href="/privacy">{% if lang == 'uk' %}Політика конфіденційності{% elif lang == 'de' %}Datenschutz{% else %}Privacy Policy{% endif %}</a> | 
-                <a href="/impressum">Impressum</a> | 
+                <a href="/privacy">{% if lang == 'uk' %}Політика конфіденційності{% elif lang == 'de' %}Datenschutz{% else %}Privacy Policy{% endif %}</a> |
+                <a href="/impressum">Impressum</a> |
                 <a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a>
             </p>
-
-            <!-- Кругла кнопка перемикання мови -->
             <div class="language-switcher">
                 <select id="language-switcher" onchange="changeLanguage()">
                     <option value="uk" {% if lang == 'uk' %}selected{% endif %}>🇺🇦</option>
@@ -49,27 +73,37 @@
             </div>
         </footer>
     </div>
+
+    <!-- Language Switcher Script -->
     <script>
         function changeLanguage() {
             const lang = document.getElementById("language-switcher").value;
-            document.cookie = "lang=" + lang + "; path=/";
-            location.reload();
+            window.location.href = "/set_language/" + lang;
         }
     </script>
+
+    <!-- Background Matrix Animation -->
     <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const symbols = ["0", "1", "{", "}", "(", ")", ";", "if", "else", "return"];
-    const body = document.body;
-    
-    for (let i = 0; i < 50; i++) {
-        let codeLine = document.createElement("div");
-        codeLine.classList.add("code-line");
-        codeLine.style.left = Math.random() * 100 + "vw";
-        codeLine.style.animationDuration = Math.random() * 3 + 2 + "s";
-        codeLine.innerText = symbols.sort(() => 0.5 - Math.random()).slice(0, 10).join(" ");
-        body.appendChild(codeLine);
-    }
-});
+        document.addEventListener("DOMContentLoaded", function () {
+            const symbols = ["0", "1", "{", "}", "(", ")", ";", "if", "else", "return"];
+            const container = document.getElementById("code-bg");
+            for (let i = 0; i < 50; i++) {
+                let codeLine = document.createElement("div");
+                codeLine.classList.add("code-line");
+                codeLine.style.position = "absolute";
+                codeLine.style.left = Math.random() * 100 + "vw";
+                codeLine.style.top = "-2rem";
+                codeLine.style.color = "#0f0";
+                codeLine.style.pointerEvents = "none";
+                codeLine.style.fontFamily = "monospace";
+                codeLine.style.whiteSpace = "nowrap";
+                codeLine.style.animation = `fall ${Math.random() * 3 + 3}s linear infinite`;
+                codeLine.innerText = symbols.sort(() => 0.5 - Math.random()).slice(0, 10).join(" ");
+                container.appendChild(codeLine);
+            }
+        });
     </script>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

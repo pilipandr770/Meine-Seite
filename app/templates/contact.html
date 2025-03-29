@@ -1,11 +1,107 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <h1>Контакти</h1>
-    <p>Зв'яжіться з нами за наступними контактними даними:</p>
+<div class="contact-wrapper">
+    <h1>
+        {% if lang == "uk" %}Контакти{% elif lang == "de" %}Kontakt{% else %}Contact{% endif %}
+    </h1>
+
+    <p>
+        {% if lang == "uk" %}
+            Ми завжди відкриті для зв'язку! Заповніть форму нижче або скористайтеся одним із наших каналів зв’язку:
+        {% elif lang == "de" %}
+            Wir sind immer offen für Kontakt! Füllen Sie das Formular unten aus oder nutzen Sie einen unserer Kommunikationskanäle:
+        {% else %}
+            We are always open to communication! Fill out the form below or use one of our contact channels:
+        {% endif %}
+    </p>
+
     <ul>
-        <li>Телефон: +380 123 456 789</li>
-        <li>Email: info@example.com</li>
-        <li>Адреса: вул. Прикладна, 123, Київ, Україна</li>
+        <li><strong>Email:</strong> pylypchukandrii770@gmail.com</li>
+        <li><strong>Telegram:</strong> <a href="https://t.me/yourtelegram" target="_blank">@borisovi479</a></li>
+        <li><strong>WhatsApp:</strong> <a href="https://wa.me/yourwhatsapp" target="_blank">+49 160 950 30 120</a></li>
+        <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/yourprofile" target="_blank">yourprofile</a></li>
     </ul>
+
+    <h2>
+        {% if lang == "uk" %}Форма зворотного зв’язку{% elif lang == "de" %}Kontaktformular{% else %}Contact Form{% endif %}
+    </h2>
+
+    <form class="contact-form" action="/contact" method="post">
+        <div class="form-group">
+            <label>{% if lang == 'uk' %}Ваше ім'я{% elif lang == 'de' %}Ihr Name{% else %}Your Name{% endif %}:</label>
+            <input type="text" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label>{% if lang == 'uk' %}Email{% elif lang == 'de' %}E-Mail{% else %}Email{% endif %}:</label>
+            <input type="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+            <label>{% if lang == 'uk' %}Повідомлення{% elif lang == 'de' %}Nachricht{% else %}Message{% endif %}:</label>
+            <textarea name="message" rows="4" required></textarea>
+        </div>
+
+        <button type="submit">
+            {% if lang == 'uk' %}Відправити{% elif lang == 'de' %}Senden{% else %}Send{% endif %}
+        </button>
+    </form>
+</div>
+
+<style>
+.contact-wrapper {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    color: white;
+    text-align: center;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.contact-form .form-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    background: white;
+    color: black;
+    box-sizing: border-box;
+}
+
+.contact-form button {
+    width: 100%;
+    padding: 12px;
+    background: #06B6D4;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.contact-form button:hover {
+    background: #C026D3;
+}
+</style>
+
 {% endblock %}

@@ -1,0 +1,36 @@
+<div class="chat-container home-chat-container">
+    <h3>{% if lang == 'uk' %}Ваш персональний асистент{% elif lang == 'de' %}Ihr persönlicher Assistent{% else %}Your Personal Assistant{% endif %}</h3>
+    <div class="messages" id="messages"></div>
+    <div class="input-container">
+        <input type="text" id="userInput" placeholder="{% if lang == 'uk' %}Введіть повідомлення...{% elif lang == 'de' %}Nachricht eingeben...{% else %}Enter your message...{% endif %}">
+        <button onclick="sendMessage()">{% if lang == 'uk' %}Відправити{% elif lang == 'de' %}Senden{% else %}Send{% endif %}</button>
+        <button id="recordButton">🎤</button>
+    </div>
+</div>
+
+<script>
+    async function sendMessage() {
+        const userInput = document.getElementById("userInput");
+        const messagesDiv = document.getElementById("messages");
+
+        if (!userInput.value.trim()) return;
+
+        messagesDiv.innerHTML += `<p><strong>{% if lang == 'uk' %}Ви{% elif lang == 'de' %}Sie{% else %}You{% endif %}:</strong> ${userInput.value}</p>`;
+        const userMessage = userInput.value;
+        userInput.value = "";
+
+        try {
+            const response = await fetch("/chatbot", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userMessage })
+            });
+            const data = await response.json();
+            messagesDiv.innerHTML += `<p><strong>{% if lang == 'uk' %}Бот{% elif lang == 'de' %}Bot{% else %}Bot{% endif %}:</strong> ${data.response || "{% if lang == 'uk' %}Помилка!{% elif lang == 'de' %}Fehler!{% else %}Error!{% endif %}"}</p>`;
+        } catch (error) {
+            messagesDiv.innerHTML += `<p><strong>{% if lang == 'uk' %}Помилка{% elif lang == 'de' %}Fehler{% else %}Error{% endif %}:</strong> Не вдалося отримати відповідь.</p>`;
+        }
+
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+</script>

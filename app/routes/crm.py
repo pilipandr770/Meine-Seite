@@ -1,7 +1,10 @@
+# routes/crm.py
+
 from flask import Blueprint, request, jsonify
 from app.models.client import db, Client, ClientRequest
 import requests
 
+# 🔐 Дані для Telegram
 TELEGRAM_BOT_TOKEN = "7572478553:AAEJxJ9Il80zrHAjcD7ZcQnht3EP-sHYrjs"
 TELEGRAM_CHAT_ID = "7444992311"  # Отримати можна через @userinfobot
 
@@ -12,6 +15,7 @@ def send_telegram_message(text):
 
 crm_bp = Blueprint("crm", __name__)
 
+# 🔹 Додати нового клієнта (опційно)
 @crm_bp.route("/clients", methods=["POST"])
 def add_client():
     data = request.json
@@ -28,11 +32,11 @@ def add_client():
 
     return jsonify({"message": "Клієнт доданий", "client": new_client.to_dict()}), 201
 
+# 🔸 Прийом ТЗ
 @crm_bp.route("/submit_task", methods=["POST"])
 def submit_task():
     data = request.json
-    
-    # Отримуємо всі дані
+
     project_type = data.get("project_type")
     project_name = data.get("project_name")
     task_description = data.get("task_description")
@@ -45,20 +49,21 @@ def submit_task():
     contact_method = data.get("contact_method")
     contact_info = data.get("contact_info", "Анонімно")
 
-    # Перевірка обов'язкових полів
+    # Валідація
     required_fields = [project_type, project_name, task_description, contact_method]
     if not all(required_fields):
         return jsonify({"error": "Будь ласка, заповніть всі обов'язкові поля."}), 400
 
-    # Створюємо новий запис ТЗ
+    if contact_method.lower() == "анонімно":
+        contact_info = None
+
+    # Зберігання в базу
     new_request = ClientRequest(
         project_type=project_type,
         task_description=task_description,
         contact_method=contact_method,
-        contact_info=contact_info if contact_method.lower() != "анонімно" else None
+        contact_info=contact_info
     )
-
-    # Додаємо всі додаткові поля
     new_request.project_name = project_name
     new_request.key_features = key_features
     new_request.design_preferences = design_preferences
@@ -67,20 +72,30 @@ def submit_task():
     new_request.timeline = timeline
     new_request.integrations = integrations
 
-    # Зберігаємо в базу
     db.session.add(new_request)
     db.session.commit()
 
-    # Відправляємо повідомлення в Telegram
-    message = f"📩 <b>Нова заявка</b>\n"
-    message += f"🔹 <b>Проєкт:</b> {project_type}\n"
-    message += f"📝 <b>Назва:</b> {project_name}\n"
-    message += f"📝 <b>Опис:</b> {task_description}\n"
-    message += f"📞 <b>Контакт:</b> {contact_info if contact_info != 'Анонімно' else 'Немає'}"
-    
+    # Повне повідомлення в Telegram
+    message = f"""
+📩 <b>Нова заявка на розробку</b>
+
+🔹 <b>Тип проєкту:</b> {project_type}
+📛 <b>Назва:</b> {project_name}
+📝 <b>Опис:</b> {task_description}
+🧩 <b>Функціонал:</b> {key_features}
+🎨 <b>Дизайн:</b> {design_preferences}
+💻 <b>Платформа:</b> {platform}
+💰 <b>Бюджет:</b> {budget}
+⏱️ <b>Термін виконання:</b> {timeline}
+🔗 <b>Інтеграції:</b> {integrations}
+
+📞 <b>Спосіб зв’язку:</b> {contact_method}
+📧 <b>Контакт:</b> {contact_info or "Немає"}
+""".strip()
+
     try:
         send_telegram_message(message)
     except Exception as e:
-        print(f"Failed to send Telegram notification: {str(e)}")
+        print(f"❌ Помилка надсилання в Telegram: {str(e)}")
 
     return jsonify({"message": "Заявка прийнята", "request": new_request.to_dict()}), 201

@@ -1,18 +1,42 @@
-from flask import Blueprint, render_template
+# routes/pages.py
+from flask import Blueprint, render_template, session, request, flash, redirect, url_for
 
 pages_bp = Blueprint('pages', __name__)
 
 @pages_bp.route('/privacy')
 def privacy():
-    return render_template('privacy.html', title="Політика конфіденційності", lang="uk")
+    lang = session.get("lang", "uk")
+    return render_template('privacy.html', title="Політика конфіденційності", lang=lang)
 
 @pages_bp.route('/impressum')
 def impressum():
-    return render_template('impressum.html', title="Impressum", lang="uk")
+    lang = session.get("lang", "uk")
+    return render_template('impressum.html', title="Impressum", lang=lang)
 
-@pages_bp.route('/contact')
+@pages_bp.route('/contact', methods=['GET', 'POST'])
 def contact():
-    return render_template('contact.html', title="Контакти", lang="uk")
+    lang = session.get("lang", "uk")
+    if request.method == 'POST':
+        name = request.form.get("name")
+        email = request.form.get("email")
+        message = request.form.get("message")
+        
+        if name and email and message:
+            msg = f"📬 <b>Нове повідомлення з контактної форми</b>\n\n" \
+                  f"👤 <b>Ім’я:</b> {name}\n" \
+                  f"📧 <b>Email:</b> {email}\n" \
+                  f"📝 <b>Повідомлення:</b> {message}"
+            try:
+                send_telegram_message(msg)  # або email
+                flash("Повідомлення надіслано успішно.", "success")
+            except Exception as e:
+                print(f"❌ Не вдалося надіслати повідомлення: {e}")
+                flash("Виникла помилка при надсиланні.", "error")
+        else:
+            flash("Заповніть усі поля.", "error")
+        return redirect(url_for("pages.contact"))
+    
+    return render_template('contact.html', title="Контакти", lang=lang)
 
 services = [
     {
@@ -61,13 +85,19 @@ services = [
 
 def generate_service_page(service):
     def service_page():
+        lang = session.get("lang", "uk")
         return render_template("service_template.html",
                                service_name=service["name"],
                                service_title=service["title"],
                                service_description=service["description"],
                                chat_endpoint=service["chat_endpoint"],
-                               submit_endpoint=service["submit_endpoint"])
+                               submit_endpoint=service["submit_endpoint"],
+                               lang=lang)
     return service_page
 
 for service in services:
-    pages_bp.add_url_rule(f'/{service["name"]}', endpoint=f'service_page_{service["name"]}', view_func=generate_service_page(service))
+    pages_bp.add_url_rule(
+        f'/{service["name"]}',
+        endpoint=f'service_page_{service["name"]}',
+        view_func=generate_service_page(service)
+    )

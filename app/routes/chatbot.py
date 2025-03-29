@@ -52,12 +52,13 @@ def main_chatbot():
 # 🔹 Тематичні асистенти (експерти за напрямами)
 @chatbot_bp.route("/<string:category>", methods=["POST"])
 def category_chatbot(category):
-    data = request.json
-    user_message = data.get("message", "")
+    data = request.get_json()
+    print("📥 Запит JSON:", request.data)  # Debug: вміст запиту
+    print("📥 Заголовки:", request.headers)  # Debug: заголовки запиту
+    if not data or "message" not in data:
+        return jsonify({"error": "Немає тексту повідомлення"}), 400
 
-    if not user_message:
-        return jsonify({"error": "Порожнє повідомлення"}), 400
-
+    user_message = data["message"]
     expert_info = EXPERT_DATA.get(category)
     if not expert_info:
         return jsonify({"error": "Невідома категорія"}), 400
@@ -70,7 +71,7 @@ def category_chatbot(category):
         client.beta.threads.messages.create(
             thread_id=thread.id,
             role="user",
-            content=f"Користувач зараз перебуває у розділі '{category}' і хоче сформувати технічне завдання. Врахуй це при відповіді."
+            content=f"Користувач зараз у розділі '{category}' і хоче сформувати ТЗ. Врахуй це."
         )
 
         client.beta.threads.messages.create(
