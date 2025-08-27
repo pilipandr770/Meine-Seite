@@ -36,6 +36,10 @@ def get_postgres_uri():
         use_pg8000 = True
     if use_pg8000:
         database_url = database_url.replace('postgresql://', 'postgresql+pg8000://', 1)
+    # Добавляем sslmode=require если не указано (Render требует SSL)
+    if 'sslmode=' not in database_url:
+        sep = '&' if '?' in database_url else '?'
+        database_url = f"{database_url}{sep}sslmode=require"
     return database_url
 
 def create_db_engine(uri=None, schema=None):

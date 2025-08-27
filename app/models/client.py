@@ -4,6 +4,7 @@ from app.models.database import db
 # Модель для збереження контактів клієнтів
 class Client(db.Model):
     __tablename__ = 'clients'
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)

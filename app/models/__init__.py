@@ -10,6 +10,4 @@ except ImportError:
     from .client import db
 
 from .client import Client
-from .task import Task
-
-__all__ = ['Client', 'Task', 'db']
+__all__ = ['Client', 'db']
