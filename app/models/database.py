@@ -86,20 +86,24 @@ def init_db(app):
     engine_options = app.config.get('SQLALCHEMY_ENGINE_OPTIONS', {})
     # Flask-SQLAlchemy примет их через параметр engine_options при init_app
     db.init_app(app)
-    # Monkey-patch engine creation если нужно добавить ssl_context
-    # (Flask-SQLAlchemy создаст движок лениво; мы обеспечили URI с опциями search_path)
-    # Если pg8000 — навешиваем событие на движок после его создания лениво
-    @app.before_first_request
-    def _attach_search_path_event():
-        uri = app.config['SQLALCHEMY_DATABASE_URI']
-        search_path = getattr(app.config, 'DB_SEARCH_PATH', None) or app.config.get('DB_SEARCH_PATH') or os.getenv('POSTGRES_SCHEMA_CLIENTS')
-        if 'pg8000' in uri and search_path:
-            engine = db.get_engine(app)
+    
+    # В новых версиях Flask before_first_request устарел (removed)
+    # Сразу прикрепляем событие при инициализации базы данных 
+    uri = app.config['SQLALCHEMY_DATABASE_URI']
+    search_path = app.config.get('DB_SEARCH_PATH') or os.getenv('POSTGRES_SCHEMA_CLIENTS')
+    if 'pg8000' in uri and search_path:
+        # Получаем движок сразу
+        with app.app_context():
+            engine = db.get_engine()
+            
+            # Функция для установки search_path при подключении
             @event.listens_for(engine, 'connect')
-            def set_search_path(dbapi_conn, conn_record):  # noqa: F811
-                with dbapi_conn.cursor() as cur:
-                    try:
-                        cur.execute(f"SET search_path TO {search_path}")
-                    except Exception as e:
-                        logger.warning(f"Failed to set search_path '{search_path}': {e}")
+            def set_search_path(dbapi_conn, conn_record):
+                try:
+                    cursor = dbapi_conn.cursor()
+                    cursor.execute(f"SET search_path TO {search_path}")
+                    cursor.close()
+                    logger.info(f"Set search_path to {search_path} for connection {id(dbapi_conn)}")
+                except Exception as e:
+                    logger.warning(f"Failed to set search_path '{search_path}': {e}")
     return db
