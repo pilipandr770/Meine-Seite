@@ -17,8 +17,10 @@ app_dir = os.path.join(current_dir, 'app')
 if app_dir not in sys.path:
     sys.path.append(app_dir)
 
-# Run the app
+# Create the app instance for Gunicorn to import
+from app.app import create_app
+app = create_app()
+
+# Run the app if executed directly
 if __name__ == "__main__":
-    from app.app import create_app
-    app = create_app()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=os.environ.get("FLASK_ENV") == "development")
