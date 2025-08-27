@@ -8,11 +8,8 @@ class Config:
     
     # Если переменная DATABASE_URI установлена, используем ее
     if database_uri and database_uri.startswith('postgresql'):
-        # Добавляем параметры для схемы, если используется PostgreSQL
-        if '?' in database_uri:
-            SQLALCHEMY_DATABASE_URI = f"{database_uri}&options=-c%20search_path=rozoom_schema"
-        else:
-            SQLALCHEMY_DATABASE_URI = f"{database_uri}?options=-c%20search_path=rozoom_schema"
+        # Используем базовый URI без параметров схемы
+        SQLALCHEMY_DATABASE_URI = database_uri
     else:
         # Fallback на SQLite для локальной разработки
         SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///clients.db")

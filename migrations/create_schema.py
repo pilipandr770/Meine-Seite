@@ -43,6 +43,7 @@ def create_schema_if_not_exists(pg_uri, schema_name):
 def create_tables_in_postgres(pg_uri, schema_name):
     """Создаем таблицы в PostgreSQL"""
     from app.app import create_app
+    from sqlalchemy import text
     
     # Устанавливаем переменную окружения для использования PostgreSQL
     os.environ["DATABASE_URI"] = pg_uri
@@ -51,10 +52,20 @@ def create_tables_in_postgres(pg_uri, schema_name):
     app = create_app()
     
     with app.app_context():
+        # Создаем схему если она не существует
+        try:
+            db.session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+            db.session.commit()
+            print(f"Схема {schema_name} создана или уже существует.")
+        except Exception as e:
+            print(f"Ошибка при создании схемы: {e}")
+            db.session.rollback()
+            raise
+            
         # Создаем все таблицы в PostgreSQL
         try:
             # Устанавливаем search_path для текущей сессии
-            db.session.execute(text(f"SET search_path TO {schema_name}, public;"))
+            db.session.execute(text(f"SET search_path TO {schema_name}, public"))
             db.session.commit()
             
             # Создаем таблицы

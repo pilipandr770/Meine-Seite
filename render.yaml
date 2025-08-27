@@ -4,8 +4,8 @@ services:
   - type: web
     name: rozoom-web-app
     runtime: python
-    buildCommand: pip install -r requirements.txt && python -m migrations.create_schema
-    startCommand: gunicorn "run:app"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python create_db.py && gunicorn "run:app"
     envVars:
       - key: FLASK_ENV
         value: production
