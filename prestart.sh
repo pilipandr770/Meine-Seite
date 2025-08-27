@@ -8,6 +8,10 @@ export RENDER=true
 echo "Updating pip..."
 pip install --upgrade pip
 
+# Выполнение нового скрипта создания таблиц (приоритет)
+echo "Выполнение основного скрипта создания таблиц..."
+python create_tables.py
+
 # Print Python version and environment info
 echo "Python version:"
 python -V
