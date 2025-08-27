@@ -5,7 +5,7 @@
 import os
 import logging
 import ssl
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger(__name__)
@@ -55,8 +55,8 @@ def create_db_engine(uri=None, schema=None, engine_options=None):
             logger.warning(f"Cannot create SSL context: {e}")
 
     # Если схема указана и не установлена через options в URI
-    if schema and not any(k in uri for k in ['options=-c', 'options=%2Dc']):
-        # Добавляем через connect_args (работает для psycopg2/pg8000)
+    if schema and 'pg8000' not in uri:
+        # Для psycopg2 допустим options через connect_args
         connect_args.setdefault('options', f'-c search_path={schema}')
 
     engine = create_engine(
@@ -88,4 +88,18 @@ def init_db(app):
     db.init_app(app)
     # Monkey-patch engine creation если нужно добавить ssl_context
     # (Flask-SQLAlchemy создаст движок лениво; мы обеспечили URI с опциями search_path)
+    # Если pg8000 — навешиваем событие на движок после его создания лениво
+    @app.before_first_request
+    def _attach_search_path_event():
+        uri = app.config['SQLALCHEMY_DATABASE_URI']
+        search_path = getattr(app.config, 'DB_SEARCH_PATH', None) or app.config.get('DB_SEARCH_PATH') or os.getenv('POSTGRES_SCHEMA_CLIENTS')
+        if 'pg8000' in uri and search_path:
+            engine = db.get_engine(app)
+            @event.listens_for(engine, 'connect')
+            def set_search_path(dbapi_conn, conn_record):  # noqa: F811
+                with dbapi_conn.cursor() as cur:
+                    try:
+                        cur.execute(f"SET search_path TO {search_path}")
+                    except Exception as e:
+                        logger.warning(f"Failed to set search_path '{search_path}': {e}")
     return db

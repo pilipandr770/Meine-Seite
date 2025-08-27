@@ -50,18 +50,21 @@ class Config:
                 database_uri = database_uri.replace('postgresql://', driver_prefix, 1)
 
         # Добавляем search_path через параметр options если ещё не указан
-        # Устанавливаем search_path (кодируем пробелы и знак '=') если ещё не указан
-        if 'options=' not in database_uri:
-            sep = '&' if '?' in database_uri else '?'
-            # encode '-c search_path=' as '-c%20search_path%3D' and commas are ok
-            database_uri = f"{database_uri}{sep}options=-c%20search_path%3D{combined_search_path}"
+        # Для psycopg2 можно использовать options=, для pg8000 — установим через событие connect
+        if '+pg8000://' in database_uri:
+            logger.info("Using pg8000: will set search_path via engine event, not URI options")
+        else:
+            if 'options=' not in database_uri:
+                sep = '&' if '?' in database_uri else '?'
+                database_uri = f"{database_uri}{sep}options=-c%20search_path%3D{combined_search_path}"
 
         SQLALCHEMY_DATABASE_URI = database_uri
-        CLIENT_REQUESTS_SCHEMA = client_schema
-        logger.info(f"Using PostgreSQL database search_path: {combined_search_path}")
+    CLIENT_REQUESTS_SCHEMA = client_schema
+    DB_SEARCH_PATH = combined_search_path
+    logger.info(f"Configured PostgreSQL search_path: {combined_search_path}")
         # Настройки движка: SSL (pg8000) + search_path через options уже указан.
         # SSL контекст добавляем всегда для безопасного соединения; psycopg2 проигнорирует лишний ключ.
-        SQLALCHEMY_ENGINE_OPTIONS = {
+    SQLALCHEMY_ENGINE_OPTIONS = {
             'pool_pre_ping': True,
             'pool_recycle': 300,
             'pool_size': 5,
