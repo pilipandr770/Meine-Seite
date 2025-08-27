@@ -98,13 +98,53 @@ def init_render_database():
                 logger.info(f"Setting search path to {schema}...")
                 conn.run(f"SET search_path TO {schema}")
                 
-                # Check if clients table exists
+                # Check if clients table exists and rozoom_clients schema/table
                 logger.info("Checking if tables exist...")
                 exists_result = conn.run(
                     "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = $1 AND table_name = 'clients')",
                     (schema,)
                 )
                 table_exists = exists_result[0][0]
+                
+                # Check if rozoom_clients.client_requests exists
+                client_schema = 'rozoom_clients'
+                client_requests_result = conn.run(
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = $1 AND table_name = 'client_requests')",
+                    (client_schema,)
+                )
+                client_requests_exists = client_requests_result[0][0]
+                
+                # Create rozoom_clients schema if needed
+                if not client_requests_exists:
+                    logger.info(f"Creating schema {client_schema} if it doesn't exist...")
+                    conn.run(f"CREATE SCHEMA IF NOT EXISTS {client_schema}")
+                    
+                    logger.info(f"Creating client_requests table in {client_schema} schema...")
+                    conn.run(f"""
+                        CREATE TABLE IF NOT EXISTS {client_schema}.client_requests (
+                            id SERIAL PRIMARY KEY,
+                            project_type VARCHAR(100) NOT NULL,
+                            project_name VARCHAR(200),
+                            task_description TEXT NOT NULL,
+                            key_features TEXT,
+                            design_preferences TEXT,
+                            platform VARCHAR(100),
+                            budget VARCHAR(100),
+                            timeline VARCHAR(100),
+                            integrations TEXT,
+                            contact_method VARCHAR(100) NOT NULL,
+                            contact_info VARCHAR(200),
+                            status VARCHAR(30) DEFAULT 'new',
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            deadline TIMESTAMP,
+                            priority INTEGER DEFAULT 1,
+                            tech_stack TEXT,
+                            acceptance_criteria TEXT,
+                            notes TEXT
+                        )
+                    """)
+                    logger.info(f"Successfully created {client_schema}.client_requests table")
                 
                 if not table_exists:
                     logger.info("Tables don't exist, creating them...")
@@ -146,6 +186,37 @@ def init_render_database():
                                 status VARCHAR(20),
                                 due_date DATE,
                                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )
+                        """)
+                        
+                        # Create rozoom_clients schema and client_requests table
+                        client_schema = 'rozoom_clients'
+                        logger.info(f"Creating schema {client_schema} if it doesn't exist...")
+                        conn.run(f"CREATE SCHEMA IF NOT EXISTS {client_schema}")
+                        
+                        logger.info(f"Creating client_requests table in {client_schema} schema...")
+                        conn.run(f"""
+                            CREATE TABLE IF NOT EXISTS {client_schema}.client_requests (
+                                id SERIAL PRIMARY KEY,
+                                project_type VARCHAR(100) NOT NULL,
+                                project_name VARCHAR(200),
+                                task_description TEXT NOT NULL,
+                                key_features TEXT,
+                                design_preferences TEXT,
+                                platform VARCHAR(100),
+                                budget VARCHAR(100),
+                                timeline VARCHAR(100),
+                                integrations TEXT,
+                                contact_method VARCHAR(100) NOT NULL,
+                                contact_info VARCHAR(200),
+                                status VARCHAR(30) DEFAULT 'new',
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                deadline TIMESTAMP,
+                                priority INTEGER DEFAULT 1,
+                                tech_stack TEXT,
+                                acceptance_criteria TEXT,
+                                notes TEXT
                             )
                         """)
                         logger.info("Basic tables created successfully")
