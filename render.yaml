@@ -5,19 +5,19 @@ services:
     name: rozoom-web-app
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python init_database.py && gunicorn "run:app"
+    startCommand: python init_database.py && gunicorn "run:app" --workers=3 --bind=0.0.0.0:$PORT
     envVars:
       - key: FLASK_APP
         value: run.py
+      - key: FLASK_ENV
+        value: production
       - key: FLASK_DEBUG
         value: "0"
-      - key: ENVIRONMENT
-        value: production
       - key: SECRET_KEY
         generateValue: true
       - key: POSTGRES_SCHEMA
         value: rozoom_schema
-      - key: DATABASE_URL
+      - key: DATABASE_URI
         value: postgresql://ittoken_db_user:Xm98VVSZv7cMJkopkdWRkgvZzC7Aly42@dpg-d0visga4d50c73ekmu4g-a.frankfurt-postgres.render.com/ittoken_db
       - key: TELEGRAM_BOT_TOKEN
         value: 7572478553:AAEJxJ9Il80zrHAjcD7ZcQnht3EP-sHYrjs
@@ -27,5 +27,7 @@ services:
         sync: false
       - key: USE_CHAT_COMPLETION
         value: "true"
+      - key: PORT
+        value: "10000"
 
 # Не создаем новую базу данных, так как используем существующую внешнюю базу
