@@ -68,8 +68,17 @@ class Project(db.Model):
 
 class ProjectStage(db.Model):
     """Модель стадии проекта"""
+    __tablename__ = 'project_stage'
+    if BASE_SCHEMA:
+        __table_args__ = {'schema': BASE_SCHEMA, 'extend_existing': True}
+    else:
+        __table_args__ = {'extend_existing': True}
+
     id = db.Column(db.Integer, primary_key=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+    if BASE_SCHEMA:
+        project_id = db.Column(db.Integer, db.ForeignKey(f"{BASE_SCHEMA}.project.id"), nullable=False)
+    else:
+        project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')
