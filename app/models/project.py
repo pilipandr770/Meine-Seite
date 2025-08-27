@@ -10,13 +10,25 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+REQUESTS_SCHEMA = os.getenv('POSTGRES_SCHEMA_CLIENTS')
+BASE_SCHEMA = os.getenv('POSTGRES_SCHEMA')  # может быть None, тогда search_path
+
 class Project(db.Model):
     """Модель проекта, связана с клиентом и заявкой (ClientRequest)."""
+    __tablename__ = 'project'
+    # Храним проект в базовой схеме (если указана)
+    if BASE_SCHEMA:
+        __table_args__ = {'schema': BASE_SCHEMA, 'extend_existing': True}
+    else:
+        __table_args__ = {'extend_existing': True}
+
     id = db.Column(db.Integer, primary_key=True)
-    # Таблица клиентов называется 'clients'
-    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'))
-    # Таблица заявок называется 'client_requests'
-    request_id = db.Column(db.Integer, db.ForeignKey('client_requests.id'))
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=True)
+    # Схема client_requests может отличаться -> квалифицируем имя
+    if REQUESTS_SCHEMA:
+        request_id = db.Column(db.Integer, db.ForeignKey(f"{REQUESTS_SCHEMA}.client_requests.id"), nullable=True)
+    else:
+        request_id = db.Column(db.Integer, db.ForeignKey('client_requests.id'), nullable=True)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(50), default='new')
@@ -27,8 +39,8 @@ class Project(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Отношения
-    client = db.relationship('Client', backref=db.backref('projects', lazy=True))
-    request = db.relationship('ClientRequest', backref=db.backref('projects', lazy=True))
+    client = db.relationship('Client', backref=db.backref('projects', lazy=True), foreign_keys=[client_id])
+    request = db.relationship('ClientRequest', backref=db.backref('projects', lazy=True), foreign_keys=[request_id])
     stages = db.relationship('ProjectStage', backref='project', lazy=True)
     
     def __init__(self, name, client_id=None, request_id=None, description=None):
