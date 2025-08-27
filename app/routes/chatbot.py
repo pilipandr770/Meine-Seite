@@ -12,7 +12,7 @@ import sys
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
-from models.client import db, ClientRequest
+from app.models.client import db, ClientRequest
 
 # Fix expert_data import
 try:

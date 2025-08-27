@@ -24,7 +24,9 @@ class ClientRequest(db.Model):
     _extra_schema = os.getenv('POSTGRES_SCHEMA_CLIENTS')
     __tablename__ = base_table_name
     if _extra_schema:
-        __table_args__ = {'schema': _extra_schema}
+        __table_args__ = {'schema': _extra_schema, 'extend_existing': True}
+    else:
+        __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     project_type = db.Column(db.String(100), nullable=False)  # Тип проєкту (web-dev, chatbots і т.д.)
     project_name = db.Column(db.String(200), nullable=True)  # Назва проекту

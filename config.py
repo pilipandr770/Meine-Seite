@@ -46,9 +46,6 @@ class Config:
         if 'options=' not in database_uri:
             sep = '&' if '?' in database_uri else '?'
             database_uri = f"{database_uri}{sep}options=-c%20search_path%3D{schema}"
-        if 'sslmode=' not in database_uri:
-            sep = '&' if '?' in database_uri else '?'
-            database_uri = f"{database_uri}{sep}sslmode=require"
 
         SQLALCHEMY_DATABASE_URI = database_uri
         # Дополнительная схема для клиентских ТЗ, если нужна изоляция
