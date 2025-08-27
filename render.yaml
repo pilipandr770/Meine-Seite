@@ -5,7 +5,7 @@ services:
     name: rozoom-web-app
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python init_render_database_pg8000.py && gunicorn "run:app" --workers=3 --bind=0.0.0.0:$PORT --log-level debug
+    startCommand: chmod +x prestart.sh && ./prestart.sh && gunicorn "run:app" --workers=3 --bind=0.0.0.0:$PORT --log-level debug
     plan: free
     buildFilter:
       paths:
@@ -26,6 +26,8 @@ services:
         generateValue: true
       - key: POSTGRES_SCHEMA
         value: render_schema
+      - key: POSTGRES_SCHEMA_CLIENTS
+        value: rozoom_clients
       - key: DATABASE_URI
         value: postgresql://ittoken_db_user:Xm98VVSZv7cMJkopkdWRkgvZzC7Aly42@dpg-d0visga4d50c73ekmu4g-a.frankfurt-postgres.render.com/ittoken_db
       - key: TELEGRAM_BOT_TOKEN
