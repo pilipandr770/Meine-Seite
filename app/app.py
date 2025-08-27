@@ -17,7 +17,7 @@ from config import Config
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///clients.db"
+    # Используем DATABASE_URI из конфига, который берется из переменной окружения
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     
     # Import here to avoid circular imports

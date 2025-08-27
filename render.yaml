@@ -4,16 +4,16 @@ services:
   - type: web
     name: rozoom-web-app
     runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -c gunicorn.conf.py run:app
+    buildCommand: pip install -r requirements.txt && python -m migrations.create_schema
+    startCommand: gunicorn "run:app"
     envVars:
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
         value: run.py
       - key: OPENAI_API_KEY
-        sync: false  # Это значит, что значение нужно будет установить в панели управления Render
+        sync: false
       - key: SECRET_KEY
-        generateValue: true  # Render сгенерирует случайный защищенный ключ
+        generateValue: true
       - key: DATABASE_URI
-        value: sqlite:///instance/clients.db  # Для продакшена лучше использовать PostgreSQL
+        value: postgresql://ittoken_db_user:Xm98VVSZv7cMJkopkdWRkgvZzC7Aly42@dpg-d0visga4d50c73ekmu4g-a.frankfurt-postgres.render.com/ittoken_db

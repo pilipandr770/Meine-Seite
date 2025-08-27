@@ -5,3 +5,5 @@ openai>=1.0.0
 requests
 werkzeug
 gunicorn
+psycopg2-binary
+alembic
