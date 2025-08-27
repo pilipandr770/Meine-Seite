@@ -6,6 +6,15 @@ services:
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: bash prestart.sh && gunicorn "run:app" --workers=3 --bind=0.0.0.0:$PORT --log-level debug
+    plan: free
+    buildFilter:
+      paths:
+      - requirements.txt
+      - "**/*.py"
+      - render.yaml
+      - prestart.sh
+      ignoredPaths:
+      - "__pycache__/**"
     envVars:
       - key: FLASK_APP
         value: run.py
@@ -16,7 +25,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: POSTGRES_SCHEMA
-        value: rozoom_schema
+        value: render_schema
       - key: DATABASE_URI
         value: postgresql://ittoken_db_user:Xm98VVSZv7cMJkopkdWRkgvZzC7Aly42@dpg-d0visga4d50c73ekmu4g-a.frankfurt-postgres.render.com/ittoken_db
       - key: TELEGRAM_BOT_TOKEN

@@ -49,8 +49,17 @@ def init_database():
             logger.error("DATABASE_URI/DATABASE_URL не заданы в переменных окружения")
             return False
             
-        # Схема базы данных
-        schema = os.environ.get('POSTGRES_SCHEMA', 'rozoom_schema')
+        # Определяем, запущены ли мы на Render.com
+        on_render = "RENDER" in os.environ
+            
+        # Схема базы данных - используем разную схему для Render и локальной разработки
+        if on_render:
+            schema = os.environ.get('POSTGRES_SCHEMA', 'render_schema')
+            logger.info(f"Запущено на Render.com, используем схему: {schema}")
+        else:
+            schema = os.environ.get('POSTGRES_SCHEMA', 'rozoom_schema')
+            logger.info(f"Запущено локально, используем схему: {schema}")
+        
         logger.info(f"Инициализация базы данных с URI: {database_uri[:20]}*** и схемой: {schema}")
         
         # Добавляем повторные попытки для Render.com, поскольку база данных может стартовать не сразу
@@ -183,8 +192,16 @@ def init_flask_app():
             logger.info("Модели базы данных импортированы успешно")
             
             with app.app_context():
-                # Создаем схему
-                schema = os.environ.get('POSTGRES_SCHEMA', 'rozoom_schema')
+                # Определяем, запущены ли мы на Render.com
+                on_render = "RENDER" in os.environ
+                
+                # Создаем схему - используем разную схему для Render и локальной разработки
+                if on_render:
+                    schema = os.environ.get('POSTGRES_SCHEMA', 'render_schema')
+                    logger.info(f"Запущено на Render.com, используем схему: {schema}")
+                else:
+                    schema = os.environ.get('POSTGRES_SCHEMA', 'rozoom_schema')
+                    logger.info(f"Запущено локально, используем схему: {schema}")
                 if app.config["SQLALCHEMY_DATABASE_URI"].startswith("postgresql"):
                     try:
                         # Проверяем версию SQLAlchemy для правильного использования text
@@ -219,42 +236,7 @@ def init_flask_app():
     except Exception as e:
         logger.error(f"Ошибка при инициализации Flask приложения: {e}")
         return False
-
-# Создаем Flask приложение и выполняем миграцию через него
-def init_flask_app():
-    """Инициализирует Flask приложение и выполняет миграцию через него"""
-    try:
-        from app.app import create_app
-        from app.models.client import db
         
-        app = create_app()
-        
-        with app.app_context():
-            # Создаем схему
-            if app.config["SQLALCHEMY_DATABASE_URI"].startswith("postgresql"):
-                try:
-                    schema = os.environ.get('POSTGRES_SCHEMA', 'rozoom_schema')
-                    db.session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
-                    db.session.commit()
-                    db.session.execute(text(f"SET search_path TO {schema}"))
-                    db.session.commit()
-                    logger.info(f"Схема {schema} создана или уже существует.")
-                except Exception as e:
-                    logger.warning(f"Ошибка при создании схемы: {e}")
-                    db.session.rollback()
-            
-            # Создаем таблицы
-            try:
-                db.create_all()
-                logger.info("Таблицы успешно созданы через SQLAlchemy.")
-                return True
-            except Exception as e:
-                logger.error(f"Ошибка при создании таблиц через SQLAlchemy: {e}")
-                return False
-    except Exception as e:
-        logger.error(f"Ошибка при инициализации Flask приложения: {e}")
-        return False
-
 if __name__ == "__main__":
     logger.info("===== Начало инициализации базы данных =====")
     

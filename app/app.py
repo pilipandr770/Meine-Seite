@@ -1,6 +1,12 @@
 from flask import Flask
 import os
 import sys
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Set up path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -21,8 +27,17 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     
     # Import here to avoid circular imports
-    from models.client import db
-    db.init_app(app)
+    try:
+        from models.client import db
+        logger.info("Successfully imported database models")
+        db.init_app(app)
+        logger.info("Successfully initialized database with app")
+    except ImportError as e:
+        logger.error(f"Failed to import database models: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+        raise
 
     # Проверяем, нужно ли создать схему в PostgreSQL
     if app.config.get("SQLALCHEMY_DATABASE_URI", "").startswith("postgresql"):
