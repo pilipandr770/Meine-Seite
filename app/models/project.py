@@ -11,10 +11,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Project(db.Model):
-    """Модель проекта, связана с клиентом и заданием"""
+    """Модель проекта, связана с клиентом и заявкой (ClientRequest)."""
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
-    request_id = db.Column(db.Integer, db.ForeignKey('client_request.id'))
+    # Таблица клиентов называется 'clients'
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'))
+    # Таблица заявок называется 'client_requests'
+    request_id = db.Column(db.Integer, db.ForeignKey('client_requests.id'))
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(50), default='new')
