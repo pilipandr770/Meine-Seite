@@ -110,6 +110,17 @@
     }
 
     async function submitTask(endpoint, service) {
+        // Проверка обязательных полей
+        const requiredFields = ["project_name", "task_description", "key_features", "design_preferences", "contact_method", "contact_info"];
+        for (const fieldId of requiredFields) {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+                alert(`Пожалуйста, заполните поле "${field.previousElementSibling.textContent.replace(':', '')}"`);
+                field.focus();
+                return;
+            }
+        }
+        
         const formData = {
             project_type: service,
             project_name: document.getElementById("project_name").value,
@@ -123,17 +134,29 @@
             contact_method: document.getElementById("contact_method").value,
             contact_info: document.getElementById("contact_info").value
         };
+        
         try {
+            console.log("Отправка ТЗ:", formData);
+            document.body.style.cursor = 'wait';
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
             });
+            
+            document.body.style.cursor = 'default';
             const data = await response.json();
-            alert(data.message || "Запит надіслано успішно.");
-            document.getElementById("task-form").reset();
+            
+            if (response.ok) {
+                alert(data.message || "Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.");
+                document.getElementById("task-form").reset();
+            } else {
+                alert(`Ошибка: ${data.error || "Не удалось отправить заявку. Пожалуйста, проверьте данные и попробуйте снова."}`);
+            }
         } catch (error) {
-            alert("Помилка при надсиланні форми.");
+            document.body.style.cursor = 'default';
+            console.error("Ошибка при отправке:", error);
+            alert("Ошибка при отправке формы. Пожалуйста, проверьте соединение и попробуйте снова.");
         }
     }
 </script>

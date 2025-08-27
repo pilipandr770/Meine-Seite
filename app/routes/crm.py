@@ -1,8 +1,27 @@
 # routes/crm.py
 
 from flask import Blueprint, request, jsonify
-from app.models.client import db, Client, ClientRequest
-import requests
+from app.models.client import db, Client, ClientRe    # Повне повідомлення в Telegram
+    message = f"""
+📩 <b>Нова заявка на розробку</b>
+
+🔹 <b>Тип проєкту:</b> {project_type}
+📛 <b>Назва:</b> {project_name}
+📝 <b>Опис:</b> {task_description}
+🧩 <b>Функціонал:</b> {key_features}
+🎨 <b>Дизайн:</b> {design_preferences}
+💻 <b>Платформа:</b> {platform}
+💰 <b>Бюджет:</b> {budget}
+⏱️ <b>Термін виконання:</b> {timeline}
+🔗 <b>Інтеграції:</b> {integrations}
+
+📞 <b>Спосіб зв'язку:</b> {contact_method}
+📧 <b>Контакт:</b> {contact_info or "Немає"}
+
+🆔 <b>ID заявки:</b> {new_request.id}
+""".strip()
+
+    # Отправляем в Telegram и логируем результатsts
 import logging
 from app.models.project import create_project_from_request, APIKey
 
@@ -32,6 +51,9 @@ def get_telegram_credentials():
             chat_id = "7444992311"
             logger.warning("Using default Telegram chat ID! Set TELEGRAM_CHAT_ID env variable.")
             
+        # Логируем используемые значения для отладки
+        logger.info(f"Используем Telegram токен: {token[:5]}...{token[-5:]} и чат ID: {chat_id}")
+            
         return token, chat_id
     except Exception as e:
         logger.error(f"Ошибка при получении Telegram-ключей: {e}")
@@ -42,11 +64,17 @@ def send_telegram_message(text):
         token, chat_id = get_telegram_credentials()
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         data = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
-        response = requests.post(url, data=data)
+        
+        logger.info(f"Отправка сообщения в Telegram на чат ID: {chat_id}")
+        response = requests.post(url, data=data, timeout=10)
+        
+        logger.info(f"Статус ответа от Telegram: {response.status_code}")
         
         if response.status_code != 200:
             logger.error(f"Ошибка отправки в Telegram: {response.text}")
             return False
+            
+        logger.info("Сообщение успешно отправлено в Telegram")
         return True
     except Exception as e:
         logger.error(f"Ошибка при отправке в Telegram: {e}")
