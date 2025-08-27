@@ -1,9 +1,9 @@
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+import os
+from app.models.database import db
 
 # Модель для збереження контактів клієнтів
 class Client(db.Model):
+    __tablename__ = 'clients'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
@@ -19,6 +19,11 @@ class Client(db.Model):
 
 # Модель для збереження технічних завдань (ТЗ)
 class ClientRequest(db.Model):
+    base_table_name = 'client_requests'
+    _extra_schema = os.getenv('POSTGRES_SCHEMA_CLIENTS')
+    __tablename__ = base_table_name
+    if _extra_schema:
+        __table_args__ = {'schema': _extra_schema}
     id = db.Column(db.Integer, primary_key=True)
     project_type = db.Column(db.String(100), nullable=False)  # Тип проєкту (web-dev, chatbots і т.д.)
     project_name = db.Column(db.String(200), nullable=True)  # Назва проекту

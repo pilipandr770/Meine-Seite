@@ -5,29 +5,38 @@
 import os
 import logging
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger(__name__)
 
 def get_postgres_uri():
-    """Возвращает URI подключения PostgreSQL на основе переменных окружения."""
-    # Приоритет для URL из переменной окружения (Render.com предоставляет его)
-    database_url = os.environ.get('DATABASE_URL')
-    if database_url:
-        # Проверка и исправление префикса URL для SQLAlchemy
-        if database_url.startswith('postgres://'):
-            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    """Возвращает URI подключения PostgreSQL. Если psycopg2 недоступен, форсируем драйвер pg8000."""
+    database_url = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI')
+    if not database_url:
+        host = os.environ.get('DATABASE_HOST', 'localhost')
+        port = os.environ.get('DATABASE_PORT', '5432')
+        database = os.environ.get('DATABASE_NAME', 'rozoom')
+        username = os.environ.get('DATABASE_USERNAME', 'postgres')
+        password = os.environ.get('DATABASE_PASSWORD', 'postgres')
+        database_url = f'postgresql://{username}:{password}@{host}:{port}/{database}'
+
+    # Нормализуем префикс
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+    # Если уже указан конкретный драйвер, оставляем
+    if database_url.startswith('postgresql+'):  # уже содержит драйвер
         return database_url
-    
-    # Резервный вариант, если DATABASE_URL не задан
-    host = os.environ.get('DATABASE_HOST', 'localhost')
-    port = os.environ.get('DATABASE_PORT', '5432')
-    database = os.environ.get('DATABASE_NAME', 'rozoom')
-    username = os.environ.get('DATABASE_USERNAME', 'postgres')
-    password = os.environ.get('DATABASE_PASSWORD', 'postgres')
-    
-    return f'postgresql://{username}:{password}@{host}:{port}/{database}'
+
+    # Проверяем доступность psycopg2, иначе используем pg8000
+    use_pg8000 = False
+    try:
+        import psycopg2  # noqa: F401
+    except Exception:
+        use_pg8000 = True
+    if use_pg8000:
+        database_url = database_url.replace('postgresql://', 'postgresql+pg8000://', 1)
+    return database_url
 
 def create_db_engine(uri=None, schema=None):
     """Создает SQLAlchemy Engine с поддержкой как psycopg2, так и pg8000."""

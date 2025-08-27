@@ -1,0 +1,2 @@
+Alembic migrations directory for shared PostgreSQL schema.
+Use: alembic revision -m "message" && alembic upgrade head

@@ -19,7 +19,7 @@ class Config:
     database_uri = os.environ.get("DATABASE_URI") or os.environ.get("DATABASE_URL")
     
     # Если есть переменная DATABASE_URI или DATABASE_URL и она PostgreSQL, используем её
-    if database_uri and database_uri.startswith('postgresql'):
+    if database_uri and database_uri.startswith('postgres'):
         # Если указана POSTGRES_SCHEMA, добавляем настройку search_path
         if ON_RENDER:
             # На Render.com используем специальную схему
@@ -29,11 +29,29 @@ class Config:
             schema = os.environ.get("POSTGRES_SCHEMA", "rozoom_schema")
             logger.info(f"Running locally, using schema: {schema}")
         
-        # Для PostgreSQL добавляем параметры для схемы, если они не указаны в URI
-        if "options=" not in database_uri:
-            SQLALCHEMY_DATABASE_URI = f"{database_uri}?options=-c%20search_path%3D{schema}"
-        else:
-            SQLALCHEMY_DATABASE_URI = database_uri
+        # Нормализуем префикс
+        if database_uri.startswith('postgres://'):
+            database_uri = database_uri.replace('postgres://', 'postgresql://', 1)
+
+        # Добавляем драйвер pg8000 если psycopg2 отсутствует
+        try:
+            import psycopg2  # noqa: F401
+            driver_prefix = 'postgresql://'
+        except Exception:
+            driver_prefix = 'postgresql+pg8000://'
+            if database_uri.startswith('postgresql://'):
+                database_uri = database_uri.replace('postgresql://', driver_prefix, 1)
+
+        # Добавляем search_path через параметр options если ещё не указан
+        if 'options=' not in database_uri:
+            sep = '&' if '?' in database_uri else '?'
+            database_uri = f"{database_uri}{sep}options=-c%20search_path%3D{schema}"
+
+        SQLALCHEMY_DATABASE_URI = database_uri
+        # Дополнительная схема для клиентских ТЗ, если нужна изоляция
+        CLIENT_REQUESTS_SCHEMA = os.environ.get('POSTGRES_SCHEMA_CLIENTS')
+        if CLIENT_REQUESTS_SCHEMA and CLIENT_REQUESTS_SCHEMA != schema:
+            logger.info(f"Additional client requests schema configured: {CLIENT_REQUESTS_SCHEMA}")
         logger.info(f"Using PostgreSQL database with schema: {schema}")
     else:
         # Fallback на SQLite для локальной разработки
