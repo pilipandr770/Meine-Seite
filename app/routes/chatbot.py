@@ -25,6 +25,18 @@ except ImportError:
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# Load system instructions
+def load_system_instructions(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return file.read()
+    except Exception as e:
+        logging.error(f"Error loading system instructions from {file_path}: {str(e)}")
+        return None
+
+# Paths to system instructions
+MAIN_ASSISTANT_INSTRUCTIONS_PATH = os.path.join(parent_dir, 'system_instructions', 'main_assistant_instructions.md')
+
 chatbot_bp = Blueprint("chatbot", __name__)
 
 # Налаштування логування
@@ -37,25 +49,50 @@ def main_chatbot():
     data = request.json
     user_message = data.get("message", "")
     assistant_id = os.getenv("MAIN_ASSISTANT_ID")
+    use_chat_completion = os.getenv("USE_CHAT_COMPLETION", "false").lower() == "true"
 
     if not user_message:
         return jsonify({"error": "Порожнє повідомлення"}), 400
 
     try:
-        thread = client.beta.threads.create()
-        client.beta.threads.messages.create(thread_id=thread.id, role="user", content=user_message)
-        run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant_id)
+        # If we have a valid assistant ID and are not using chat completion, use the Assistants API
+        if assistant_id and not use_chat_completion:
+            thread = client.beta.threads.create()
+            client.beta.threads.messages.create(thread_id=thread.id, role="user", content=user_message)
+            run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant_id)
 
-        while True:
-            run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            if run.status == "completed":
-                break
-            elif run.status == "failed":
-                return jsonify({"error": "Асистент не зміг відповісти"}), 500
+            while True:
+                run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+                if run.status == "completed":
+                    break
+                elif run.status == "failed":
+                    return jsonify({"error": "Асистент не зміг відповісти"}), 500
 
-        messages = client.beta.threads.messages.list(thread_id=thread.id)
-        last_message = messages.data[0].content[0].text.value
-        return jsonify({"response": last_message})
+            messages = client.beta.threads.messages.list(thread_id=thread.id)
+            last_message = messages.data[0].content[0].text.value
+            return jsonify({"response": last_message})
+        
+        # Fallback to Chat Completion API if assistant ID is not available or we've configured to use chat completion
+        else:
+            logger.info("Using Chat Completion API instead of Assistants API")
+            
+            # Load the detailed system instructions for the main assistant
+            system_message = load_system_instructions(MAIN_ASSISTANT_INSTRUCTIONS_PATH)
+            
+            # Fallback if instructions can't be loaded
+            if not system_message:
+                system_message = "Ви професійний асистент сайту Rozoom. Допомагайте користувачам з їхніми запитаннями."
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",  # Using gpt-4o-mini which your API key has access to
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": user_message}
+                ],
+                temperature=0.7
+            )
+            
+            return jsonify({"response": response.choices[0].message.content})
     except Exception as e:
         logger.exception("Помилка у головному асистенті")
         return jsonify({"error": str(e)}), 500
@@ -76,34 +113,61 @@ def category_chatbot(category):
         return jsonify({"error": "Невідома категорія"}), 400
 
     assistant_id = expert_info.get("assistant_id") or os.getenv("TASK_ASSISTANT_ID")
+    use_chat_completion = os.getenv("USE_CHAT_COMPLETION", "false").lower() == "true"
 
     try:
-        thread = client.beta.threads.create()
+        # If we have a valid assistant ID and are not using chat completion, use the Assistants API
+        if assistant_id and not use_chat_completion:
+            thread = client.beta.threads.create()
 
-        client.beta.threads.messages.create(
-            thread_id=thread.id,
-            role="user",
-            content=f"Користувач зараз у розділі '{category}' і хоче сформувати ТЗ. Врахуй це."
-        )
+            client.beta.threads.messages.create(
+                thread_id=thread.id,
+                role="user",
+                content=f"Користувач зараз у розділі '{category}' і хоче сформувати ТЗ. Врахуй це."
+            )
 
-        client.beta.threads.messages.create(
-            thread_id=thread.id,
-            role="user",
-            content=user_message
-        )
+            client.beta.threads.messages.create(
+                thread_id=thread.id,
+                role="user",
+                content=user_message
+            )
 
-        run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant_id)
+            run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant_id)
 
-        while True:
-            run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            if run.status == "completed":
-                break
-            elif run.status == "failed":
-                return jsonify({"error": "Асистент не зміг відповісти"}), 500
+            while True:
+                run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+                if run.status == "completed":
+                    break
+                elif run.status == "failed":
+                    return jsonify({"error": "Асистент не зміг відповісти"}), 500
 
-        messages = client.beta.threads.messages.list(thread_id=thread.id)
-        last_message = messages.data[0].content[0].text.value
-        return jsonify({"response": last_message})
+            messages = client.beta.threads.messages.list(thread_id=thread.id)
+            last_message = messages.data[0].content[0].text.value
+            return jsonify({"response": last_message})
+        
+        # Fallback to Chat Completion API if assistant ID is not available or we've configured to use chat completion
+        else:
+            logger.info(f"Using Chat Completion API instead of Assistants API for category {category}")
+            category_name = expert_info.get("name", category)
+            
+            # Try to load category-specific instructions
+            category_instructions_path = os.path.join(parent_dir, 'system_instructions', 'expert_instructions', f'{category}.md')
+            system_message = load_system_instructions(category_instructions_path)
+            
+            # Fallback if category-specific instructions can't be loaded
+            if not system_message:
+                system_message = f"Ви експерт у сфері {category_name}. Користувач зараз у розділі '{category}' і хоче сформувати ТЗ. Допоможіть йому створити детальне технічне завдання на основі його запиту."
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",  # Using gpt-4o-mini which your API key has access to
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": user_message}
+                ],
+                temperature=0.7
+            )
+            
+            return jsonify({"response": response.choices[0].message.content})
     except Exception as e:
         logger.exception(f"Помилка у асистенті категорії {category}")
         return jsonify({"error": str(e)}), 500
@@ -113,6 +177,7 @@ def category_chatbot(category):
 @chatbot_bp.route("/voice", methods=["POST"])
 def voice_chatbot():
     assistant_id = os.getenv("MAIN_ASSISTANT_ID")
+    use_chat_completion = os.getenv("USE_CHAT_COMPLETION", "false").lower() == "true"
     audio_file = request.files.get("audio")
 
     if not audio_file:
@@ -135,21 +200,39 @@ def voice_chatbot():
 
         print("📝 Транскрипція:", transcription)
 
-        thread = client.beta.threads.create()
-        client.beta.threads.messages.create(thread_id=thread.id, role="user", content=transcription)
-        run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant_id)
+        # If we have a valid assistant ID and are not using chat completion, use the Assistants API
+        if assistant_id and not use_chat_completion:
+            thread = client.beta.threads.create()
+            client.beta.threads.messages.create(thread_id=thread.id, role="user", content=transcription)
+            run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant_id)
 
-        while True:
-            run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            if run.status == "completed":
-                break
-            elif run.status == "failed":
-                return jsonify({"error": "Асистент не зміг відповісти"}), 500
+            while True:
+                run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+                if run.status == "completed":
+                    break
+                elif run.status == "failed":
+                    return jsonify({"error": "Асистент не зміг відповісти"}), 500
 
-        messages = client.beta.threads.messages.list(thread_id=thread.id)
-        last_message = messages.data[0].content[0].text.value
-
-        return jsonify({"transcription": transcription, "response": last_message})
+            messages = client.beta.threads.messages.list(thread_id=thread.id)
+            last_message = messages.data[0].content[0].text.value
+            
+            return jsonify({"transcription": transcription, "response": last_message})
+        
+        # Fallback to Chat Completion API if assistant ID is not available or we've configured to use chat completion
+        else:
+            logger.info("Using Chat Completion API instead of Assistants API for voice message")
+            system_message = "Ви професійний асистент, який відповідає на голосові запити користувачів. Дайте чітку та корисну відповідь на запит користувача."
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",  # Using gpt-4o-mini which your API key has access to
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": transcription}
+                ],
+                temperature=0.7
+            )
+            
+            return jsonify({"transcription": transcription, "response": response.choices[0].message.content})
 
     except Exception as e:
         print("🔥 Внутрішня помилка:", traceback.format_exc())
