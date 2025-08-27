@@ -21,7 +21,14 @@ class Client(db.Model):
 class ClientRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_type = db.Column(db.String(100), nullable=False)  # Тип проєкту (web-dev, chatbots і т.д.)
+    project_name = db.Column(db.String(200), nullable=True)  # Назва проекту
     task_description = db.Column(db.Text, nullable=False)  # Опис технічного завдання
+    key_features = db.Column(db.Text, nullable=True)  # Ключові функції
+    design_preferences = db.Column(db.Text, nullable=True)  # Переваги дизайну
+    platform = db.Column(db.String(100), nullable=True)  # Платформа
+    budget = db.Column(db.String(100), nullable=True)  # Бюджет
+    timeline = db.Column(db.String(100), nullable=True)  # Термін
+    integrations = db.Column(db.Text, nullable=True)  # Інтеграції
     contact_method = db.Column(db.String(100), nullable=False)  # Метод зв'язку (Email, Telegram)
     contact_info = db.Column(db.String(200), nullable=True)  # Контактні дані (якщо не анонімно)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())  # Дата створення заявки
@@ -36,7 +43,14 @@ class ClientRequest(db.Model):
         return {
             "id": self.id,
             "project_type": self.project_type,
+            "project_name": self.project_name,
             "task_description": self.task_description,
+            "key_features": self.key_features,
+            "design_preferences": self.design_preferences,
+            "platform": self.platform,
+            "budget": self.budget,
+            "timeline": self.timeline,
+            "integrations": self.integrations,
             "contact_method": self.contact_method,
             "contact_info": self.contact_info if self.contact_method != "Анонімно" else "Немає",
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S")

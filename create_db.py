@@ -65,6 +65,25 @@ def create_schema_and_tables():
         )
         """)
         
+        # Создаем таблицу для технических заданий (ТЗ)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS client_request (
+            id SERIAL PRIMARY KEY,
+            project_type VARCHAR(100) NOT NULL,
+            project_name VARCHAR(200),
+            task_description TEXT NOT NULL,
+            key_features TEXT,
+            design_preferences TEXT,
+            platform VARCHAR(100),
+            budget VARCHAR(100),
+            timeline VARCHAR(100),
+            integrations TEXT,
+            contact_method VARCHAR(100) NOT NULL,
+            contact_info VARCHAR(200),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        
         print("Схема и таблицы успешно созданы.")
         
         # Закрываем соединение
