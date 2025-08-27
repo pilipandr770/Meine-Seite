@@ -1,6 +1,7 @@
 import os
 import logging
 import sys
+import ssl
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -22,12 +23,18 @@ class Config:
     if database_uri and database_uri.startswith('postgres'):
         # Если указана POSTGRES_SCHEMA, добавляем настройку search_path
         if ON_RENDER:
-            # На Render.com используем специальную схему
             schema = os.environ.get("POSTGRES_SCHEMA", "render_schema")
-            logger.info(f"Running on Render.com, using schema: {schema}")
+            logger.info(f"Running on Render.com, base schema: {schema}")
         else:
             schema = os.environ.get("POSTGRES_SCHEMA", "rozoom_schema")
-            logger.info(f"Running locally, using schema: {schema}")
+            logger.info(f"Running locally, base schema: {schema}")
+
+        client_schema = os.environ.get('POSTGRES_SCHEMA_CLIENTS')
+        if client_schema and client_schema != schema:
+            combined_search_path = f"{client_schema},{schema}"
+            logger.info(f"Additional client requests schema detected: {client_schema}")
+        else:
+            combined_search_path = schema
         
         # Нормализуем префикс
         if database_uri.startswith('postgres://'):
@@ -43,20 +50,36 @@ class Config:
                 database_uri = database_uri.replace('postgresql://', driver_prefix, 1)
 
         # Добавляем search_path через параметр options если ещё не указан
+        # Устанавливаем search_path (кодируем пробелы и знак '=') если ещё не указан
         if 'options=' not in database_uri:
             sep = '&' if '?' in database_uri else '?'
-            database_uri = f"{database_uri}{sep}options=-c%20search_path%3D{schema}"
+            # encode '-c search_path=' as '-c%20search_path%3D' and commas are ok
+            database_uri = f"{database_uri}{sep}options=-c%20search_path%3D{combined_search_path}"
 
         SQLALCHEMY_DATABASE_URI = database_uri
-        # Дополнительная схема для клиентских ТЗ, если нужна изоляция
-        CLIENT_REQUESTS_SCHEMA = os.environ.get('POSTGRES_SCHEMA_CLIENTS')
-        if CLIENT_REQUESTS_SCHEMA and CLIENT_REQUESTS_SCHEMA != schema:
-            logger.info(f"Additional client requests schema configured: {CLIENT_REQUESTS_SCHEMA}")
-        logger.info(f"Using PostgreSQL database with schema: {schema}")
+        CLIENT_REQUESTS_SCHEMA = client_schema
+        logger.info(f"Using PostgreSQL database search_path: {combined_search_path}")
+        # Настройки движка: SSL (pg8000) + search_path через options уже указан.
+        # SSL контекст добавляем всегда для безопасного соединения; psycopg2 проигнорирует лишний ключ.
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+            'pool_size': 5,
+            'max_overflow': 10,
+            'connect_args': {}
+        }
+        # Добавляем ssl_context только если используем pg8000
+        if '+pg8000://' in database_uri:
+            try:
+                SSL_CONTEXT = ssl.create_default_context()
+                SQLALCHEMY_ENGINE_OPTIONS['connect_args']['ssl_context'] = SSL_CONTEXT
+            except Exception as e:
+                logger.warning(f"Failed to create SSL context: {e}")
     else:
         # Fallback на SQLite для локальной разработки
         SQLALCHEMY_DATABASE_URI = database_uri or "sqlite:///instance/clients.db"
         logger.info("Using SQLite database for development")
+        SQLALCHEMY_ENGINE_OPTIONS = {}
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     

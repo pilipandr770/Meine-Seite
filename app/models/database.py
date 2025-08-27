@@ -4,6 +4,7 @@
 """
 import os
 import logging
+import ssl
 from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
 
@@ -38,81 +39,53 @@ def get_postgres_uri():
         database_url = database_url.replace('postgresql://', 'postgresql+pg8000://', 1)
     return database_url
 
-def create_db_engine(uri=None, schema=None):
-    """Создает SQLAlchemy Engine с поддержкой как psycopg2, так и pg8000."""
+def create_db_engine(uri=None, schema=None, engine_options=None):
+    """Создает SQLAlchemy Engine, добавляя SSL для pg8000 при необходимости."""
     if uri is None:
         uri = get_postgres_uri()
-    
-    # Добавляем к URI параметры для использования схемы, если указана
-    connect_args = {}
-    if schema:
-        # Для pg8000
-        connect_args['options'] = f'-c search_path={schema}'
 
-    try:
-        # Сначала пробуем pg8000 (чистый Python драйвер, совместимый с Python 3.13)
-        engine = create_engine(
-            uri, 
-            connect_args=connect_args,
-            pool_pre_ping=True,
-            pool_recycle=300,
-            pool_size=10,
-            max_overflow=20,
-            echo=False,
-            execution_options={"schema_translate_map": {None: schema}} if schema else {}
-        )
-        # Проверяем подключение
-        with engine.connect() as conn:
-            conn.execute("SELECT 1")
-        logger.info("Successfully connected to PostgreSQL using pg8000")
-        return engine
-    except Exception as e:
-        logger.warning(f"Failed to connect using pg8000: {e}")
-        
-        # Удаляем параметр из URI, который может быть специфичным для pg8000
-        if "?driver=pg8000" in uri:
-            uri = uri.replace("?driver=pg8000", "")
-        
+    opts = engine_options.copy() if engine_options else {}
+
+    connect_args = opts.pop('connect_args', {}) or {}
+    # Если явно не передан ssl_context и драйвер pg8000 — добавим
+    if 'pg8000' in uri and 'ssl_context' not in connect_args:
         try:
-            # Резервный вариант - пробуем psycopg2
-            engine = create_engine(
-                uri,
-                connect_args={"options": f"-c search_path={schema}"} if schema else {},
-                pool_pre_ping=True,
-                pool_recycle=300,
-                pool_size=10,
-                max_overflow=20,
-                echo=False,
-                execution_options={"schema_translate_map": {None: schema}} if schema else {}
-            )
-            # Проверяем подключение
-            with engine.connect() as conn:
-                conn.execute("SELECT 1")
-            logger.info("Successfully connected to PostgreSQL using psycopg2")
-            return engine
-        except Exception as e2:
-            logger.error(f"Failed to connect to database with both drivers: {e2}")
-            raise
+            connect_args['ssl_context'] = ssl.create_default_context()
+        except Exception as e:
+            logger.warning(f"Cannot create SSL context: {e}")
+
+    # Если схема указана и не установлена через options в URI
+    if schema and not any(k in uri for k in ['options=-c', 'options=%2Dc']):
+        # Добавляем через connect_args (работает для psycopg2/pg8000)
+        connect_args.setdefault('options', f'-c search_path={schema}')
+
+    engine = create_engine(
+        uri,
+        connect_args=connect_args,
+        **opts
+    )
+    try:
+        with engine.connect() as conn:
+            conn.exec_driver_sql("SELECT 1")
+        logger.info("Database connection OK")
+    except Exception as e:
+        logger.error(f"Initial DB connection failed: {e}")
+        raise
+    return engine
 
 # Глобальный экземпляр SQLAlchemy для совместимости со стандартным кодом Flask-SQLAlchemy
 db = SQLAlchemy()
 
 def init_db(app):
-    """Инициализирует базу данных с учетом настроек схемы."""
-    # Устанавливаем URI из функции для обеспечения совместимости с разными драйверами
-    app.config['SQLALCHEMY_DATABASE_URI'] = get_postgres_uri()
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
-    # Инициализируем объект SQLAlchemy с приложением
+    """Инициализирует базу данных: использует готовый URI из Config и engine options."""
+    if 'SQLALCHEMY_DATABASE_URI' not in app.config:
+        app.config['SQLALCHEMY_DATABASE_URI'] = get_postgres_uri()
+    app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+
+    # Применяем engine options (включая ssl_context) если заданы в конфиге
+    engine_options = app.config.get('SQLALCHEMY_ENGINE_OPTIONS', {})
+    # Flask-SQLAlchemy примет их через параметр engine_options при init_app
     db.init_app(app)
-    
-    # Если указана схема в конфигурации, настраиваем ее
-    schema = app.config.get('POSTGRES_SCHEMA')
-    if schema:
-        # Добавляем обработчик событий до запроса для установки схемы
-        @app.before_request
-        def set_schema():
-            if hasattr(db, 'session'):
-                db.session.execute(f'SET search_path TO {schema}')
-    
+    # Monkey-patch engine creation если нужно добавить ssl_context
+    # (Flask-SQLAlchemy создаст движок лениво; мы обеспечили URI с опциями search_path)
     return db
