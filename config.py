@@ -59,19 +59,16 @@ class Config:
                 database_uri = f"{database_uri}{sep}options=-c%20search_path%3D{combined_search_path}"
 
         SQLALCHEMY_DATABASE_URI = database_uri
-    CLIENT_REQUESTS_SCHEMA = client_schema
-    DB_SEARCH_PATH = combined_search_path
-    logger.info(f"Configured PostgreSQL search_path: {combined_search_path}")
-        # Настройки движка: SSL (pg8000) + search_path через options уже указан.
-        # SSL контекст добавляем всегда для безопасного соединения; psycopg2 проигнорирует лишний ключ.
-    SQLALCHEMY_ENGINE_OPTIONS = {
+        CLIENT_REQUESTS_SCHEMA = client_schema
+        DB_SEARCH_PATH = combined_search_path
+        logger.info(f"Configured PostgreSQL search_path: {combined_search_path}")
+        SQLALCHEMY_ENGINE_OPTIONS = {
             'pool_pre_ping': True,
             'pool_recycle': 300,
             'pool_size': 5,
             'max_overflow': 10,
             'connect_args': {}
         }
-        # Добавляем ssl_context только если используем pg8000
         if '+pg8000://' in database_uri:
             try:
                 SSL_CONTEXT = ssl.create_default_context()
