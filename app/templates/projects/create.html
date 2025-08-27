@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Создание нового проекта{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Создание нового проекта</h1>
+        <a href="{{ url_for('project.list_projects') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Назад к списку
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="projectForm" action="{{ url_for('project.create_project') }}" method="POST">
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label for="name" class="form-label">Название проекта <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="client_id" class="form-label">Клиент</label>
+                        <select class="form-select" id="client_id" name="client_id">
+                            <option value="">Выберите клиента</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.name }} {% if client.email %}({{ client.email }}){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Описание проекта</label>
+                    <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="deadline" class="form-label">Дедлайн</label>
+                        <input type="date" class="form-control" id="deadline" name="deadline">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="request_id" class="form-label">ТЗ из заявок клиентов</label>
+                        <select class="form-select" id="request_id" name="request_id">
+                            <option value="">Выберите заявку</option>
+                            {% for request in requests %}
+                            <option value="{{ request.id }}">{{ request.project_name }} ({{ request.contact_info }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="add_default_stages" name="add_default_stages" value="true" checked>
+                    <label class="form-check-label" for="add_default_stages">Добавить стандартные этапы проекта</label>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-outline-secondary me-md-2" id="resetBtn">Сбросить</button>
+                    <button type="submit" class="btn btn-primary">Создать проект</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Создать проект из существующей заявки</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Клиент</th>
+                            <th>Дата</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if requests %}
+                            {% for request in requests %}
+                            <tr>
+                                <td>{{ request.project_name }}</td>
+                                <td>{{ request.contact_info }}</td>
+                                <td>{{ request.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success create-from-request" 
+                                            data-request-id="{{ request.id }}">
+                                        <i class="fas fa-plus"></i> Создать проект
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">Нет доступных заявок</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set progress bar widths
+        document.querySelectorAll('.project-progress').forEach(bar => {
+            const progress = bar.getAttribute('data-progress');
+            bar.style.width = progress + '%';
+        });
+        
+        // Обработка сброса формы
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            document.getElementById('projectForm').reset();
+        });
+        
+        // Заполнение формы данными из выбранной заявки
+        document.getElementById('request_id').addEventListener('change', function() {
+            const requestId = this.value;
+            if (!requestId) return;
+            
+            // Найти выбранную заявку в списке
+            const option = this.options[this.selectedIndex];
+            const requestName = option.text.split(' (')[0];
+            
+            // Заполнить поля формы
+            document.getElementById('name').value = requestName;
+        });
+        
+        // Создание проекта из заявки
+        document.querySelectorAll('.create-from-request').forEach(button => {
+            button.addEventListener('click', function() {
+                const requestId = this.getAttribute('data-request-id');
+                
+                fetch(`/projects/from_request/${requestId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Проект успешно создан!');
+                        window.location.href = `/projects/${data.project_id}`;
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при создании проекта');
+                });
+            });
+        });
+        
+        // Отправка формы
+        document.getElementById('projectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Проект успешно создан!');
+                    window.location.href = `/projects/${data.project_id}`;
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при создании проекта');
+            });
+        });
+    });
+</script>
+{% endblock %}

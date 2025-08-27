@@ -1,0 +1,542 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} - Детали проекта{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ project.name }}</h1>
+        <div>
+            <a href="{{ url_for('project.list_projects') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Назад к списку
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal">
+                <i class="fas fa-edit"></i> Редактировать
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Информация о проекте</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Статус:</div>
+                        <div class="col-md-9">
+                            {% if project.status == 'new' %}
+                                <span class="badge bg-primary">Новый</span>
+                            {% elif project.status == 'in_progress' %}
+                                <span class="badge bg-warning text-dark">В работе</span>
+                            {% elif project.status == 'completed' %}
+                                <span class="badge bg-success">Завершен</span>
+                            {% elif project.status == 'on_hold' %}
+                                <span class="badge bg-danger">Приостановлен</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ project.status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Клиент:</div>
+                        <div class="col-md-9">
+                            {% if project.client %}
+                                {{ project.client.name }}
+                                {% if project.client.email %}
+                                    <span class="text-muted">({{ project.client.email }})</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Не указан</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Дата создания:</div>
+                        <div class="col-md-9">{{ project.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Начало проекта:</div>
+                        <div class="col-md-9">
+                            {% if project.start_date %}
+                                {{ project.start_date.strftime('%d.%m.%Y') }}
+                            {% else %}
+                                <span class="text-muted">Не начат</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Дедлайн:</div>
+                        <div class="col-md-9">
+                            {% if project.deadline %}
+                                {{ project.deadline.strftime('%d.%m.%Y') }}
+                                {% set days_left = (project.deadline - now).days %}
+                                {% if days_left > 0 %}
+                                    <span class="badge bg-info">Осталось {{ days_left }} дн.</span>
+                                {% elif days_left == 0 %}
+                                    <span class="badge bg-warning text-dark">Сегодня!</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Просрочен на {{ days_left|abs }} дн.</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Не указан</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 fw-bold">Описание:</div>
+                        <div class="col-md-9">
+                            {% if project.description %}
+                                <p>{{ project.description|nl2br }}</p>
+                            {% else %}
+                                <span class="text-muted">Описание отсутствует</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Этапы проекта</h5>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStageModal">
+                        <i class="fas fa-plus"></i> Добавить этап
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if stages %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%">#</th>
+                                        <th style="width: 30%">Название</th>
+                                        <th style="width: 20%">Статус</th>
+                                        <th style="width: 25%">Даты</th>
+                                        <th style="width: 20%">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stage in stages %}
+                                    <tr>
+                                        <td>{{ stage.order_number }}</td>
+                                        <td>
+                                            <strong>{{ stage.name }}</strong>
+                                            {% if stage.description %}
+                                            <br><small class="text-muted">{{ stage.description }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <select class="form-select form-select-sm stage-status" data-stage-id="{{ stage.id }}">
+                                                <option value="pending" {% if stage.status == 'pending' %}selected{% endif %}>Ожидает</option>
+                                                <option value="in_progress" {% if stage.status == 'in_progress' %}selected{% endif %}>В работе</option>
+                                                <option value="completed" {% if stage.status == 'completed' %}selected{% endif %}>Завершен</option>
+                                                <option value="blocked" {% if stage.status == 'blocked' %}selected{% endif %}>Заблокирован</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            {% if stage.start_date %}
+                                                <small>Начало: {{ stage.start_date.strftime('%d.%m.%Y') }}</small>
+                                            {% endif %}
+                                            {% if stage.end_date %}
+                                                <br><small>Завершение: {{ stage.end_date.strftime('%d.%m.%Y') }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary edit-stage-btn" data-stage-id="{{ stage.id }}" 
+                                                    data-stage-name="{{ stage.name }}" data-stage-description="{{ stage.description }}"
+                                                    data-stage-order="{{ stage.order_number }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            У проекта пока нет этапов. Добавьте первый этап, чтобы начать работу.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Прогресс проекта</h5>
+                </div>
+                <div class="card-body">
+                    {% set completed_stages = stages|selectattr('status', 'equalto', 'completed')|list|length %}
+                    {% set total_stages = stages|length %}
+                    {% if total_stages > 0 %}
+                        {% set progress = (completed_stages / total_stages * 100)|int %}
+                    {% else %}
+                        {% set progress = 0 %}
+                    {% endif %}
+                    
+                    <div class="text-center mb-2">
+                        <span class="display-4 fw-bold">{{ progress }}%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 20px;">
+                        <div class="progress-bar project-progress" role="progressbar" 
+                             data-progress="{{ progress }}"
+                             aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="text-center text-muted">
+                        {{ completed_stages }} из {{ total_stages }} этапов завершено
+                    </div>
+                </div>
+            </div>
+
+            {% if project.request %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Исходное ТЗ</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ project.request.project_name }}</h6>
+                    <p class="text-muted">
+                        Получено: {{ project.request.created_at.strftime('%d.%m.%Y %H:%M') }}<br>
+                        Контакт: {{ project.request.contact_info }}
+                    </p>
+                    <div>
+                        {{ project.request.task_description|nl2br }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Управление проектом</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if project.status == 'new' %}
+                            <button class="btn btn-warning change-status-btn" data-status="in_progress">
+                                <i class="fas fa-play"></i> Запустить проект
+                            </button>
+                        {% elif project.status == 'in_progress' %}
+                            <button class="btn btn-success change-status-btn" data-status="completed">
+                                <i class="fas fa-check"></i> Завершить проект
+                            </button>
+                            <button class="btn btn-danger change-status-btn" data-status="on_hold">
+                                <i class="fas fa-pause"></i> Приостановить проект
+                            </button>
+                        {% elif project.status == 'on_hold' %}
+                            <button class="btn btn-warning change-status-btn" data-status="in_progress">
+                                <i class="fas fa-play"></i> Возобновить проект
+                            </button>
+                        {% elif project.status == 'completed' %}
+                            <button class="btn btn-warning change-status-btn" data-status="in_progress">
+                                <i class="fas fa-undo"></i> Переоткрыть проект
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования проекта -->
+<div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProjectModalLabel">Редактирование проекта</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProjectForm" action="{{ url_for('project.update_project', project_id=project.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Название проекта</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" value="{{ project.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="4">{{ project.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_deadline" class="form-label">Дедлайн</label>
+                        <input type="date" class="form-control" id="edit_deadline" name="deadline" 
+                            value="{{ project.deadline.strftime('%Y-%m-%d') if project.deadline else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_status" class="form-label">Статус</label>
+                        <select class="form-select" id="edit_status" name="status">
+                            <option value="new" {% if project.status == 'new' %}selected{% endif %}>Новый</option>
+                            <option value="in_progress" {% if project.status == 'in_progress' %}selected{% endif %}>В работе</option>
+                            <option value="on_hold" {% if project.status == 'on_hold' %}selected{% endif %}>Приостановлен</option>
+                            <option value="completed" {% if project.status == 'completed' %}selected{% endif %}>Завершен</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления этапа проекта -->
+<div class="modal fade" id="addStageModal" tabindex="-1" aria-labelledby="addStageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addStageModalLabel">Добавление этапа проекта</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addStageForm" action="{{ url_for('project.add_stage', project_id=project.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="stage_name" class="form-label">Название этапа</label>
+                        <input type="text" class="form-control" id="stage_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stage_description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="stage_description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="order_number" class="form-label">Порядковый номер</label>
+                        <input type="number" class="form-control" id="order_number" name="order_number" 
+                               value="{{ stages|length + 1 }}" min="1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить этап</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования этапа -->
+<div class="modal fade" id="editStageModal" tabindex="-1" aria-labelledby="editStageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editStageModalLabel">Редактирование этапа</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editStageForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_stage_name" class="form-label">Название этапа</label>
+                        <input type="text" class="form-control" id="edit_stage_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_stage_description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="edit_stage_description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_order_number" class="form-label">Порядковый номер</label>
+                        <input type="number" class="form-control" id="edit_order_number" name="order_number" min="1">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_start_date" class="form-label">Дата начала</label>
+                            <input type="date" class="form-control" id="edit_start_date" name="start_date">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_end_date" class="form-label">Дата завершения</label>
+                            <input type="date" class="form-control" id="edit_end_date" name="end_date">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set progress bar widths
+        document.querySelectorAll('.project-progress').forEach(bar => {
+            const progress = bar.getAttribute('data-progress');
+            bar.style.width = progress + '%';
+        });
+    
+        // Импорт текущей даты из сервера
+        const now = new Date('{{ now.strftime("%Y-%m-%d") }}');
+        
+        // Обработка изменения статуса этапа
+        document.querySelectorAll('.stage-status').forEach(select => {
+            select.addEventListener('change', function() {
+                const stageId = this.getAttribute('data-stage-id');
+                const status = this.value;
+                
+                // Обновление статуса этапа
+                fetch(`/projects/stages/${stageId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `status=${status}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Если статус изменен на "завершен", устанавливаем дату завершения
+                        if (status === 'completed') {
+                            fetch(`/projects/stages/${stageId}/update`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: `end_date=${new Date().toISOString().split('T')[0]}`
+                            });
+                        }
+                        
+                        // Обновляем страницу для отображения новой информации
+                        location.reload();
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при обновлении статуса');
+                });
+            });
+        });
+        
+        // Обработка формы редактирования проекта
+        document.getElementById('editProjectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при обновлении проекта');
+            });
+        });
+        
+        // Обработка формы добавления этапа
+        document.getElementById('addStageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при добавлении этапа');
+            });
+        });
+        
+        // Обработка кнопок изменения статуса проекта
+        document.querySelectorAll('.change-status-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const status = this.getAttribute('data-status');
+                
+                fetch('{{ url_for("project.update_project", project_id=project.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `status=${status}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при изменении статуса проекта');
+                });
+            });
+        });
+        
+        // Открытие модального окна редактирования этапа
+        document.querySelectorAll('.edit-stage-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const stageId = this.getAttribute('data-stage-id');
+                const stageName = this.getAttribute('data-stage-name');
+                const stageDesc = this.getAttribute('data-stage-description') || '';
+                const stageOrder = this.getAttribute('data-stage-order');
+                
+                document.getElementById('edit_stage_name').value = stageName;
+                document.getElementById('edit_stage_description').value = stageDesc;
+                document.getElementById('edit_order_number').value = stageOrder;
+                
+                document.getElementById('editStageForm').action = `/projects/stages/${stageId}/update`;
+                
+                const editStageModal = new bootstrap.Modal(document.getElementById('editStageModal'));
+                editStageModal.show();
+            });
+        });
+        
+        // Обработка формы редактирования этапа
+        document.getElementById('editStageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при обновлении этапа');
+            });
+        });
+    });
+</script>
+{% endblock %}

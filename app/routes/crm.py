@@ -3,15 +3,54 @@
 from flask import Blueprint, request, jsonify
 from app.models.client import db, Client, ClientRequest
 import requests
+import logging
+from app.models.project import create_project_from_request, APIKey
 
-# 🔐 Дані для Telegram
-TELEGRAM_BOT_TOKEN = "7572478553:AAEJxJ9Il80zrHAjcD7ZcQnht3EP-sHYrjs"
-TELEGRAM_CHAT_ID = "7444992311"  # Отримати можна через @userinfobot
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def get_telegram_credentials():
+    """Получает данные для Telegram из переменных окружения, базы данных или значений по умолчанию"""
+    import os
+    try:
+        # Сначала проверяем переменные окружения (приоритет)
+        token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+        
+        # Если нет в переменных окружения, проверяем базу данных
+        if not token:
+            token = APIKey.get_key('telegram_bot_token')
+        if not chat_id:
+            chat_id = APIKey.get_key('telegram_chat_id')
+        
+        # Используем значения по умолчанию, если нигде не найдены
+        if not token:
+            token = "7572478553:AAEJxJ9Il80zrHAjcD7ZcQnht3EP-sHYrjs"
+            logger.warning("Using default Telegram bot token! Set TELEGRAM_BOT_TOKEN env variable.")
+        if not chat_id:
+            chat_id = "7444992311"
+            logger.warning("Using default Telegram chat ID! Set TELEGRAM_CHAT_ID env variable.")
+            
+        return token, chat_id
+    except Exception as e:
+        logger.error(f"Ошибка при получении Telegram-ключей: {e}")
+        return "7572478553:AAEJxJ9Il80zrHAjcD7ZcQnht3EP-sHYrjs", "7444992311"
 
 def send_telegram_message(text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    data = {"chat_id": TELEGRAM_CHAT_ID, "text": text, "parse_mode": "HTML"}
-    requests.post(url, data=data)
+    try:
+        token, chat_id = get_telegram_credentials()
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        data = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
+        response = requests.post(url, data=data)
+        
+        if response.status_code != 200:
+            logger.error(f"Ошибка отправки в Telegram: {response.text}")
+            return False
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка при отправке в Telegram: {e}")
+        return False
 
 crm_bp = Blueprint("crm", __name__)
 
@@ -93,9 +132,24 @@ def submit_task():
 📧 <b>Контакт:</b> {contact_info or "Немає"}
 """.strip()
 
-    try:
-        send_telegram_message(message)
-    except Exception as e:
-        print(f"❌ Помилка надсилання в Telegram: {str(e)}")
+    # Отправляем в Telegram и логируем результат
+    telegram_sent = send_telegram_message(message)
+    if telegram_sent:
+        logger.info(f"Telegram уведомление отправлено для заявки {new_request.id}")
+    else:
+        logger.warning(f"Не удалось отправить Telegram уведомление для заявки {new_request.id}")
 
-    return jsonify({"message": "Заявка прийнята", "request": new_request.to_dict()}), 201
+    # Автоматическое создание проекта из ТЗ
+    try:
+        project = create_project_from_request(new_request)
+        if project:
+            logger.info(f"Автоматически создан проект {project.id} для заявки {new_request.id}")
+            return jsonify({
+                "message": "Заявка принята и проект создан", 
+                "request": new_request.to_dict(),
+                "project_id": project.id
+            }), 201
+    except Exception as e:
+        logger.error(f"Ошибка при автосоздании проекта: {e}")
+    
+    return jsonify({"message": "Заявка принята", "request": new_request.to_dict()}), 201
