@@ -5,10 +5,8 @@ services:
     name: rozoom-web-app
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python init_database.py && gunicorn "run:app" --workers=3 --bind=0.0.0.0:$PORT
+    startCommand: bash prestart.sh && gunicorn "run:app" --workers=3 --bind=0.0.0.0:$PORT --log-level debug
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.10.12"
       - key: FLASK_APP
         value: run.py
       - key: FLASK_ENV

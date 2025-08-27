@@ -1,0 +1,7 @@
+# Use the specific buildpack for Python 3.10
+[[buildpacks]]
+  url = "heroku/python"
+  
+[build]
+  # This ensures we use Python 3.10
+  builder = "heroku/buildpacks:20"

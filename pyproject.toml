@@ -1,0 +1,6 @@
+[build]
+target-version = "py310"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
