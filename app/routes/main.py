@@ -1,7 +1,10 @@
 # routes/main.py
 
 from flask import Blueprint, render_template, request, redirect, url_for, session
-from app.config import Config
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from config import Config
 
 main_bp = Blueprint('main', __name__)
 

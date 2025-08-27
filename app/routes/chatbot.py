@@ -6,8 +6,20 @@ import traceback
 from flask import Blueprint, request, jsonify
 from dotenv import load_dotenv
 from openai import OpenAI
-from app.models.client import db, ClientRequest
-from app.expert_data import EXPERT_DATA
+
+# Fix import paths
+import sys
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
+from models.client import db, ClientRequest
+
+# Fix expert_data import
+try:
+    from expert_data import EXPERT_DATA
+except ImportError:
+    # Try relative import as fallback
+    from ..expert_data import EXPERT_DATA
 
 # Завантаження змінних середовища
 load_dotenv()

@@ -1,21 +1,36 @@
 from flask import Flask
-from config import Config  # Нове: імпорт класу конфігурації
-from app.routes import register_routes  # Changed back to absolute import
-from app.models.client import db        # Changed back to absolute import
+import os
+import sys
+
+# Set up path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
+# Import config
+sys.path.append(parent_dir)
+from config import Config
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)  # Завантаження конфігурації (секретний ключ та ін.)
+    app.config.from_object(Config)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///clients.db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
+    
+    # Import here to avoid circular imports
+    from models.client import db
     db.init_app(app)
 
     with app.app_context():
-        db.create_all()  # Створюємо таблиці у базі
-
+        db.create_all()
+    
+    # Import and register routes after app creation
+    from routes import register_routes
     register_routes(app)
-
+    
     return app
 
 if __name__ == "__main__":
