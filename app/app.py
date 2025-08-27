@@ -26,12 +26,26 @@ def create_app():
     # Используем DATABASE_URI из конфига, который берется из переменной окружения
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     
-    # Import here to avoid circular imports
+    # Определение схемы для PostgreSQL в зависимости от окружения
+    if os.environ.get('RENDER'):
+        app.config['POSTGRES_SCHEMA'] = os.environ.get('POSTGRES_SCHEMA', 'render_schema')
+    else:
+        app.config['POSTGRES_SCHEMA'] = os.environ.get('POSTGRES_SCHEMA', 'rozoom_schema')
+    
+    # Import here to avoid circular imports - используем новый модуль database.py
     try:
-        from models.client import db
-        logger.info("Successfully imported database models")
-        db.init_app(app)
-        logger.info("Successfully initialized database with app")
+        # Пробуем использовать новый интерфейс с поддержкой pg8000
+        try:
+            from app.models.database import db, init_db
+            logger.info("Successfully imported new database module")
+            init_db(app)
+            logger.info("Successfully initialized database with app using new interface")
+        except ImportError:
+            # Запасной вариант - старый интерфейс
+            from app.models.client import db
+            logger.info("Using legacy database interface")
+            db.init_app(app)
+            logger.info("Successfully initialized database with app using legacy interface")
     except ImportError as e:
         logger.error(f"Failed to import database models: {e}")
         raise
@@ -40,27 +54,28 @@ def create_app():
         raise
 
     # Проверяем, нужно ли создать схему в PostgreSQL
-    if app.config.get("SQLALCHEMY_DATABASE_URI", "").startswith("postgresql"):
+    schema = app.config.get('POSTGRES_SCHEMA')
+    if app.config.get("SQLALCHEMY_DATABASE_URI", "").startswith("postgresql") and schema:
         with app.app_context():
             # Сначала создаем схему, если она не существует
             try:
-                db.session.execute(db.text("CREATE SCHEMA IF NOT EXISTS rozoom_schema"))
+                db.session.execute(db.text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
                 db.session.commit()
                 # Установим схему по умолчанию для текущей сессии
-                db.session.execute(db.text("SET search_path TO rozoom_schema"))
+                db.session.execute(db.text(f"SET search_path TO {schema}"))
                 db.session.commit()
-                print("Схема rozoom_schema создана или уже существует.")
+                logger.info(f"Schema {schema} created or already exists")
             except Exception as e:
-                print(f"Ошибка при создании схемы: {e}")
+                logger.error(f"Error creating schema: {e}")
                 db.session.rollback()
     
     # Теперь создаем таблицы
     with app.app_context():
         try:
             db.create_all()
-            print("Таблицы успешно созданы.")
+            logger.info("Tables successfully created")
         except Exception as e:
-            print(f"Ошибка при создании таблиц: {e}")
+            logger.error(f"Error creating tables: {e}")
             db.session.rollback()
     
     # Import and register routes after app creation
