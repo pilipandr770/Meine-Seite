@@ -78,8 +78,16 @@
     <script>
         function changeLanguage() {
             const lang = document.getElementById("language-switcher").value;
+            // Устанавливаем язык как атрибут HTML тега для JavaScript
+            document.documentElement.lang = lang;
             window.location.href = "/set_language/" + lang;
         }
+        
+        // Устанавливаем язык при загрузке страницы
+        document.addEventListener("DOMContentLoaded", function() {
+            const currentLang = "{{ lang }}";
+            document.documentElement.lang = currentLang;
+        });
     </script>
 
     <!-- Background Matrix Animation -->

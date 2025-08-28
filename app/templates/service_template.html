@@ -36,19 +36,19 @@
             <form id="task-form">
                 <div class="form-group">
                     <label for="project_name">1. {% if lang == 'uk' %}Назва проєкту{% elif lang == 'de' %}Projektname{% else %}Project Name{% endif %}:</label>
-                    <input type="text" id="project_name" placeholder="Наприклад, 'Сайт для продажу авто'" required>
+                    <input type="text" id="project_name" placeholder="{% if lang == 'uk' %}Наприклад, 'Сайт для продажу авто'{% elif lang == 'de' %}Zum Beispiel, 'Autoverkauf-Website'{% else %}For example, 'Car Sales Website'{% endif %}" required>
                 </div>
                 <div class="form-group">
                     <label for="task_description">2. {% if lang == 'uk' %}Загальний опис{% elif lang == 'de' %}Projektbeschreibung{% else %}Description{% endif %}:</label>
-                    <textarea id="task_description" placeholder="Опишіть, що потрібно реалізувати..." required></textarea>
+                    <textarea id="task_description" placeholder="{% if lang == 'uk' %}Опишіть, що потрібно реалізувати...{% elif lang == 'de' %}Beschreiben Sie, was umgesetzt werden soll...{% else %}Describe what needs to be implemented...{% endif %}" required></textarea>
                 </div>
                 <div class="form-group">
                     <label for="key_features">3. {% if lang == 'uk' %}Основні функції{% elif lang == 'de' %}Hauptfunktionen{% else %}Key Features{% endif %}:</label>
-                    <textarea id="key_features" placeholder="Каталог, фільтри, реєстрація..." required></textarea>
+                    <textarea id="key_features" placeholder="{% if lang == 'uk' %}Каталог, фільтри, реєстрація...{% elif lang == 'de' %}Katalog, Filter, Anmeldung...{% else %}Catalog, filters, registration...{% endif %}" required></textarea>
                 </div>
                 <div class="form-group">
                     <label for="design_preferences">4. {% if lang == 'uk' %}Стиль дизайну{% elif lang == 'de' %}Designstil{% else %}Design Style{% endif %}:</label>
-                    <input type="text" id="design_preferences" placeholder="Мінімалістичний, темний..." required>
+                    <input type="text" id="design_preferences" placeholder="{% if lang == 'uk' %}Мінімалістичний, темний...{% elif lang == 'de' %}Minimalistisch, dunkel...{% else %}Minimalist, dark...{% endif %}" required>
                 </div>
                 <div class="form-group">
                     <label for="platform">5. {% if lang == 'uk' %}Платформа{% elif lang == 'de' %}Plattform{% else %}Platform{% endif %}:</label>
@@ -61,15 +61,15 @@
                 </div>
                 <div class="form-group">
                     <label for="budget">6. {% if lang == 'uk' %}Бюджет{% elif lang == 'de' %}Budget{% else %}Budget{% endif %}:</label>
-                    <input type="text" id="budget" placeholder="200-1000€, 5000$, тощо">
+                    <input type="text" id="budget" placeholder="{% if lang == 'uk' %}200-1000€, 5000$, тощо{% elif lang == 'de' %}200-1000€, 5000$, usw.{% else %}200-1000€, 5000$, etc.{% endif %}">
                 </div>
                 <div class="form-group">
                     <label for="timeline">7. {% if lang == 'uk' %}Термін виконання{% elif lang == 'de' %}Zeitplan{% else %}Timeline{% endif %}:</label>
-                    <input type="text" id="timeline" placeholder="2 тижні, 1 місяць...">
+                    <input type="text" id="timeline" placeholder="{% if lang == 'uk' %}2 тижні, 1 місяць...{% elif lang == 'de' %}2 Wochen, 1 Monat...{% else %}2 weeks, 1 month...{% endif %}">
                 </div>
                 <div class="form-group">
                     <label for="integrations">8. {% if lang == 'uk' %}Інтеграції{% elif lang == 'de' %}Integrationen{% else %}Integrations{% endif %}:</label>
-                    <textarea id="integrations" placeholder="API, CRM, Stripe, Telegram..."></textarea>
+                    <textarea id="integrations" placeholder="{% if lang == 'uk' %}API, CRM, Stripe, Telegram...{% elif lang == 'de' %}API, CRM, Stripe, Telegram...{% else %}API, CRM, Stripe, Telegram...{% endif %}"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="contact_method">9. {% if lang == 'uk' %}Спосіб зв'язку{% elif lang == 'de' %}Kontaktmethode{% else %}Contact Method{% endif %}:</label>
@@ -80,7 +80,7 @@
                 </div>
                 <div class="form-group">
                     <label for="contact_info">10. {% if lang == 'uk' %}Контактна інформація{% elif lang == 'de' %}Kontaktdaten{% else %}Contact Info{% endif %}:</label>
-                    <input type="text" id="contact_info" placeholder="Ваш Email або Telegram">
+                    <input type="text" id="contact_info" placeholder="{% if lang == 'uk' %}Ваш Email або Telegram{% elif lang == 'de' %}Ihre E-Mail oder Telegram{% else %}Your Email or Telegram{% endif %}">
                 </div>
                 <button type="button" onclick="submitTask('{{ submit_endpoint }}', '{{ service_name }}')">{% if lang == 'uk' %}Надіслати{% elif lang == 'de' %}Absenden{% else %}Submit{% endif %}</button>
             </form>
@@ -112,10 +112,19 @@
     async function submitTask(endpoint, service) {
         // Проверка обязательных полей
         const requiredFields = ["project_name", "task_description", "key_features", "design_preferences", "contact_method", "contact_info"];
+        const lang = document.documentElement.lang || 'uk';
+        
+        const validation_messages = {
+            'uk': 'Будь ласка, заповніть поле',
+            'de': 'Bitte füllen Sie das Feld aus',
+            'en': 'Please fill in the field'
+        };
+        
         for (const fieldId of requiredFields) {
             const field = document.getElementById(fieldId);
             if (!field.value.trim()) {
-                alert(`Пожалуйста, заполните поле "${field.previousElementSibling.textContent.replace(':', '')}"`);
+                const message = validation_messages[lang] || validation_messages['en'];
+                alert(`${message} "${field.previousElementSibling.textContent.replace(':', '')}"`);
                 field.focus();
                 return;
             }
@@ -146,17 +155,43 @@
             
             document.body.style.cursor = 'default';
             const data = await response.json();
+            const lang = document.documentElement.lang || 'uk';
+            
+            const success_messages = {
+                'uk': "Заявка успішно відправлена! Ми зв'яжемося з вами найближчим часом.",
+                'de': "Anfrage erfolgreich gesendet! Wir werden uns in Kürze mit Ihnen in Verbindung setzen.",
+                'en': "Request successfully sent! We will contact you shortly."
+            };
+            
+            const error_messages = {
+                'uk': "Не вдалося відправити заявку. Будь ласка, перевірте дані та спробуйте знову.",
+                'de': "Die Anfrage konnte nicht gesendet werden. Bitte überprüfen Sie die Daten und versuchen Sie es erneut.",
+                'en': "Failed to send the request. Please check the data and try again."
+            };
+            
+            const connection_errors = {
+                'uk': "Помилка при відправці форми. Будь ласка, перевірте з'єднання та спробуйте знову.",
+                'de': "Fehler beim Senden des Formulars. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+                'en': "Error sending the form. Please check your connection and try again."
+            };
             
             if (response.ok) {
-                alert(data.message || "Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.");
+                alert(data.message || success_messages[lang] || success_messages['en']);
                 document.getElementById("task-form").reset();
             } else {
-                alert(`Ошибка: ${data.error || "Не удалось отправить заявку. Пожалуйста, проверьте данные и попробуйте снова."}`);
+                const prefix = lang === 'de' ? 'Fehler: ' : (lang === 'uk' ? 'Помилка: ' : 'Error: ');
+                alert(`${prefix}${data.error || error_messages[lang] || error_messages['en']}`);
             }
         } catch (error) {
             document.body.style.cursor = 'default';
             console.error("Ошибка при отправке:", error);
-            alert("Ошибка при отправке формы. Пожалуйста, проверьте соединение и попробуйте снова.");
+            const lang = document.documentElement.lang || 'uk';
+            const connection_errors = {
+                'uk': "Помилка при відправці форми. Будь ласка, перевірте з'єднання та спробуйте знову.",
+                'de': "Fehler beim Senden des Formulars. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+                'en': "Error sending the form. Please check your connection and try again."
+            };
+            alert(connection_errors[lang] || connection_errors['en']);
         }
     }
 </script>
