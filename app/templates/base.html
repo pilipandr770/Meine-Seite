@@ -2,9 +2,14 @@
 <html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Добавляем скрипты для работы с сайтом -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='qr.js') }}"></script>
     <style>
         body {
             margin: 0;
@@ -28,6 +33,30 @@
             0% { transform: translateY(-100%); opacity: 0; }
             100% { transform: translateY(100vh); opacity: 1; }
         }
+        /* Стили для мобильного меню */
+        .mobile-menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+            .header-nav ul {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+            }
+            .header-nav ul.mobile-active {
+                display: flex;
+            }
+            .header-nav li {
+                margin: 5px 0;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body class="{% if title in ['Політика конфіденційності', 'Контакти', 'Impressum'] %}no-animation{% endif %}">
@@ -39,9 +68,15 @@
         <header>
             <nav class="header-nav">
                 <a href="/" class="home-link">{% if lang == 'uk' %}Головна{% elif lang == 'de' %}Startseite{% else %}Home{% endif %}</a>
+                
+                <!-- Гамбургер меню для мобильных устройств -->
+                <div class="mobile-menu-toggle" id="mobileMenuToggle">
+                    ☰
+                </div>
+                
                 <div class="social-icons">
                     <a href="https://www.linkedin.com" target="_blank">
-                        <img src="/static/icons/LinkedIn_logo_initials.png" alt="LinkedIn">
+                        <img src="/static/icons/LinkedIn_logo_initials.png" alt="LinkedIn" class="mobile-image">
                     </a>
                     <a href="https://t.me/yourtelegram" target="_blank">
                         <img src="/static/icons/Telegram_logo.svg" alt="Telegram">
@@ -62,7 +97,8 @@
             <p>
                 <a href="/privacy">{% if lang == 'uk' %}Політика конфіденційності{% elif lang == 'de' %}Datenschutz{% else %}Privacy Policy{% endif %}</a> |
                 <a href="/impressum">Impressum</a> |
-                <a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a>
+                <a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a> |
+                <a href="/qr-codes">{% if lang == 'uk' %}QR-коди{% elif lang == 'de' %}QR-Codes{% else %}QR Codes{% endif %}</a>
             </p>
             <div class="language-switcher">
                 <select id="language-switcher" onchange="changeLanguage()">
@@ -108,6 +144,18 @@
                 codeLine.style.animation = `fall ${Math.random() * 3 + 3}s linear infinite`;
                 codeLine.innerText = symbols.sort(() => 0.5 - Math.random()).slice(0, 10).join(" ");
                 container.appendChild(codeLine);
+            }
+        });
+        
+        // Скрипт для мобильного меню
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const navMenu = document.querySelector('.header-nav ul');
+            
+            if (mobileMenuToggle && navMenu) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    navMenu.classList.toggle('mobile-active');
+                });
             }
         });
     </script>

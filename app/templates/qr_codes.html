@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="qr-page-container">
+    <h1>
+        {% if lang == "uk" %}QR-коди для мобільного доступу{% elif lang == "de" %}QR-Codes für mobilen Zugriff{% else %}QR Codes for mobile access{% endif %}
+    </h1>
+
+    <p>
+        {% if lang == "uk" %}
+            Відскануйте QR-код за допомогою мобільного телефону для швидкого доступу до потрібної сторінки.
+        {% elif lang == "de" %}
+            Scannen Sie den QR-Code mit Ihrem Mobiltelefon für schnellen Zugriff auf die gewünschte Seite.
+        {% else %}
+            Scan the QR code with your mobile phone for quick access to the desired page.
+        {% endif %}
+    </p>
+
+    <div class="qr-grid">
+        <!-- Главная страница -->
+        <div class="qr-item">
+            <h3>
+                {% if lang == "uk" %}Головна сторінка{% elif lang == "de" %}Startseite{% else %}Home Page{% endif %}
+            </h3>
+            <div id="homeQR" class="qr-code"></div>
+        </div>
+
+        <!-- Контакты -->
+        <div class="qr-item">
+            <h3>
+                {% if lang == "uk" %}Контакти{% elif lang == "de" %}Kontakt{% else %}Contact{% endif %}
+            </h3>
+            <div id="contactQR" class="qr-code"></div>
+        </div>
+
+        <!-- Чат -->
+        <div class="qr-item">
+            <h3>
+                {% if lang == "uk" %}Чат з AI{% elif lang == "de" %}AI Chat{% else %}AI Chat{% endif %}
+            </h3>
+            <div id="chatQR" class="qr-code"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Загружаем библиотеку QR-кода, если она еще не загружена
+        if (typeof QRCode === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
+            script.onload = generateAllQRCodes;
+            document.head.appendChild(script);
+        } else {
+            generateAllQRCodes();
+        }
+    });
+
+    function generateAllQRCodes() {
+        // Базовый URL сайта
+        const baseUrl = window.location.origin;
+        
+        // Генерируем QR-коды для разных страниц
+        generateQRCode(`${baseUrl}/`, 'homeQR');
+        generateQRCode(`${baseUrl}/contact`, 'contactQR');
+        generateQRCode(`${baseUrl}/chatbot`, 'chatQR');
+    }
+</script>
+{% endblock %}

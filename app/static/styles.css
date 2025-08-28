@@ -237,6 +237,7 @@ body.no-animation .code-line {
 }
 
 /* --- Media Queries --- */
+/* Планшеты (средние экраны) */
 @media (max-width: 768px) {
     .content-wrapper {
         flex-direction: column;
@@ -265,6 +266,74 @@ body.no-animation .code-line {
 
     .home-chat-container .messages {
         max-height: 200px;
+    }
+    
+    /* Улучшения для форм */
+    .contact-form .form-group {
+        margin-bottom: 15px;
+    }
+    
+    /* Улучшения для меню */
+    .nav-menu ul {
+        padding: 0 10px;
+    }
+}
+
+/* Смартфоны (малые экраны) */
+@media (max-width: 480px) {
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .page-wrapper {
+        padding: 0.5rem;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+    
+    h2 {
+        font-size: 20px;
+    }
+    
+    /* Улучшения для форм */
+    .contact-form {
+        width: 100%;
+        padding: 15px;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        font-size: 16px; /* Более крупный шрифт для форм на телефонах */
+    }
+    
+    /* Улучшения для кнопок */
+    button, 
+    .button {
+        padding: 10px 15px;
+        width: 100%;
+        margin: 10px 0;
+    }
+    
+    /* Навигация */
+    .nav-menu {
+        flex-direction: column;
+    }
+    
+    /* Чат и сообщения */
+    .chat-container {
+        padding: 10px;
+    }
+    
+    .input-container {
+        flex-direction: column;
+    }
+    
+    .input-container input {
+        margin-bottom: 10px;
+        width: 100%;
     }
 }
 
@@ -339,6 +408,85 @@ body.no-animation .code-line {
 .service-button:hover {
     transform: scale(1.05);
     box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.4);
+}
+
+/* Мобильная оптимизация текста и изображений */
+.mobile-optimized {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.mobile-image {
+    max-width: 100%;
+    height: auto;
+}
+
+/* QR код стили */
+.qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.qr-code {
+    margin-bottom: 10px;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.qr-text {
+    font-size: 14px;
+    color: #ccc;
+}
+
+/* QR-коды страница */
+.qr-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.qr-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+    width: 100%;
+    max-width: 900px;
+}
+
+.qr-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.qr-item h3 {
+    margin-bottom: 15px;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .qr-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .qr-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 nav ul {

@@ -13,6 +13,17 @@ def impressum():
     lang = session.get("lang", "uk")
     return render_template('impressum.html', title="Impressum", lang=lang)
 
+@pages_bp.route('/qr-codes')
+def qr_codes():
+    lang = session.get("lang", "uk")
+    title_map = {
+        "uk": "QR-коди",
+        "de": "QR-Codes",
+        "en": "QR Codes"
+    }
+    title = title_map.get(lang, "QR-коди")
+    return render_template('qr_codes.html', title=title, lang=lang)
+
 @pages_bp.route('/contact', methods=['GET', 'POST'])
 def contact():
     lang = session.get("lang", "uk")
