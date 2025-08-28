@@ -5,28 +5,25 @@ pages_bp = Blueprint('pages', __name__)
 
 @pages_bp.route('/privacy')
 def privacy():
-    lang = session.get("lang", "uk")
-    return render_template('privacy.html', title="Політика конфіденційності", lang=lang)
+    lang = session.get("lang", "de")
+    titles = {"de": "Datenschutz", "uk": "Політика конфіденційності", "en": "Privacy Policy"}
+    return render_template('privacy.html', title=titles.get(lang, 'Datenschutz'), lang=lang)
 
 @pages_bp.route('/impressum')
 def impressum():
-    lang = session.get("lang", "uk")
+    lang = session.get("lang", "de")
     return render_template('impressum.html', title="Impressum", lang=lang)
 
 @pages_bp.route('/qr-codes')
 def qr_codes():
-    lang = session.get("lang", "uk")
-    title_map = {
-        "uk": "QR-коди",
-        "de": "QR-Codes",
-        "en": "QR Codes"
-    }
-    title = title_map.get(lang, "QR-коди")
+    lang = session.get("lang", "de")
+    title_map = {"uk": "QR-коди", "de": "QR-Codes", "en": "QR Codes"}
+    title = title_map.get(lang, "QR-Codes")
     return render_template('qr_codes.html', title=title, lang=lang)
 
 @pages_bp.route('/contact', methods=['GET', 'POST'])
 def contact():
-    lang = session.get("lang", "uk")
+    lang = session.get("lang", "de")
     if request.method == 'POST':
         name = request.form.get("name")
         email = request.form.get("email")
@@ -96,14 +93,16 @@ services = [
 
 def generate_service_page(service):
     def service_page():
-        lang = session.get("lang", "uk")
-        return render_template("service_template.html",
-                               service_name=service["name"],
-                               service_title=service["title"],
-                               service_description=service["description"],
-                               chat_endpoint=service["chat_endpoint"],
-                               submit_endpoint=service["submit_endpoint"],
-                               lang=lang)
+        lang = session.get("lang", "de")
+        return render_template(
+            "service_template.html",
+            service_name=service["name"],
+            service_title=service["title"],
+            service_description=service["description"],
+            chat_endpoint=service["chat_endpoint"],
+            submit_endpoint=service["submit_endpoint"],
+            lang=lang
+        )
     return service_page
 
 for service in services:

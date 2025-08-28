@@ -6,6 +6,17 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>{{ title }}</title>
+    {# Meta description default Deutsch #}
+    {% set meta_descriptions = {
+        'de': 'Rozoom – KI-gestützte Automatisierung, Web- & Softwareentwicklung. Schneller Start: Bereich wählen oder unverbindliches Kurz-Briefing (TЗ) in 3–5 Minuten. Transparente Angebote, hochwertige Umsetzung.',
+        'uk': 'Rozoom – індивідуальні рішення з автоматизації, веб та AI. Швидкий старт: виберіть напрямок або заповніть коротке ТЗ за 3–5 хвилин.',
+        'en': 'Rozoom – AI-driven automation & web/software solutions. Fast start: pick a focus area or submit a short brief (3–5 min). Transparent proposals.'
+    } %}
+    <meta name="description" content="{{ meta_descriptions.get(lang, meta_descriptions['de']) }}">
+    <meta property="og:title" content="Rozoom">
+    <meta property="og:description" content="{{ meta_descriptions.get(lang, meta_descriptions['de']) }}">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="{{ 'de_DE' if lang=='de' else ('uk_UA' if lang=='uk' else 'en_US') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Добавляем скрипты для работы с сайтом -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>

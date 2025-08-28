@@ -10,8 +10,10 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def home():
-    lang = session.get("lang", "uk")  # ⬅️ зчитуємо з session (як на інших сторінках)
-    return render_template('index.html', title="Головна", lang=lang)
+    # Default language switched to German ('de')
+    lang = session.get("lang", "de")
+    default_titles = {"de": "Startseite", "uk": "Головна", "en": "Home"}
+    return render_template('index.html', title=default_titles.get(lang, "Startseite"), lang=lang)
 
 @main_bp.route('/set_language/<language>')
 def set_language(language):
