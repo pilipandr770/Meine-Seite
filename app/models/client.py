@@ -21,7 +21,7 @@ class Client(db.Model):
 # Модель для збереження технічних завдань (ТЗ)
 class ClientRequest(db.Model):
     base_table_name = 'client_requests'
-    _extra_schema = os.getenv('POSTGRES_SCHEMA_CLIENTS')
+    _extra_schema = os.getenv('POSTGRES_SCHEMA_CLIENTS', 'rozoom_clients')
     __tablename__ = base_table_name
     if _extra_schema:
         __table_args__ = {'schema': _extra_schema, 'extend_existing': True}
@@ -39,7 +39,15 @@ class ClientRequest(db.Model):
     integrations = db.Column(db.Text, nullable=True)  # Інтеграції
     contact_method = db.Column(db.String(100), nullable=False)  # Метод зв'язку (Email, Telegram)
     contact_info = db.Column(db.String(200), nullable=True)  # Контактні дані (якщо не анонімно)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())  # Дата створення заявки
+    status = db.Column(db.String(30), default="new")  # Статус заявки (новая, в работе, завершена)
+    created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())  # Дата створення заявки
+    updated_at = db.Column(db.DateTime, server_default=db.func.current_timestamp(), 
+                          onupdate=db.func.current_timestamp())  # Дата обновления
+    deadline = db.Column(db.DateTime, nullable=True)  # Срок выполнения
+    priority = db.Column(db.Integer, default=1)  # Приоритет задачи
+    tech_stack = db.Column(db.Text, nullable=True)  # Используемые технологии
+    acceptance_criteria = db.Column(db.Text, nullable=True)  # Критерии приемки
+    notes = db.Column(db.Text, nullable=True)  # Дополнительные заметки
 
     def __init__(self, project_type, task_description, contact_method, contact_info):
         self.project_type = project_type
@@ -61,5 +69,12 @@ class ClientRequest(db.Model):
             "integrations": self.integrations,
             "contact_method": self.contact_method,
             "contact_info": self.contact_info if self.contact_method != "Анонімно" else "Немає",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            "status": self.status,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else None,
+            "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S") if self.updated_at else None,
+            "deadline": self.deadline.strftime("%Y-%m-%d %H:%M:%S") if self.deadline else None,
+            "priority": self.priority,
+            "tech_stack": self.tech_stack,
+            "acceptance_criteria": self.acceptance_criteria,
+            "notes": self.notes
         }
