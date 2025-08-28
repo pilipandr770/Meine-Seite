@@ -4,7 +4,6 @@
     <div class="input-container">
         <input type="text" id="userInput" placeholder="{% if lang == 'uk' %}Введіть повідомлення...{% elif lang == 'de' %}Nachricht eingeben...{% else %}Enter your message...{% endif %}">
         <button onclick="sendMessage()">{% if lang == 'uk' %}Відправити{% elif lang == 'de' %}Senden{% else %}Send{% endif %}</button>
-        <button id="recordButton">🎤</button>
     </div>
 </div>
 
