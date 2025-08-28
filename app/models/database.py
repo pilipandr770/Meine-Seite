@@ -106,4 +106,72 @@ def init_db(app):
                     logger.info(f"Set search_path to {search_path} for connection {id(dbapi_conn)}")
                 except Exception as e:
                     logger.warning(f"Failed to set search_path '{search_path}': {e}")
+            
+            # Создание необходимых таблиц при инициализации
+            try:
+                logger.info("Инициализация таблиц базы данных...")
+                from sqlalchemy import text
+                
+                # Создание схемы rozoom_clients, если она не существует
+                conn = engine.connect()
+                try:
+                    conn.execute(text("CREATE SCHEMA IF NOT EXISTS rozoom_clients"))
+                    conn.commit()
+                    logger.info("Схема rozoom_clients создана или уже существует")
+                except Exception as e:
+                    logger.error(f"Ошибка при создании схемы rozoom_clients: {e}")
+                
+                # Создание таблицы client_requests
+                try:
+                    conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS rozoom_clients.client_requests (
+                        id SERIAL PRIMARY KEY,
+                        project_type VARCHAR(100) NOT NULL,
+                        project_name VARCHAR(200),
+                        task_description TEXT NOT NULL,
+                        key_features TEXT,
+                        design_preferences TEXT,
+                        platform VARCHAR(100),
+                        budget VARCHAR(100),
+                        timeline VARCHAR(100),
+                        integrations TEXT,
+                        contact_method VARCHAR(100) NOT NULL,
+                        contact_info VARCHAR(200),
+                        status VARCHAR(30) DEFAULT 'new',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        deadline TIMESTAMP,
+                        priority INTEGER DEFAULT 1,
+                        tech_stack TEXT,
+                        acceptance_criteria TEXT,
+                        notes TEXT
+                    )
+                    """))
+                    conn.commit()
+                    logger.info("✅ Таблица rozoom_clients.client_requests создана или уже существует")
+                    
+                    # Проверка, что таблица действительно существует
+                    result = conn.execute(text("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'rozoom_clients' AND table_name = 'client_requests')")).scalar()
+                    if result:
+                        logger.info("✅ Подтверждено существование таблицы rozoom_clients.client_requests")
+                    else:
+                        logger.warning("⚠️ Таблица rozoom_clients.client_requests НЕ найдена в information_schema!")
+                    
+                    # Добавление тестовой записи для проверки доступа
+                    conn.execute(text("""
+                    INSERT INTO rozoom_clients.client_requests 
+                    (project_type, project_name, task_description, contact_method, contact_info)
+                    VALUES ('test', 'Тестовый проект', 'Тестовое задание', 'Email', 'test@example.com')
+                    ON CONFLICT DO NOTHING
+                    """))
+                    conn.commit()
+                    logger.info("✅ Тестовая запись добавлена или уже существует")
+                    
+                except Exception as e:
+                    logger.error(f"Ошибка при создании таблицы rozoom_clients.client_requests: {e}")
+                finally:
+                    conn.close()
+            except Exception as e:
+                logger.error(f"Общая ошибка при инициализации таблиц: {e}")
+    
     return db
