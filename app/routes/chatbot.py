@@ -37,6 +37,19 @@ def load_system_instructions(file_path):
 # Paths to system instructions
 MAIN_ASSISTANT_INSTRUCTIONS_PATH = os.path.join(parent_dir, 'system_instructions', 'main_assistant_instructions.md')
 
+# Simple in-memory cache for system instructions to avoid repeated disk IO
+_system_instruction_cache = {}
+
+def get_system_instructions_cached(path: str):
+    from time import time
+    cache_entry = _system_instruction_cache.get(path)
+    if cache_entry and (time() - cache_entry['ts'] < 300):  # 5 min TTL
+        return cache_entry['content']
+    content = load_system_instructions(path)
+    if content:
+        _system_instruction_cache[path] = {'content': content, 'ts': time()}
+    return content
+
 chatbot_bp = Blueprint("chatbot", __name__)
 
 # Налаштування логування
@@ -77,7 +90,7 @@ def main_chatbot():
             logger.info("Using Chat Completion API instead of Assistants API")
             
             # Load the detailed system instructions for the main assistant
-            system_message = load_system_instructions(MAIN_ASSISTANT_INSTRUCTIONS_PATH)
+            system_message = get_system_instructions_cached(MAIN_ASSISTANT_INSTRUCTIONS_PATH)
             
             # Fallback if instructions can't be loaded
             if not system_message:
@@ -152,7 +165,11 @@ def category_chatbot(category):
             
             # Try to load category-specific instructions
             category_instructions_path = os.path.join(parent_dir, 'system_instructions', 'expert_instructions', f'{category}.md')
-            system_message = load_system_instructions(category_instructions_path)
+            system_message = get_system_instructions_cached(category_instructions_path)
+            if not system_message:
+                # Generic fallback for TЗ structuring
+                generic_tz_path = os.path.join(parent_dir, 'system_instructions', 'expert_instructions', '_tz_assistant.md')
+                system_message = get_system_instructions_cached(generic_tz_path)
             
             # Fallback if category-specific instructions can't be loaded
             if not system_message:
