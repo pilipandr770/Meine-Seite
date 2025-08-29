@@ -68,12 +68,43 @@
                 width: 100%;
             }
         }
+        
+        /* Стили для кнопки остановки анимации */
+        .animation-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #0f0;
+            border: 1px solid #0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: monospace;
+            z-index: 100;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(3px);
+            box-shadow: 0 0 10px rgba(15, 255, 15, 0.3);
+        }
+        
+        .animation-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 15px rgba(15, 255, 15, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .animation-paused .code-line {
+            animation-play-state: paused !important;
+        }
     </style>
 </head>
 <body class="{% if title in ['Політика конфіденційності', 'Контакти', 'Impressum'] %}no-animation{% endif %}">
 
     <!-- Контейнер для коду на фоні -->
     <div id="code-bg"></div>
+    
+    <!-- Кнопка остановки анимации -->
+    <button id="animationToggle" class="animation-toggle">{% if lang == 'uk' %}Стоп анімація{% elif lang == 'de' %}Animation stoppen{% else %}Stop animation{% endif %}</button>
 
     <div class="page-wrapper">
         <header>
@@ -142,6 +173,9 @@
         document.addEventListener("DOMContentLoaded", function () {
             const symbols = ["0", "1", "{", "}", "(", ")", ";", "if", "else", "return"];
             const container = document.getElementById("code-bg");
+            let isAnimationPaused = false;
+            
+            // Создание падающих строк кода
             for (let i = 0; i < 50; i++) {
                 let codeLine = document.createElement("div");
                 codeLine.classList.add("code-line");
@@ -155,6 +189,54 @@
                 codeLine.style.animation = `fall ${Math.random() * 3 + 3}s linear infinite`;
                 codeLine.innerText = symbols.sort(() => 0.5 - Math.random()).slice(0, 10).join(" ");
                 container.appendChild(codeLine);
+            }
+            
+            // Управление кнопкой остановки анимации
+            const animationToggle = document.getElementById('animationToggle');
+            if (animationToggle) {
+                animationToggle.addEventListener('click', function() {
+                    isAnimationPaused = !isAnimationPaused;
+                    
+                    // Сохраняем состояние в localStorage
+                    localStorage.setItem('animationPaused', isAnimationPaused);
+                    
+                    if (isAnimationPaused) {
+                        document.body.classList.add('animation-paused');
+                        const lang = document.documentElement.lang || 'de';
+                        if (lang === 'uk') {
+                            animationToggle.textContent = 'Відновити анімацію';
+                        } else if (lang === 'de') {
+                            animationToggle.textContent = 'Animation fortsetzen';
+                        } else {
+                            animationToggle.textContent = 'Resume animation';
+                        }
+                    } else {
+                        document.body.classList.remove('animation-paused');
+                        const lang = document.documentElement.lang || 'de';
+                        if (lang === 'uk') {
+                            animationToggle.textContent = 'Стоп анімація';
+                        } else if (lang === 'de') {
+                            animationToggle.textContent = 'Animation stoppen';
+                        } else {
+                            animationToggle.textContent = 'Stop animation';
+                        }
+                    }
+                });
+                
+                // Проверка, нужно ли остановить анимацию при загрузке страницы
+                // (можно хранить в localStorage предпочтение пользователя)
+                if (localStorage.getItem('animationPaused') === 'true') {
+                    isAnimationPaused = true;
+                    document.body.classList.add('animation-paused');
+                    const lang = document.documentElement.lang || 'de';
+                    if (lang === 'uk') {
+                        animationToggle.textContent = 'Відновити анімацію';
+                    } else if (lang === 'de') {
+                        animationToggle.textContent = 'Animation fortsetzen';
+                    } else {
+                        animationToggle.textContent = 'Resume animation';
+                    }
+                }
             }
         });
         
