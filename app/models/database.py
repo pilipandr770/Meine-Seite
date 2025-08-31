@@ -348,8 +348,116 @@ def init_db(app):
                             except Exception as e:
                                 logger.warning(f"Error creating ProjectStage table: {e}")
                     else:
-                        logger.info("Production environment detected - skipping table drop")
-                        db.create_all()
+                        logger.info("Production environment detected - creating tables in dependency order")
+                        # In production, create tables individually to ensure correct dependency order
+                        from app.models.user import User
+                        from app.models.product import Category, Product, ProductImage, ProductReview
+                        from app.models.shop import Cart, CartItem
+                        from app.models.order import Order, OrderItem, Payment
+                        from app.models.coupon import Coupon
+                        from app.models.client import Client, ClientRequest
+                        from app.models.task import Task
+                        from app.models.project import Project, ProjectStage
+                        
+                        # Create tables in strict dependency order
+                        try:
+                            User.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ User table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating User table: {e}")
+                        
+                        try:
+                            Client.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Client table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Client table: {e}")
+                        
+                        try:
+                            ClientRequest.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ ClientRequest table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating ClientRequest table: {e}")
+                        
+                        try:
+                            Category.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Category table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Category table: {e}")
+                        
+                        try:
+                            Product.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Product table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Product table: {e}")
+                        
+                        try:
+                            Cart.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Cart table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Cart table: {e}")
+                        
+                        try:
+                            CartItem.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ CartItem table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating CartItem table: {e}")
+                        
+                        try:
+                            Order.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Order table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Order table: {e}")
+                        
+                        try:
+                            OrderItem.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ OrderItem table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating OrderItem table: {e}")
+                        
+                        # Create Project BEFORE ProjectStage (dependency order)
+                        try:
+                            Project.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Project table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Project table: {e}")
+                        
+                        try:
+                            Task.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Task table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Task table: {e}")
+                        
+                        # Create ProjectStage AFTER Project (dependency order)
+                        try:
+                            ProjectStage.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ ProjectStage table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating ProjectStage table: {e}")
+                        
+                        # Create remaining tables
+                        try:
+                            Coupon.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Coupon table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Coupon table: {e}")
+                        
+                        try:
+                            Payment.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ Payment table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating Payment table: {e}")
+                        
+                        try:
+                            ProductImage.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ ProductImage table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating ProductImage table: {e}")
+                        
+                        try:
+                            ProductReview.__table__.create(db.engine, checkfirst=True)
+                            logger.info("✅ ProductReview table created")
+                        except Exception as e:
+                            logger.warning(f"Error creating ProductReview table: {e}")
                     logger.info("✅ Все таблицы созданы или уже существуют")
             except Exception as e:
                 logger.error(f"Общая ошибка при инициализации таблиц: {e}")
