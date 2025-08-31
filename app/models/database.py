@@ -163,6 +163,14 @@ def init_db(app):
 
                 # Use SQLAlchemy to create all tables (only create, don't drop in production)
                 with app.app_context():
+                    # Set search_path before creating tables
+                    with engine.begin() as conn:
+                        try:
+                            conn.execute(text(f"SET search_path TO {search_path}"))
+                            logger.info(f"Set search_path to {search_path} for table creation")
+                        except Exception as e:
+                            logger.warning(f"Failed to set search_path for table creation: {e}")
+                    
                     # Only drop tables in development, not in production
                     if app.config.get('ENVIRONMENT') == 'development':
                         db.drop_all()
