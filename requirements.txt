@@ -16,7 +16,7 @@ alembic==1.12.0
 SQLAlchemy==1.4.50
 pytest==7.4.3
 stripe==6.0.0
-pillow==10.0.0
+pillow
 unidecode==1.3.6
 python-dateutil==2.8.2
 slugify==0.0.1
