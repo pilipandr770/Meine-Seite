@@ -25,6 +25,132 @@ logging.getLogger().addFilter(StockWarningFilter())
 
 shop_bp = Blueprint("shop", __name__)
 
+# Translation helper function
+def get_shop_text(key, lang=None):
+    """Get translated text for shop messages"""
+    if lang is None:
+        lang = session.get("lang", "de")
+    
+    translations = {
+        'product_added': {
+            'uk': 'Товар додано до кошика',
+            'de': 'Produkt zum Warenkorb hinzugefügt',
+            'en': 'Product added to cart'
+        },
+        'product_not_found': {
+            'uk': 'Товар не знайдено',
+            'de': 'Produkt nicht gefunden',
+            'en': 'Product not found'
+        },
+        'product_id_required': {
+            'uk': 'Необхідно вказати ID товару',
+            'de': 'Produkt-ID ist erforderlich',
+            'en': 'Product ID is required'
+        },
+        'invalid_product_id': {
+            'uk': 'Невірний формат ID товару',
+            'de': 'Ungültiges Produkt-ID-Format',
+            'en': 'Invalid product ID format'
+        },
+        'quantity_min_1': {
+            'uk': 'Кількість повинна бути не менше 1',
+            'de': 'Menge muss mindestens 1 sein',
+            'en': 'Quantity must be at least 1'
+        },
+        'error_processing_request': {
+            'uk': 'Помилка обробки запиту',
+            'de': 'Fehler bei der Verarbeitung der Anfrage',
+            'en': 'Error processing request'
+        },
+        'error_form_data': {
+            'uk': 'Помилка обробки даних форми',
+            'de': 'Fehler bei der Verarbeitung der Formulardaten',
+            'en': 'Error processing form data'
+        },
+        'error_retrieving_product': {
+            'uk': 'Помилка отримання інформації про товар',
+            'de': 'Fehler beim Abrufen der Produktinformationen',
+            'en': 'Error retrieving product information'
+        },
+        'unexpected_error': {
+            'uk': 'Сталася непередбачена помилка',
+            'de': 'Ein unerwarteter Fehler ist aufgetreten',
+            'en': 'An unexpected error occurred'
+        },
+        'error_processing_cart': {
+            'uk': 'Помилка обробки кошика',
+            'de': 'Fehler bei der Verarbeitung des Warenkorbs',
+            'en': 'Error processing cart'
+        },
+        'added_to_cart': {
+            'uk': 'додано до кошика',
+            'de': 'zum Warenkorb hinzugefügt',
+            'en': 'added to cart'
+        },
+        'cart_update_error': {
+            'uk': 'Сталася помилка при оновленні кошика. Спробуйте ще раз.',
+            'de': 'Beim Aktualisieren Ihres Warenkorbs ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.',
+            'en': 'An error occurred while updating your cart. Please try again.'
+        },
+        'invalid_item_quantity': {
+            'uk': 'Невірний товар або кількість',
+            'de': 'Ungültiger Artikel oder Menge',
+            'en': 'Invalid item or quantity'
+        },
+        'item_removed': {
+            'uk': 'Товар видалено з кошика',
+            'de': 'Artikel aus dem Warenkorb entfernt',
+            'en': 'Item removed from cart'
+        },
+        'cart_updated': {
+            'uk': 'Кошик оновлено',
+            'de': 'Warenkorb aktualisiert',
+            'en': 'Cart updated'
+        },
+        'cart_empty': {
+            'uk': 'Ваш кошик порожній',
+            'de': 'Ihr Warenkorb ist leer',
+            'en': 'Your cart is empty'
+        },
+        'fill_required_fields': {
+            'uk': 'Будь ласка, заповніть усі обов\'язкові поля',
+            'de': 'Bitte füllen Sie alle erforderlichen Felder aus',
+            'en': 'Please fill in all required fields'
+        },
+        'checkout_error': {
+            'uk': 'Помилка створення сесії оплати',
+            'de': 'Fehler beim Erstellen der Checkout-Sitzung',
+            'en': 'Error creating checkout session'
+        },
+        'order_cancelled': {
+            'uk': 'Ваше замовлення було скасовано',
+            'de': 'Ihre Bestellung wurde storniert',
+            'en': 'Your order has been cancelled'
+        },
+        'cart_cleared': {
+            'uk': 'Кошик очищено',
+            'de': 'Warenkorb geleert',
+            'en': 'Cart cleared'
+        },
+        'coupon_missing': {
+            'uk': 'Код купона відсутній',
+            'de': 'Gutscheincode fehlt',
+            'en': 'Coupon code missing'
+        },
+        'coupon_applied': {
+            'uk': 'Купон застосовано',
+            'de': 'Gutschein angewendet',
+            'en': 'Coupon applied'
+        },
+        'invalid_coupon': {
+            'uk': 'Невірний код купона',
+            'de': 'Ungültiger Gutscheincode',
+            'en': 'Invalid coupon code'
+        }
+    }
+    
+    return translations.get(key, {}).get(lang, translations.get(key, {}).get('en', key))
+
 shop_bp = Blueprint("shop", __name__)
 
 # Helper functions
@@ -285,11 +411,11 @@ def add_to_cart():
                     db.session.add(cart_item)
                 
                 db.session.commit()
-                return jsonify({'success': True, 'message': 'Product added to cart', 'cart_count': sum(item.quantity for item in cart.items)}), 200
+                return jsonify({'success': True, 'message': get_shop_text('product_added'), 'cart_count': sum(item.quantity for item in cart.items)}), 200
             else:
-                return jsonify({'success': False, 'message': 'Product not found'}), 404
+                return jsonify({'success': False, 'message': get_shop_text('product_not_found')}), 404
         else:
-            return jsonify({'success': False, 'message': 'Product ID is required'}), 400
+            return jsonify({'success': False, 'message': get_shop_text('product_id_required')}), 400
     except Exception as e:
         current_app.logger.exception(f"EMERGENCY OVERRIDE ERROR: {str(e)}")
         # Continue to old implementation
@@ -311,10 +437,10 @@ def add_to_cart():
                         current_app.logger.debug(f"Successfully parsed product_id as int: {product_id}")
                     except (ValueError, TypeError) as e:
                         current_app.logger.error(f"Error converting product_id to int: {str(e)}")
-                        return jsonify({'success': False, 'message': 'Invalid product ID format'}), 400
+                        return jsonify({'success': False, 'message': get_shop_text('invalid_product_id')}), 400
                 else:
                     current_app.logger.warning("No product_id in JSON data")
-                    return jsonify({'success': False, 'message': 'Product ID is required'}), 400
+                    return jsonify({'success': False, 'message': get_shop_text('product_id_required')}), 400
                     
                 # Try to convert quantity to int
                 if 'quantity' in json_data:
@@ -322,7 +448,7 @@ def add_to_cart():
                         quantity = int(json_data.get('quantity', 1))
                         current_app.logger.debug(f"Successfully parsed quantity as int: {quantity}")
                         if quantity < 1:
-                            return jsonify({'success': False, 'message': 'Quantity must be at least 1'}), 400
+                            return jsonify({'success': False, 'message': get_shop_text('quantity_min_1')}), 400
                     except (ValueError, TypeError) as e:
                         current_app.logger.error(f"Error converting quantity to int: {str(e)}")
                         quantity = 1
@@ -330,7 +456,7 @@ def add_to_cart():
                     quantity = 1
             except Exception as e:
                 current_app.logger.exception(f"General error parsing JSON data: {str(e)}")
-                return jsonify({'success': False, 'message': f'Error processing request: {str(e)}'}), 400
+                return jsonify({'success': False, 'message': f'{get_shop_text("error_processing_request")}: {str(e)}'}), 400
         else:
             try:
                 product_id = request.form.get('product_id', type=int)
@@ -338,13 +464,13 @@ def add_to_cart():
                 current_app.logger.debug(f"Form data: product_id={product_id}, quantity={quantity}")
                 
                 if not product_id:
-                    return jsonify({'success': False, 'message': 'Product ID is required'}), 400
+                    return jsonify({'success': False, 'message': get_shop_text('product_id_required')}), 400
                     
                 if quantity < 1:
                     quantity = 1
             except Exception as e:
                 current_app.logger.exception(f"Error parsing form data: {str(e)}")
-                return jsonify({'success': False, 'message': f'Error processing form data: {str(e)}'}), 400
+                return jsonify({'success': False, 'message': f'{get_shop_text("error_form_data")}: {str(e)}'}), 400
         
         # Try to get the product - with enhanced debugging
         try:
@@ -353,7 +479,7 @@ def add_to_cart():
             
             if not product:
                 current_app.logger.warning(f"Product not found: id={product_id}")
-                return jsonify({'success': False, 'message': 'Product not found'}), 404
+                return jsonify({'success': False, 'message': get_shop_text('product_not_found')}), 404
                 
             # Log all product attributes for debugging
             current_app.logger.debug(f"Found product: id={product.id}, name={product.name}, slug={product.slug}, active={product.is_active}")
@@ -366,7 +492,7 @@ def add_to_cart():
             
         except Exception as e:
             current_app.logger.error(f"Database error fetching product: {str(e)}")
-            return jsonify({'success': False, 'message': 'Error retrieving product information'}), 500
+            return jsonify({'success': False, 'message': get_shop_text('error_retrieving_product')}), 500
         
         # Check if product is active
         if not product.is_active:
@@ -385,7 +511,7 @@ def add_to_cart():
     
     except Exception as e:
         current_app.logger.exception(f"Unexpected error in add_to_cart: {str(e)}")
-        return jsonify({'success': False, 'message': 'An unexpected error occurred'}), 500
+        return jsonify({'success': False, 'message': get_shop_text('unexpected_error')}), 500
     
     try:
         cart = get_cart()
@@ -427,7 +553,7 @@ def add_to_cart():
             db.session.add(cart_item)
     except Exception as e:
         current_app.logger.exception(f"Error during cart operation: {str(e)}")
-        return jsonify({'success': False, 'message': f'Error processing cart: {str(e)}'}), 500
+        return jsonify({'success': False, 'message': f'{get_shop_text("error_processing_cart")}: {str(e)}'}), 500
     
     try:
         db.session.commit()
@@ -443,7 +569,7 @@ def add_to_cart():
         
         return jsonify({
             'success': True, 
-            'message': f'Added {quantity} {product.name} to cart',
+            'message': f'{quantity} {product.name} {get_shop_text("added_to_cart")}',
             'cart_count': cart_count
         })
     except Exception as e:
@@ -451,7 +577,7 @@ def add_to_cart():
         current_app.logger.exception(f"Error committing cart changes: {str(e)}")
         return jsonify({
             'success': False,
-            'message': 'An error occurred while updating your cart. Please try again.'
+            'message': get_shop_text('cart_update_error')
         }), 500
 
 @shop_bp.route('/cart/update', methods=['POST'])
@@ -473,7 +599,7 @@ def update_cart():
         quantity = request.form.get('quantity', type=int)
     
     if not item_id or quantity < 0:
-        return jsonify({'success': False, 'message': 'Invalid item or quantity'}), 400
+        return jsonify({'success': False, 'message': get_shop_text('invalid_item_quantity')}), 400
     
     cart = get_cart()
     cart_item = CartItem.query.filter_by(id=item_id, cart_id=cart.id).first_or_404()
@@ -481,7 +607,7 @@ def update_cart():
     if quantity == 0:
         # Remove item from cart
         db.session.delete(cart_item)
-        message = 'Item removed from cart'
+        message = get_shop_text('item_removed')
     else:
         # TEMPORARY: Allow all quantity updates regardless of stock
         current_app.logger.debug(f"Stock check bypassed for cart update: cart_item_id={cart_item.id}, new_qty={quantity}, product_stock={cart_item.product.stock}")
@@ -489,7 +615,7 @@ def update_cart():
         # Update quantity
         cart_item.quantity = quantity
         cart_item.updated_at = datetime.datetime.utcnow()
-        message = 'Cart updated'
+        message = get_shop_text('cart_updated')
     
     db.session.commit()
     
@@ -518,9 +644,9 @@ def remove_from_cart(item_id):
     if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         # Return JSON for AJAX callers
         cart = get_cart()
-        return jsonify({'success': True, 'message': 'Item removed', 'cart_count': sum(i.quantity for i in cart.items)})
+        return jsonify({'success': True, 'message': get_shop_text('item_removed'), 'cart_count': sum(i.quantity for i in cart.items)})
 
-    flash('Item removed from cart', 'success')
+    flash(get_shop_text('item_removed'), 'success')
     return redirect(url_for('shop.cart'))
 
 @shop_bp.route('/checkout', methods=['GET', 'POST'])
@@ -530,7 +656,7 @@ def checkout():
     
     # Check if cart is empty
     if not cart.items:
-        flash('Your cart is empty', 'warning')
+        flash(get_shop_text('cart_empty'), 'warning')
         return redirect(url_for('shop.cart'))
     
     if request.method == 'POST':
@@ -543,7 +669,7 @@ def checkout():
             
             # Validate required fields
             if not email or not first_name or not last_name:
-                flash('Please fill in all required fields', 'danger')
+                flash(get_shop_text('fill_required_fields'), 'danger')
                 return render_template('shop/checkout.html', cart=cart)
                 
             # Generate unique order number
@@ -663,7 +789,7 @@ def checkout():
             
         except Exception as e:
             current_app.logger.error(f'Stripe checkout session creation failed: {str(e)}')
-            flash(f'Error creating checkout session: {str(e)}', 'danger')
+            flash(f'{get_shop_text("checkout_error")}: {str(e)}', 'danger')
             return render_template('shop/checkout.html', cart=cart)
     
     return render_template('shop/checkout.html', cart=cart)
@@ -679,7 +805,7 @@ def clear_cart():
     # Reset session cart id for guest
     if 'cart_id' in session:
         session.pop('cart_id')
-    return jsonify({'success': True, 'message': 'Cart cleared', 'cart_count': 0})
+    return jsonify({'success': True, 'message': get_shop_text('cart_cleared'), 'cart_count': 0})
 
 
 @shop_bp.route('/cart/apply-coupon', methods=['POST'])
@@ -688,14 +814,14 @@ def apply_coupon():
     data = request.get_json(silent=True) or {}
     code = data.get('coupon_code')
     if not code:
-        return jsonify({'success': False, 'message': 'Coupon code missing'}), 400
+        return jsonify({'success': False, 'message': get_shop_text('coupon_missing')}), 400
     # Very simple demo: accept code 'DISCOUNT10' -> 10% off
     cart = get_cart()
     if code.upper() == 'DISCOUNT10':
         # Store a naive coupon in session for display only
         session['coupon'] = {'code': code.upper(), 'percent': 10}
-        return jsonify({'success': True, 'message': 'Coupon applied', 'discount': 0.0})
-    return jsonify({'success': False, 'message': 'Invalid coupon code'}), 400
+        return jsonify({'success': True, 'message': get_shop_text('coupon_applied'), 'discount': 0.0})
+    return jsonify({'success': False, 'message': get_shop_text('invalid_coupon')}), 400
 
 @shop_bp.route('/payment/success')
 def payment_success():
@@ -749,7 +875,7 @@ def payment_cancel():
     
     db.session.commit()
     
-    flash('Your order has been cancelled', 'info')
+    flash(get_shop_text('order_cancelled'), 'info')
     return redirect(url_for('shop.cart'))
 
 @shop_bp.route('/orders')
