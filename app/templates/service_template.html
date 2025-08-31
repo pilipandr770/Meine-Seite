@@ -95,9 +95,16 @@
         if (!userInput.value.trim()) return;
         try {
             messagesDiv.innerHTML += `<p><strong>Ви:</strong> ${userInput.value}</p>`;
+            
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
             const response = await fetch(endpoint, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": csrfToken
+                },
                 body: JSON.stringify({ message: userInput.value })
             });
             const data = await response.json();
