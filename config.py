@@ -117,6 +117,10 @@ class Config:
         SQLALCHEMY_DATABASE_URI = database_uri or "sqlite:///instance/clients.db"
         logger.info("Using SQLite database for development")
         SQLALCHEMY_ENGINE_OPTIONS = {}
+        CLIENT_REQUESTS_SCHEMA = None
+        SHOP_SCHEMA = None
+        PROJECTS_SCHEMA = None
+        DB_SEARCH_PATH = None
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
