@@ -3,6 +3,32 @@ from flask import Blueprint, render_template, session, request, flash, redirect,
 
 pages_bp = Blueprint('pages', __name__)
 
+# Translation helper function
+def get_page_text(key, lang=None):
+    """Get translated text for page messages"""
+    if lang is None:
+        lang = session.get("lang", "de")
+    
+    translations = {
+        'message_sent': {
+            'uk': 'Повідомлення надіслано успішно.',
+            'de': 'Nachricht erfolgreich gesendet.',
+            'en': 'Message sent successfully.'
+        },
+        'send_error': {
+            'uk': 'Виникла помилка при надсиланні.',
+            'de': 'Beim Senden ist ein Fehler aufgetreten.',
+            'en': 'An error occurred while sending.'
+        },
+        'fill_all_fields': {
+            'uk': 'Заповніть усі поля.',
+            'de': 'Bitte füllen Sie alle Felder aus.',
+            'en': 'Please fill in all fields.'
+        }
+    }
+    
+    return translations.get(key, {}).get(lang, translations.get(key, {}).get('en', key))
+
 @pages_bp.route('/privacy')
 def privacy():
     lang = session.get("lang", "de")
@@ -36,12 +62,12 @@ def contact():
                   f"📝 <b>Повідомлення:</b> {message}"
             try:
                 send_telegram_message(msg)  # або email
-                flash("Повідомлення надіслано успішно.", "success")
+                flash(get_page_text('message_sent'), "success")
             except Exception as e:
                 print(f"❌ Не вдалося надіслати повідомлення: {e}")
-                flash("Виникла помилка при надсиланні.", "error")
+                flash(get_page_text('send_error'), "error")
         else:
-            flash("Заповніть усі поля.", "error")
+            flash(get_page_text('fill_all_fields'), "error")
         return redirect(url_for("pages.contact"))
     
     return render_template('contact.html', title="Контакти", lang=lang)
