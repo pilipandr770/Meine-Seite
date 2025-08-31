@@ -3,7 +3,9 @@ from app.models.database import db
 from datetime import datetime
 
 _SHOP_SCHEMA = os.environ.get('POSTGRES_SCHEMA_SHOP')
-_USE_SHOP_SCHEMA = bool(_SHOP_SCHEMA and os.environ.get('DATABASE_URL', '').startswith('postgres'))
+# More reliable check for PostgreSQL - check for postgres in DATABASE_URL or DATABASE_URI
+_db_url = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI') or ''
+_USE_SHOP_SCHEMA = bool(_SHOP_SCHEMA and ('postgres' in _db_url or 'postgresql' in _db_url))
 
 class Coupon(db.Model):
     __tablename__ = 'coupons'

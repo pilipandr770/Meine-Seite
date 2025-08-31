@@ -54,7 +54,7 @@ class CartItem(db.Model):
     cart_id = db.Column(db.Integer, db.ForeignKey(f'{_SHOP_SCHEMA}.carts.id' if _USE_SHOP_SCHEMA else 'carts.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey(f'{_SHOP_SCHEMA}.products.id' if _USE_SHOP_SCHEMA else 'products.id'), nullable=False)
     # Relationship to Product so templates and routes can use `item.product`
-    product = db.relationship('Product', lazy=True)
+    product = db.relationship('Product', lazy=True, foreign_keys=[product_id])
     quantity = db.Column(db.Integer, default=1)
     # Store price at time of adding to cart so totals don't change if product price updates
     price = db.Column(db.Numeric(10, 2), nullable=False)
