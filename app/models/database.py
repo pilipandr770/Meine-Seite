@@ -356,6 +356,12 @@ def init_db(app):
                                 logger.warning(f"Error creating ProductReview table: {e}")
                             
                             try:
+                                # Ensure search_path includes projects_schema for ProjectStage creation
+                                projects_schema = app.config.get('PROJECTS_SCHEMA')
+                                if projects_schema:
+                                    with engine.begin() as conn:
+                                        conn.execute(text(f"SET search_path TO {table_search_path}"))
+                                
                                 ProjectStage.__table__.create(db.engine, checkfirst=True)
                                 logger.info("✅ ProjectStage table created")
                             except Exception as e:
@@ -458,6 +464,11 @@ def init_db(app):
                         
                         # Create ProjectStage AFTER Project (dependency order)
                         try:
+                            # Ensure search_path includes projects_schema for ProjectStage creation
+                            if projects_schema:
+                                with engine.begin() as conn:
+                                    conn.execute(text(f"SET search_path TO {production_search_path}"))
+                            
                             ProjectStage.__table__.create(db.engine, checkfirst=True)
                             logger.info("✅ ProjectStage table created")
                         except Exception as e:
