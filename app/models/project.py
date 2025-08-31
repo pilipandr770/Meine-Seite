@@ -50,9 +50,6 @@ class Project(db.Model):
     request = db.relationship('ClientRequest', backref=db.backref('projects', lazy=True), 
                             primaryjoin="Project.request_id == ClientRequest.id",
                             foreign_keys=[request_id])
-    user = db.relationship('User', backref=db.backref('projects', lazy=True), 
-                         primaryjoin="Project.user_id == User.id",
-                         foreign_keys=[user_id])
     stages = db.relationship('ProjectStage', backref='project', lazy=True,
                            primaryjoin="Project.id == ProjectStage.project_id")
     
@@ -92,7 +89,7 @@ class ProjectStage(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     # Dynamic FK target based on PROJECTS_SCHEMA
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects_schema.project.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')
