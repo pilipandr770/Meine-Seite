@@ -50,8 +50,7 @@ class Project(db.Model):
     request = db.relationship('ClientRequest', backref=db.backref('projects', lazy=True), 
                             primaryjoin="Project.request_id == ClientRequest.id",
                             foreign_keys=[request_id])
-    stages = db.relationship('ProjectStage', backref='project', lazy=True,
-                           primaryjoin="Project.id == ProjectStage.project_id")
+    stages = db.relationship('ProjectStage', backref='project', lazy=True)
     
     def __init__(self, name, client_id=None, request_id=None, description=None, slug=None, user_id=None):
         from app.utils.slug import generate_slug
@@ -89,7 +88,7 @@ class ProjectStage(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     # Dynamic FK target based on PROJECTS_SCHEMA
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects_schema.project.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')
