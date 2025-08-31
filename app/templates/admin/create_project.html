@@ -1,0 +1,108 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Create Project | RoZoom Admin{% endblock %}
+
+{% block content %}
+<div class="admin-main">
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h2><i class="fas fa-plus"></i> Create New Project</h2>
+            <a href="{{ url_for('admin.projects') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Projects
+            </a>
+        </div>
+        
+        <form method="POST">
+            {{ form.csrf_token }}
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Project Name *</label>
+                        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else "")) }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">User</label>
+                        {{ form.user_id(class="form-control" + (" is-invalid" if form.user_id.errors else "")) }}
+                        {% if form.user_id.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.user_id.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="deadline" class="form-label">Deadline</label>
+                        {{ form.deadline(class="form-control" + (" is-invalid" if form.deadline.errors else "")) }}
+                        {% if form.deadline.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.deadline.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="add_default_stages" name="add_default_stages" checked>
+                            <label class="form-check-label" for="add_default_stages">
+                                Add default project stages
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            This will create 12 standard project stages including planning, development, testing, and deployment phases.
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Default Stages Preview</h6>
+                        </div>
+                        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                            <ol class="list-group list-group-numbered">
+                                <li class="list-group-item">Создание и утверждение ТЗ</li>
+                                <li class="list-group-item">Планирование и анализ требований</li>
+                                <li class="list-group-item">Дизайн и прототипирование</li>
+                                <li class="list-group-item">Фронтенд разработка</li>
+                                <li class="list-group-item">Бекенд разработка</li>
+                                <li class="list-group-item">Верстка</li>
+                                <li class="list-group-item">Интеграция</li>
+                                <li class="list-group-item">Тестировка</li>
+                                <li class="list-group-item">Доработка</li>
+                                <li class="list-group-item">Деплой</li>
+                                <li class="list-group-item">Документация</li>
+                                <li class="list-group-item">Поддержка и сопровождение</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Create Project
+                </button>
+                <a href="{{ url_for('admin.projects') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

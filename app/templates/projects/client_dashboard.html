@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Личный кабинет</h1>
+            
+            <!-- Информация о пользователе -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Информация о пользователе</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
+                            <p><strong>Email:</strong> {{ user.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Дата регистрации:</strong> {{ user.created_at.strftime('%d.%m.%Y') if user.created_at else 'Не указана' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Список проектов -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Мои проекты</h5>
+                    <span class="badge badge-primary">{{ projects|length }} проект(ов)</span>
+                </div>
+                <div class="card-body">
+                    {% if projects %}
+                        <div class="row">
+                            {% for project in projects %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ project.name }}</h6>
+                                        <p class="card-text text-muted small">
+                                            {{ project.description|truncate(100) if project.description else 'Описание отсутствует' }}
+                                        </p>
+                                        <div class="mb-2">
+                                            <span class="badge 
+                                                {% if project.status == 'new' %}badge-secondary
+                                                {% elif project.status == 'in_progress' %}badge-primary
+                                                {% elif project.status == 'completed' %}badge-success
+                                                {% else %}badge-warning{% endif %}">
+                                                {{ project.status }}
+                                            </span>
+                                        </div>
+                                        <div class="small text-muted mb-2">
+                                            <p>Создан: {{ project.created_at.strftime('%d.%m.%Y') }}</p>
+                                            {% if project.deadline %}
+                                            <p>Дедлайн: {{ project.deadline.strftime('%d.%m.%Y') }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <a href="{{ url_for('project.client_project_detail', project_id=project.id) }}" 
+                                           class="btn btn-primary btn-sm">Подробнее</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">У вас пока нет проектов</h5>
+                            <p class="text-muted">Когда администратор создаст проект для вас, он появится здесь.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

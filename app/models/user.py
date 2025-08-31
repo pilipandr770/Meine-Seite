@@ -24,6 +24,7 @@ class User(db.Model, UserMixin):
     # Relations
     orders = db.relationship('Order', backref='user', lazy=True)
     cart = db.relationship('Cart', backref='user', lazy=True, uselist=False)
+    projects = db.relationship('Project', backref='user', lazy=True, foreign_keys='Project.user_id')
     
     def __init__(self, email, username, password, first_name=None, last_name=None, is_admin=False):
         self.email = email.lower()

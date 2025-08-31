@@ -1,8 +1,10 @@
-from flask import Blueprint, render_template, request, jsonify, current_app
-from app.models.client import ClientRequest, db
+from flask import Blueprint, render_template, request, jsonify, current_app, flash, redirect, url_for
+from app.models.client import ClientRequest, db, Client
 from app.models.project import create_project_from_request, Project, ProjectStage
+from app.models.user import User
 from datetime import datetime
 import logging
+from flask_login import login_required, current_user
 
 project_bp = Blueprint('project', __name__, url_prefix='/projects')
 logger = logging.getLogger(__name__)
@@ -21,6 +23,7 @@ def view_project(project_id):
     return render_template('projects/detail.html', project=project, stages=stages)
 
 @project_bp.route('/new', methods=['GET', 'POST'])
+@login_required
 def create_project():
     """Создает новый проект"""
     if request.method == 'POST':
@@ -28,7 +31,7 @@ def create_project():
             data = request.form
             project = Project(
                 name=data.get('name'),
-                client_id=data.get('client_id'),
+                user_id=current_user.id,
                 description=data.get('description')
             )
             
@@ -165,15 +168,26 @@ def create_from_request(request_id):
         logger.error(f"Ошибка при создании проекта из ТЗ: {e}")
         return jsonify({"success": False, "message": f"Ошибка: {str(e)}"}), 500
 
-@project_bp.route('/api/list', methods=['GET'])
-def api_list_projects():
-    """API endpoint для получения списка проектов"""
-    try:
-        projects = Project.query.all()
-        return jsonify({
-            "success": True,
-            "projects": [project.to_dict() for project in projects]
-        })
-    except Exception as e:
-        logger.error(f"Ошибка при получении списка проектов: {e}")
-        return jsonify({"success": False, "message": f"Ошибка: {str(e)}"}), 500
+@project_bp.route('/client/dashboard', methods=['GET'])
+@login_required
+def client_dashboard():
+    """Личный кабинет пользователя - просмотр его проектов"""
+    # Получаем проекты пользователя
+    projects = Project.query.filter_by(user_id=current_user.id).order_by(Project.created_at.desc()).all()
+    
+    return render_template('projects/client_dashboard.html', projects=projects, user=current_user)
+
+@project_bp.route('/client/<int:project_id>', methods=['GET'])
+@login_required
+def client_project_detail(project_id):
+    """Детальный просмотр проекта пользователем"""
+    # Получаем проект и проверяем, что он принадлежит пользователю
+    project = Project.query.filter_by(id=project_id, user_id=current_user.id).first()
+    if not project:
+        flash('Проект не найден или у вас нет доступа к нему.', 'error')
+        return redirect(url_for('project.client_dashboard'))
+    
+    # Получаем стадии проекта
+    stages = ProjectStage.query.filter_by(project_id=project_id).order_by(ProjectStage.order_number).all()
+    
+    return render_template('projects/client_project_detail.html', project=project, stages=stages)

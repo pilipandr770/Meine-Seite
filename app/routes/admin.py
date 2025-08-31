@@ -2,12 +2,14 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from app.models.database import db
+from app.models.client import Client, ClientRequest
+from app.models.project import Project, ProjectStage
 from app.models.user import User
-from app.models.product import Category, Product, ProductImage, ProductReview
-from app.models.order import Order, OrderItem, Payment
+from app.models.product import Product, Category
+from app.models.order import Order
 from app.utils.decorators import admin_required
 from app.utils.slug import generate_slug
-from app.forms.admin import CategoryForm, ProductForm, OrderStatusForm
+from app.forms.admin import CategoryForm, ProductForm, OrderStatusForm, ProjectForm, EditProjectForm
 import datetime
 
 admin_bp = Blueprint("admin", __name__)
@@ -310,3 +312,170 @@ def dashboard_sales():
         'dates': dates,
         'sales': sales_data
     })
+
+# Projects Management
+@admin_bp.route('/projects')
+@login_required
+@admin_required
+def projects():
+    """Projects management page"""
+    from app.models.user import User
+    projects = Project.query.order_by(Project.created_at.desc()).all()
+    users = User.query.all()
+    return render_template('admin/projects.html', projects=projects, users=users)
+
+@admin_bp.route('/projects/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_project():
+    """Create new project"""
+    form = ProjectForm()
+    
+    # Populate user choices
+    from app.models.user import User
+    users = User.query.all()
+    form.user_id.choices = [(user.id, f"{user.username} ({user.email})") for user in users]
+    
+    if form.validate_on_submit():
+        try:
+            from app.utils.slug import generate_slug
+            
+            # Generate slug from project name
+            base_slug = generate_slug(form.name.data)
+            slug = base_slug
+            counter = 1
+            
+            # Ensure slug uniqueness
+            while Project.query.filter_by(slug=slug).first():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            
+            project = Project(
+                name=form.name.data,
+                slug=slug,
+                user_id=form.user_id.data,
+                description=form.description.data
+            )
+            
+            if form.deadline.data:
+                project.deadline = form.deadline.data
+            
+            db.session.add(project)
+            db.session.flush()
+            
+            # Create default stages
+            stages = [
+                {"name": "Создание и утверждение ТЗ", "description": "Сбор требований, анализ, составление технического задания", "order": 1},
+                {"name": "Планирование и анализ требований", "description": "Детальный анализ требований, оценка сложности, планирование ресурсов", "order": 2},
+                {"name": "Дизайн и прототипирование", "description": "Создание дизайна интерфейса, прототипов, UX/UI дизайн", "order": 3},
+                {"name": "Фронтенд разработка", "description": "Разработка пользовательского интерфейса, клиентской части", "order": 4},
+                {"name": "Бекенд разработка", "description": "Разработка серверной части, API, бизнес-логики", "order": 5},
+                {"name": "Верстка", "description": "HTML/CSS верстка, адаптивный дизайн, кроссбраузерность", "order": 6},
+                {"name": "Интеграция", "description": "Интеграция фронтенда и бекенда, настройка API", "order": 7},
+                {"name": "Тестировка", "description": "Модульное тестирование, интеграционное тестирование, QA", "order": 8},
+                {"name": "Доработка", "description": "Исправление ошибок, оптимизация производительности", "order": 9},
+                {"name": "Деплой", "description": "Развертывание на сервере, настройка production среды", "order": 10},
+                {"name": "Документация", "description": "Создание технической документации, инструкций пользователя", "order": 11},
+                {"name": "Поддержка и сопровождение", "description": "Мониторинг, техническая поддержка, обновления", "order": 12}
+            ]
+            
+            for stage in stages:
+                db.session.add(ProjectStage(
+                    project_id=project.id,
+                    name=stage["name"],
+                    description=stage["description"],
+                    order_number=stage["order"]
+                ))
+            
+            db.session.commit()
+            flash('Проект успешно создан!', 'success')
+            return redirect(url_for('admin.projects'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ошибка при создании проекта: {str(e)}', 'error')
+    
+    return render_template('admin/create_project.html', form=form, clients=clients)
+
+@admin_bp.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_project(project_id):
+    """Edit project"""
+    project = Project.query.get_or_404(project_id)
+    from app.models.user import User
+    users = User.query.all()
+    
+    form = EditProjectForm()
+    form.user_id.choices = [(user.id, f"{user.username} ({user.email})") for user in users]
+    
+    if form.validate_on_submit():
+        try:
+            from app.utils.slug import generate_slug
+            
+            old_name = project.name
+            new_name = form.name.data
+            
+            # Update slug if name changed
+            if old_name != new_name:
+                base_slug = generate_slug(new_name)
+                slug = base_slug
+                counter = 1
+                
+                # Ensure slug uniqueness (excluding current project)
+                while Project.query.filter(Project.slug == slug, Project.id != project.id).first():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                
+                project.slug = slug
+            
+            project.name = form.name.data
+            project.description = form.description.data
+            project.status = form.status.data
+            project.user_id = form.user_id.data
+            
+            if form.deadline.data:
+                project.deadline = form.deadline.data
+            
+            db.session.commit()
+            flash('Проект обновлен!', 'success')
+            return redirect(url_for('admin.projects'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ошибка при обновлении проекта: {str(e)}', 'error')
+    
+    # Pre-populate form with current project data
+    if request.method == 'GET':
+        form.name.data = project.name
+        form.description.data = project.description
+        form.status.data = project.status
+        form.user_id.data = project.user_id
+        form.deadline.data = project.deadline
+    
+    stages = ProjectStage.query.filter_by(project_id=project_id).order_by(ProjectStage.order_number).all()
+    return render_template('admin/edit_project.html', project=project, form=form, users=users, stages=stages)
+
+@admin_bp.route('/projects/<int:project_id>/stages/<int:stage_id>/update', methods=['POST'])
+@login_required
+@admin_required
+def update_project_stage(project_id, stage_id):
+    """Update project stage"""
+    try:
+        stage = ProjectStage.query.filter_by(id=stage_id, project_id=project_id).first_or_404()
+        data = request.form
+        
+        stage.name = data.get('name', stage.name)
+        stage.description = data.get('description', stage.description)
+        stage.status = data.get('status', stage.status)
+        
+        if data.get('start_date'):
+            stage.start_date = datetime.datetime.strptime(data.get('start_date'), '%Y-%m-%d')
+        if data.get('end_date'):
+            stage.end_date = datetime.datetime.strptime(data.get('end_date'), '%Y-%m-%d')
+        
+        db.session.commit()
+        flash('Стадия обновлена!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при обновлении стадии: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.edit_project', project_id=project_id))

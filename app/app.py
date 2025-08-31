@@ -49,12 +49,15 @@ def create_app():
         app.config['POSTGRES_SCHEMA'] = os.environ.get('POSTGRES_SCHEMA', 'rozoom_schema')
     
     # Import all models to ensure they're registered with SQLAlchemy before relationships are resolved
-    from app.models import user, product, shop, order, coupon
+    from app.models import user, product, shop, order, coupon, client, task
     from app.models.user import User
     from app.models.product import Category, Product, ProductImage, ProductReview
     from app.models.shop import Cart, CartItem
     from app.models.order import Order, OrderItem, Payment
     from app.models.coupon import Coupon
+    from app.models.client import Client, ClientRequest
+    from app.models.task import Task
+    from app.models.project import Project, ProjectStage
     
     # Import here to avoid circular imports - используем новый модуль database.py
     from app.models.database import db, init_db

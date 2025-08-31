@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Навигация -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('project.client_dashboard') }}">Личный кабинет</a></li>
+                    <li class="breadcrumb-item active">{{ project.name }}</li>
+                </ol>
+            </nav>
+            
+            <!-- Информация о проекте -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ project.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6>Описание проекта</h6>
+                            <p>{{ project.description or 'Описание отсутствует' }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <strong>Статус:</strong>
+                                <span class="badge ml-2 
+                                    {% if project.status == 'new' %}badge-secondary
+                                    {% elif project.status == 'in_progress' %}badge-primary
+                                    {% elif project.status == 'completed' %}badge-success
+                                    {% else %}badge-warning{% endif %}">
+                                    {{ project.status }}
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Дата создания:</strong><br>
+                                {{ project.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            </div>
+                            {% if project.deadline %}
+                            <div class="mb-3">
+                                <strong>Дедлайн:</strong><br>
+                                {{ project.deadline.strftime('%d.%m.%Y') }}
+                            </div>
+                            {% endif %}
+                            {% if project.completed_date %}
+                            <div class="mb-3">
+                                <strong>Дата завершения:</strong><br>
+                                {{ project.completed_date.strftime('%d.%m.%Y') }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Стадии проекта -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Этапы проекта</h5>
+                </div>
+                <div class="card-body">
+                    {% if stages %}
+                        <div class="timeline">
+                            {% for stage in stages %}
+                            <div class="timeline-item mb-4">
+                                <div class="timeline-marker 
+                                    {% if stage.status == 'completed' %}bg-success
+                                    {% elif stage.status == 'in_progress' %}bg-primary
+                                    {% else %}bg-secondary{% endif %}">
+                                    {% if stage.status == 'completed' %}
+                                        <i class="fas fa-check text-white"></i>
+                                    {% elif stage.status == 'in_progress' %}
+                                        <i class="fas fa-clock text-white"></i>
+                                    {% else %}
+                                        <i class="fas fa-circle text-white"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">{{ stage.name }}</h6>
+                                    <p class="timeline-description">{{ stage.description or 'Описание отсутствует' }}</p>
+                                    <div class="timeline-meta">
+                                        <small class="text-muted">
+                                            Статус: 
+                                            <span class="badge 
+                                                {% if stage.status == 'pending' %}badge-secondary
+                                                {% elif stage.status == 'in_progress' %}badge-primary
+                                                {% elif stage.status == 'completed' %}badge-success
+                                                {% else %}badge-warning{% endif %}">
+                                                {{ stage.status }}
+                                            </span>
+                                        </small>
+                                        {% if stage.start_date %}
+                                        <br><small class="text-muted">Начало: {{ stage.start_date.strftime('%d.%m.%Y') }}</small>
+                                        {% endif %}
+                                        {% if stage.end_date %}
+                                        <br><small class="text-muted">Завершение: {{ stage.end_date.strftime('%d.%m.%Y') }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">Этапы проекта еще не определены.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Кнопка возврата -->
+            <div class="mt-4">
+                <a href="{{ url_for('project.client_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Вернуться в кабинет
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-left: -30px;
+    padding-left: 60px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 3px solid #007bff;
+}
+
+.timeline-title {
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+.timeline-description {
+    margin-bottom: 10px;
+    color: #6c757d;
+}
+
+.timeline-meta {
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

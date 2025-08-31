@@ -37,12 +37,12 @@ def create_app(config_class=Config):
     CSRFProtect(app)
 
     # Register blueprints
-    from app.routes.main import bp as main_bp
-    from app.routes.auth import bp as auth_bp
-    from app.routes.pages import bp as pages_bp
-    from app.routes.crm import bp as crm_bp
-    from app.routes.calendar_routes import bp as calendar_bp
-    from app.routes.chatbot import bp as chatbot_bp
+    from app.routes.main import main_bp
+    from app.routes.auth import auth_bp
+    from app.routes.pages import pages_bp
+    from app.routes.crm import crm_bp
+    from app.routes.calendar_routes import calendar_bp
+    from app.routes.chatbot import chatbot_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')

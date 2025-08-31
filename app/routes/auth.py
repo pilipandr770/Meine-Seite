@@ -54,6 +54,12 @@ def login():
             logger.info('Invalid login attempt for email=%s', form.email.data.lower())
             flash('Invalid email or password.', 'danger')
     
+    # Log form validation errors for login
+    if request.method == 'POST' and not form.validate_on_submit():
+        logger.info('Login form validation failed')
+        if form.errors:
+            logger.info('Login form errors: %s', form.errors)
+    
     return render_template('auth/login.html', form=form)
 
 @auth_bp.route('/logout')
@@ -74,33 +80,45 @@ def register():
     form = RegistrationForm()
     
     if form.validate_on_submit():
+        logger.info('Registration attempt: form validated; username=%s, email=%s',
+                    form.username.data, form.email.data.lower())
+        
         # Check if email already exists
         existing_user = User.query.filter_by(email=form.email.data.lower()).first()
         if existing_user:
+            logger.info('Registration blocked: email already exists: %s', form.email.data.lower())
             flash('A user with that email already exists.', 'danger')
             return render_template('auth/register.html', form=form)
             
         # Check if username already exists
         existing_username = User.query.filter_by(username=form.username.data).first()
         if existing_username:
+            logger.info('Registration blocked: username already exists: %s', form.username.data)
             flash('That username is already taken.', 'danger')
             return render_template('auth/register.html', form=form)
         
         # Create new user
         new_user = User(
-            username=form.username.data,
             email=form.email.data.lower(),
-            password_hash=generate_password_hash(form.password.data),
+            username=form.username.data,
+            password=form.password.data,  # Pass the plain password, constructor will hash it
             is_admin=False,  # Default to non-admin
-            is_active=True   # Default to active
         )
+        new_user.is_active = True  # Set is_active after creation
         
         # Add to database
         db.session.add(new_user)
         db.session.commit()
         
+        logger.info('User registered successfully: %s (%s)', new_user.username, new_user.email)
         flash('Your account has been created! You can now login.', 'success')
         return redirect(url_for('auth.login'))
+    
+    # Log form validation errors
+    if request.method == 'POST':
+        logger.info('Registration form validation failed')
+        if form.errors:
+            logger.info('Form errors: %s', form.errors)
     
     return render_template('auth/register.html', form=form)
 

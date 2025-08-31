@@ -46,8 +46,10 @@ class Config:
         client_schema = os.environ.get('POSTGRES_SCHEMA_CLIENTS')
         # New: optional separate schema for shop data
         shop_schema = os.environ.get('POSTGRES_SCHEMA_SHOP')
+        # New: optional separate schema for projects data
+        projects_schema = os.environ.get('POSTGRES_SCHEMA_PROJECTS')
 
-        # Build search_path: prefer client schema, then shop schema (if any), then base schema
+        # Build search_path: prefer client schema, then shop schema, then projects schema (if any), then base schema
         parts = []
         if client_schema and client_schema != schema:
             parts.append(client_schema)
@@ -55,6 +57,9 @@ class Config:
         if shop_schema and shop_schema != schema and shop_schema not in parts:
             parts.append(shop_schema)
             logger.info(f"Shop schema detected: {shop_schema}")
+        if projects_schema and projects_schema != schema and projects_schema not in parts:
+            parts.append(projects_schema)
+            logger.info(f"Projects schema detected: {projects_schema}")
         parts.append(schema)
         combined_search_path = ','.join(parts)
         
@@ -83,6 +88,7 @@ class Config:
         SQLALCHEMY_DATABASE_URI = database_uri
         CLIENT_REQUESTS_SCHEMA = client_schema
         SHOP_SCHEMA = shop_schema
+        PROJECTS_SCHEMA = projects_schema
         DB_SEARCH_PATH = combined_search_path
         logger.info(f"Configured PostgreSQL search_path: {combined_search_path}")
         SQLALCHEMY_ENGINE_OPTIONS = {

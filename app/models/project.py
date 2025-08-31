@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 REQUESTS_SCHEMA = os.getenv('POSTGRES_SCHEMA_CLIENTS')
 BASE_SCHEMA = os.getenv('POSTGRES_SCHEMA')  # может быть None, тогда search_path
+PROJECTS_SCHEMA = os.getenv('POSTGRES_SCHEMA_PROJECTS', REQUESTS_SCHEMA or BASE_SCHEMA)
 
 # If the configured database isn't PostgreSQL, avoid using schema-qualified
 # table names because SQLite doesn't support schemas the same way.
@@ -19,18 +20,21 @@ _db_url = os.getenv('DATABASE_URL') or os.getenv('DATABASE_URI') or ''
 if not ('postgres' in _db_url or 'postgresql' in _db_url):
     REQUESTS_SCHEMA = None
     BASE_SCHEMA = None
+    PROJECTS_SCHEMA = None
 
 class Project(db.Model):
     """Модель проекта, связана с клиентом и заявкой (ClientRequest)."""
     __tablename__ = 'project'
     # Keep table args simple for SQLite/dev. Schema placement handled by PG search_path in production.
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {'extend_existing': True, 'schema': PROJECTS_SCHEMA} if PROJECTS_SCHEMA else {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('rozoom_schema.users.id'), nullable=True)
     # Use unqualified FK targets so SQLite metadata doesn't include schema names.
     request_id = db.Column(db.Integer, db.ForeignKey('client_requests.id'), nullable=True)
     name = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(255), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(50), default='new')
     start_date = db.Column(db.DateTime)
@@ -40,23 +44,34 @@ class Project(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Отношения
-    client = db.relationship('Client', backref=db.backref('projects', lazy=True), foreign_keys=[client_id])
-    request = db.relationship('ClientRequest', backref=db.backref('projects', lazy=True), foreign_keys=[request_id])
-    stages = db.relationship('ProjectStage', backref='project', lazy=True)
+    client = db.relationship('Client', backref=db.backref('projects', lazy=True), 
+                           primaryjoin="Project.client_id == Client.id",
+                           foreign_keys=[client_id])
+    request = db.relationship('ClientRequest', backref=db.backref('projects', lazy=True), 
+                            primaryjoin="Project.request_id == ClientRequest.id",
+                            foreign_keys=[request_id])
+    stages = db.relationship('ProjectStage', backref='project', lazy=True,
+                           primaryjoin="Project.id == ProjectStage.project_id")
     
-    def __init__(self, name, client_id=None, request_id=None, description=None):
+    def __init__(self, name, client_id=None, request_id=None, description=None, slug=None, user_id=None):
+        from app.utils.slug import generate_slug
+        
         self.name = name
         self.client_id = client_id
+        self.user_id = user_id
         self.request_id = request_id
         self.description = description
+        self.slug = slug or generate_slug(name)
         self.start_date = datetime.utcnow()
     
     def to_dict(self):
         return {
             "id": self.id,
             "client_id": self.client_id,
+            "user_id": self.user_id,
             "request_id": self.request_id,
             "name": self.name,
+            "slug": self.slug,
             "description": self.description,
             "status": self.status,
             "start_date": self.start_date.strftime("%Y-%m-%d %H:%M:%S") if self.start_date else None,
@@ -70,11 +85,11 @@ class Project(db.Model):
 class ProjectStage(db.Model):
     """Модель стадии проекта"""
     __tablename__ = 'project_stage'
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {'extend_existing': True, 'schema': PROJECTS_SCHEMA} if PROJECTS_SCHEMA else {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    # Unqualified FK target for portability
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    # Schema-qualified FK target for proper resolution
+    project_id = db.Column(db.Integer, db.ForeignKey('projects_schema.project.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')
@@ -153,11 +168,18 @@ def create_project_from_request(client_request):
         
         # Создаем стадии проекта
         stages = [
-            {"name": "Анализ требований", "description": "Детальный разбор ТЗ, уточнение требований", "order": 1},
-            {"name": "Проектирование", "description": "Разработка архитектуры и дизайна", "order": 2},
-            {"name": "Разработка", "description": "Написание кода, создание функционала", "order": 3},
-            {"name": "Тестирование", "description": "Проверка работоспособности, поиск ошибок", "order": 4},
-            {"name": "Развертывание", "description": "Публикация проекта", "order": 5}
+            {"name": "Создание и утверждение ТЗ", "description": "Сбор требований, анализ, составление технического задания", "order": 1},
+            {"name": "Планирование и анализ требований", "description": "Детальный анализ требований, оценка сложности, планирование ресурсов", "order": 2},
+            {"name": "Дизайн и прототипирование", "description": "Создание дизайна интерфейса, прототипов, UX/UI дизайн", "order": 3},
+            {"name": "Фронтенд разработка", "description": "Разработка пользовательского интерфейса, клиентской части", "order": 4},
+            {"name": "Бекенд разработка", "description": "Разработка серверной части, API, бизнес-логики", "order": 5},
+            {"name": "Верстка", "description": "HTML/CSS верстка, адаптивный дизайн, кроссбраузерность", "order": 6},
+            {"name": "Интеграция", "description": "Интеграция фронтенда и бекенда, настройка API", "order": 7},
+            {"name": "Тестировка", "description": "Модульное тестирование, интеграционное тестирование, QA", "order": 8},
+            {"name": "Доработка", "description": "Исправление ошибок, оптимизация производительности", "order": 9},
+            {"name": "Деплой", "description": "Развертывание на сервере, настройка production среды", "order": 10},
+            {"name": "Документация", "description": "Создание технической документации, инструкций пользователя", "order": 11},
+            {"name": "Поддержка и сопровождение", "description": "Мониторинг, техническая поддержка, обновления", "order": 12}
         ]
         
         for stage in stages:

@@ -49,10 +49,6 @@ class RegistrationForm(FlaskForm):
         # Check for at least one number
         if not re.search(r'\d', password.data):
             raise ValidationError('Password must contain at least one number')
-            
-        # Check for at least one special character
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password.data):
-            raise ValidationError('Password must contain at least one special character')
 
 class PasswordResetForm(FlaskForm):
     """Password reset request form"""
@@ -87,7 +83,3 @@ class PasswordChangeForm(FlaskForm):
         # Check for at least one number
         if not re.search(r'\d', password.data):
             raise ValidationError('Password must contain at least one number')
-            
-        # Check for at least one special character
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password.data):
-            raise ValidationError('Password must contain at least one special character')

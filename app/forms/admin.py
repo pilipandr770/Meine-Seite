@@ -1,6 +1,6 @@
 """Admin forms for RoZoom website"""
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, FloatField, IntegerField, BooleanField, SelectField
+from wtforms import StringField, TextAreaField, FloatField, IntegerField, BooleanField, SelectField, DateField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
 from flask_wtf.file import FileField, FileAllowed
 
@@ -82,3 +82,35 @@ class UserForm(FlaskForm):
     ])
     is_admin = BooleanField('Admin', default=False)
     is_active = BooleanField('Active', default=True)
+
+class ProjectForm(FlaskForm):
+    """Form for creating and editing projects"""
+    name = StringField('Project Name', validators=[
+        DataRequired(),
+        Length(min=2, max=200, message='Project name must be between 2 and 200 characters')
+    ])
+    description = TextAreaField('Description', validators=[
+        Optional(),
+        Length(max=1000, message='Description cannot exceed 1000 characters')
+    ])
+    user_id = SelectField('User', coerce=int, validators=[DataRequired()])
+    deadline = DateField('Deadline', validators=[Optional()], format='%Y-%m-%d')
+
+class EditProjectForm(FlaskForm):
+    """Form for editing projects"""
+    name = StringField('Project Name', validators=[
+        DataRequired(),
+        Length(min=2, max=200, message='Project name must be between 2 and 200 characters')
+    ])
+    description = TextAreaField('Description', validators=[
+        Optional(),
+        Length(max=1000, message='Description cannot exceed 1000 characters')
+    ])
+    user_id = SelectField('User', coerce=int, validators=[DataRequired()])
+    status = SelectField('Status', choices=[
+        ('new', 'New'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('on_hold', 'On Hold')
+    ], validators=[DataRequired()])
+    deadline = DateField('Deadline', validators=[Optional()], format='%Y-%m-%d')
