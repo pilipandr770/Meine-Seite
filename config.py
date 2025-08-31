@@ -17,10 +17,16 @@ logger = logging.getLogger(__name__)
 class Config:
     # Основные настройки
     SECRET_KEY = os.environ.get("SECRET_KEY", "super-secret-key")
+    # Better environment detection for production
     ENVIRONMENT = os.environ.get("FLASK_ENV", "development")
     
     # Определяем, запущены ли мы на Render.com
-    ON_RENDER = "RENDER" in os.environ
+    ON_RENDER = "RENDER" in os.environ or "RENDER_SERVICE_ID" in os.environ
+    
+    # Force production mode if on Render.com
+    if ON_RENDER:
+        ENVIRONMENT = "production"
+        logger.info("Render.com detected - forcing production environment")
     
     # Настройки базы данных
     # Проверяем сначала DATABASE_URI, затем DATABASE_URL (на случай если Render.com использует это имя)

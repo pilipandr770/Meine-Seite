@@ -173,7 +173,23 @@ def init_db(app):
                     
                     # Check environment - NEVER drop tables in production
                     environment = app.config.get('ENVIRONMENT', 'development')
-                    is_production = environment == 'production' or os.environ.get('FLASK_ENV') == 'production'
+                    flask_env = os.environ.get('FLASK_ENV', 'development')
+                    render_env = os.environ.get('RENDER', 'false')
+                    render_service = os.environ.get('RENDER_SERVICE_ID', '')
+                    
+                    logger.info(f"Environment detection: ENVIRONMENT={environment}, FLASK_ENV={flask_env}, RENDER={render_env}, RENDER_SERVICE_ID={render_service}")
+                    
+                    # Multiple ways to detect production (Render.com specific)
+                    is_production = (
+                        environment == 'production' or 
+                        flask_env == 'production' or 
+                        render_env == 'true' or
+                        bool(render_service) or
+                        'RENDER' in os.environ or
+                        'RENDER_SERVICE_ID' in os.environ
+                    )
+                    
+                    logger.info(f"Production detection result: {is_production}")
                     
                     if not is_production:
                         logger.info("Development environment detected - dropping and recreating tables")
