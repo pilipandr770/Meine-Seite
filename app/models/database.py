@@ -159,7 +159,7 @@ def init_db(app):
                             logger.info(f"Схема {shop_schema} создана или уже существует")
                         except Exception as e:
                             logger.error(f"Ошибка при создании схемы {shop_schema}: {e}")
-                    conn.commit()  # Explicit commit for schema creation
+                    # No explicit commit needed - engine.begin() handles transaction automatically
 
                 # Use SQLAlchemy to create all tables (only create, don't drop in production)
                 with app.app_context():
