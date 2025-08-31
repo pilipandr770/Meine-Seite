@@ -30,7 +30,7 @@ class Project(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('rozoom_schema.users.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     # Use unqualified FK targets so SQLite metadata doesn't include schema names.
     request_id = db.Column(db.Integer, db.ForeignKey('client_requests.id'), nullable=True)
     name = db.Column(db.String(200), nullable=False)
@@ -88,8 +88,8 @@ class ProjectStage(db.Model):
     __table_args__ = {'extend_existing': True, 'schema': PROJECTS_SCHEMA} if PROJECTS_SCHEMA else {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    # Schema-qualified FK target for proper resolution
-    project_id = db.Column(db.Integer, db.ForeignKey('projects_schema.project.id'), nullable=False)
+    # Dynamic FK target based on PROJECTS_SCHEMA
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')
