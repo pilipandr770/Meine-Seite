@@ -30,7 +30,7 @@ class Project(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('rozoom_schema.users.id'), nullable=True)
     # Use unqualified FK targets so SQLite metadata doesn't include schema names.
     request_id = db.Column(db.Integer, db.ForeignKey('client_requests.id'), nullable=True)
     name = db.Column(db.String(200), nullable=False)
@@ -50,6 +50,9 @@ class Project(db.Model):
     request = db.relationship('ClientRequest', backref=db.backref('projects', lazy=True), 
                             primaryjoin="Project.request_id == ClientRequest.id",
                             foreign_keys=[request_id])
+    user = db.relationship('User', backref=db.backref('projects', lazy=True), 
+                         primaryjoin="Project.user_id == User.id",
+                         foreign_keys=[user_id])
     stages = db.relationship('ProjectStage', backref='project', lazy=True,
                            primaryjoin="Project.id == ProjectStage.project_id")
     
