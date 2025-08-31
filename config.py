@@ -82,16 +82,28 @@ class Config:
         SQLALCHEMY_ENGINE_OPTIONS = {
             'pool_pre_ping': True,
             'pool_recycle': 300,
-            'pool_size': 5,
-            'max_overflow': 10,
-            'connect_args': {}
+            'pool_size': 2,  # Reduced for Render.com
+            'max_overflow': 5,  # Reduced for Render.com
+            'pool_timeout': 30,
+            'connect_args': {
+                'connect_timeout': 10,
+                'keepalives': 1,
+                'keepalives_idle': 30,
+                'keepalives_interval': 10,
+                'keepalives_count': 5,
+            }
         }
         if '+pg8000://' in database_uri:
             try:
                 SSL_CONTEXT = ssl.create_default_context()
+                SSL_CONTEXT.check_hostname = False
+                SSL_CONTEXT.verify_mode = ssl.CERT_NONE
                 SQLALCHEMY_ENGINE_OPTIONS['connect_args']['ssl_context'] = SSL_CONTEXT
+                logger.info("SSL context configured for pg8000")
             except Exception as e:
                 logger.warning(f"Failed to create SSL context: {e}")
+                # Fallback without SSL context
+                SQLALCHEMY_ENGINE_OPTIONS['connect_args'].pop('ssl_context', None)
     else:
         # Fallback на SQLite для локальной разработки
         SQLALCHEMY_DATABASE_URI = database_uri or "sqlite:///instance/clients.db"

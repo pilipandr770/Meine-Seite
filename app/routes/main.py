@@ -21,8 +21,22 @@ def index():
     """Alias endpoint so url_for('main.index') works across the codebase."""
     return home()
 
-@main_bp.route('/set_language/<language>')
-def set_language(language):
-    if language in Config.SUPPORTED_LANGUAGES:
-        session["lang"] = language  # ⬅️ зберігаємо вибір мови в сесію
-    return redirect(request.referrer or url_for("main.home"))
+@main_bp.route('/health')
+def health_check():
+    """Health check endpoint for monitoring database connectivity."""
+    try:
+        from app.models.database import db
+        from sqlalchemy import text
+
+        # Test database connection
+        with db.engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+            db_status = "healthy"
+    except Exception as e:
+        db_status = f"unhealthy: {str(e)}"
+
+    return {
+        "status": "healthy" if db_status == "healthy" else "unhealthy",
+        "database": db_status,
+        "timestamp": "2025-08-31"
+    }, 200 if db_status == "healthy" else 500

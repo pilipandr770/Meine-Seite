@@ -121,12 +121,26 @@ def init_db(app):
                     logger.info(f"Set search_path to {search_path} for connection {id(dbapi_conn)}")
                 except Exception as e:
                     logger.warning(f"Failed to set search_path '{search_path}': {e}")
+                    # Don't raise exception to avoid breaking connection
+            
+            # Функция для обработки отключений соединений
+            @event.listens_for(engine, 'checkout')
+            def ping_connection(dbapi_conn, conn_record, conn_proxy):
+                try:
+                    cursor = dbapi_conn.cursor()
+                    cursor.execute("SELECT 1")
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Connection ping failed: {e}")
+                    # Invalidate the connection so SQLAlchemy creates a new one
+                    conn_proxy.invalidate()
+                    raise
             
             # Создание необходимых таблиц при инициализации
             try:
                 logger.info("Инициализация таблиц базы данных...")
                 from sqlalchemy import text
-                
+
                 # Создание дополнительных схем (clients + shop) если они указаны в конфиге
                 with engine.begin() as conn:
                     client_schema = app.config.get('CLIENT_REQUESTS_SCHEMA')
@@ -145,14 +159,16 @@ def init_db(app):
                             logger.info(f"Схема {shop_schema} создана или уже существует")
                         except Exception as e:
                             logger.error(f"Ошибка при создании схемы {shop_schema}: {e}")
-                
-                # Use SQLAlchemy to create all tables
+                    conn.commit()  # Explicit commit for schema creation
+
+                # Use SQLAlchemy to create all tables (only create, don't drop in production)
                 with app.app_context():
-                    # Drop all tables first to ensure foreign keys are updated
-                    db.drop_all()
+                    # Only drop tables in development, not in production
+                    if app.config.get('ENVIRONMENT') == 'development':
+                        db.drop_all()
                     db.create_all()
                     logger.info("✅ Все таблицы созданы или уже существуют")
-                
+
                 # Additional manual table creation for client_requests if needed
                 if client_schema:
                     with engine.begin() as conn:
@@ -186,5 +202,5 @@ def init_db(app):
                             logger.error(f"Ошибка при создании таблицы client_requests: {e}")
             except Exception as e:
                 logger.error(f"Общая ошибка при инициализации таблиц: {e}")
-    
+
     return db
