@@ -171,9 +171,16 @@ def init_db(app):
                         except Exception as e:
                             logger.warning(f"Failed to set search_path for table creation: {e}")
                     
-                    # Only drop tables in development, not in production
-                    if app.config.get('ENVIRONMENT') == 'development':
+                    # Check environment - NEVER drop tables in production
+                    environment = app.config.get('ENVIRONMENT', 'development')
+                    is_production = environment == 'production' or os.environ.get('FLASK_ENV') == 'production'
+                    
+                    if not is_production:
+                        logger.info("Development environment detected - dropping and recreating tables")
                         db.drop_all()
+                    else:
+                        logger.info("Production environment detected - skipping table drop")
+                    
                     db.create_all()
                     logger.info("✅ Все таблицы созданы или уже существуют")
 
