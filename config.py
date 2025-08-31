@@ -106,3 +106,10 @@ class Config:
     TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
     USE_CHAT_COMPLETION = os.environ.get("USE_CHAT_COMPLETION", "true").lower() == "true"
+    
+    # Stripe платежи
+    STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+    STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    # Optional test Price ID to use when product-specific price_id is not set
+    STRIPE_TEST_PRICE_ID = os.environ.get("STRIPE_TEST_PRICE_ID")
