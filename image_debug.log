@@ -1,0 +1,10 @@
+2025-08-30 18:57:30,260 - __main__ - INFO - Static path exists: True
+2025-08-30 18:57:30,261 - __main__ - INFO - Uploads path exists: True
+2025-08-30 18:57:30,261 - __main__ - INFO - Categories path exists: True
+2025-08-30 18:57:30,261 - __main__ - INFO - Products path exists: True
+2025-08-30 18:57:30,261 - __main__ - INFO - Static path writable: True
+2025-08-30 18:57:30,262 - __main__ - INFO - Uploads path writable: True
+2025-08-30 18:57:30,262 - __main__ - INFO - Categories path writable: True
+2025-08-30 18:57:30,262 - __main__ - INFO - Products path writable: True
+2025-08-30 18:57:30,263 - __main__ - INFO - Successfully wrote test file to categories: C:\Users\ой\Meine Seite\app\static\uploads\categories\test_write.txt
+2025-08-30 18:57:30,263 - __main__ - INFO - Successfully removed test file

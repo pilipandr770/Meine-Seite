@@ -1,0 +1,23 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Users - Admin{% endblock %}
+
+{% block content %}
+<h1>Users</h1>
+<table class="table">
+  <thead>
+    <tr><th>ID</th><th>Email</th><th>Username</th><th>Admin</th><th>Active</th></tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.id }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ user.username }}</td>
+      <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+      <td>{{ 'Yes' if user.is_active else 'No' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

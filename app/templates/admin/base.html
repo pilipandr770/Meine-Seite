@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RoZoom Admin{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Admin CSS -->
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --header-height: 60px;
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        /* Admin Layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--dark-bg);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .admin-sidebar.collapsed {
+            width: 60px;
+        }
+
+        .admin-sidebar .logo {
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            background-color: rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .admin-sidebar .logo img {
+            max-height: 40px;
+        }
+
+        .admin-sidebar .logo .logo-text {
+            margin-left: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .admin-sidebar .menu {
+            padding: 15px 0;
+        }
+
+        .admin-sidebar .menu-item {
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .admin-sidebar .menu-item:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .admin-sidebar .menu-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .admin-sidebar .menu-item i {
+            width: 30px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .admin-sidebar .menu-item .menu-text {
+            margin-left: 10px;
+            white-space: nowrap;
+        }
+
+        .admin-sidebar.collapsed .menu-text,
+        .admin-sidebar.collapsed .logo-text {
+            display: none;
+        }
+
+        /* Main Content */
+        .admin-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            transition: all 0.3s;
+        }
+
+        .admin-content.expanded {
+            margin-left: 60px;
+        }
+
+        .admin-header {
+            height: var(--header-height);
+            background-color: white;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        .admin-header .toggle-sidebar {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .admin-header .user-menu {
+            display: flex;
+            align-items: center;
+        }
+
+        .admin-header .user-menu .dropdown-toggle {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .admin-header .user-menu .avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Main Content Area */
+        .admin-main {
+            padding: 20px;
+        }
+
+        .admin-card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .admin-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .admin-card-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        /* Dashboard Stats */
+        .stats-card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stats-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stats-icon.blue {
+            background-color: var(--primary-color);
+        }
+
+        .stats-icon.green {
+            background-color: var(--success-color);
+        }
+
+        .stats-icon.orange {
+            background-color: var(--warning-color);
+        }
+
+        .stats-icon.red {
+            background-color: var(--danger-color);
+        }
+
+        .stats-info h3 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .stats-info p {
+            margin: 0;
+            color: #777;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 60px;
+            }
+            
+            .admin-content {
+                margin-left: 60px;
+            }
+            
+            .admin-sidebar .menu-text,
+            .admin-sidebar .logo-text {
+                display: none;
+            }
+            
+            .admin-sidebar.mobile-expanded {
+                width: var(--sidebar-width);
+                z-index: 1001;
+            }
+            
+            .admin-sidebar.mobile-expanded .menu-text,
+            .admin-sidebar.mobile-expanded .logo-text {
+                display: inline;
+            }
+            
+            .mobile-sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 1000;
+                display: none;
+            }
+            
+            .mobile-sidebar-overlay.active {
+                display: block;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='icons/logo.svg') }}" alt="RoZoom Logo" style="width: 40px; height: 40px;">
+                <span class="logo-text">RoZoom Admin</span>
+            </div>
+            <nav class="menu">
+                <a href="{{ url_for('admin.dashboard') }}" class="menu-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+                
+                <!-- Shop Management Section -->
+                <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">
+                    <span>Shop Management</span>
+                </h6>
+                
+                <a href="{{ url_for('admin_shop.products') }}" class="menu-item {% if request.endpoint.startswith('admin_shop.product') %}active{% endif %}">
+                    <i class="fas fa-box-open"></i>
+                    <span class="menu-text">Products</span>
+                </a>
+                
+                <a href="{{ url_for('admin_shop.categories') }}" class="menu-item {% if request.endpoint.startswith('admin_shop.categor') %}active{% endif %}">
+                    <i class="fas fa-tags"></i>
+                    <span class="menu-text">Categories</span>
+                </a>
+                
+                <a href="{{ url_for('admin_shop.orders') }}" class="menu-item {% if request.endpoint.startswith('admin_shop.order') %}active{% endif %}">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="menu-text">Orders</span>
+                </a>
+                
+                <a href="{{ url_for('admin_shop.reviews') }}" class="menu-item {% if request.endpoint.startswith('admin_shop.reviews') %}active{% endif %}">
+                    <i class="fas fa-star"></i>
+                    <span class="menu-text">Reviews</span>
+                </a>
+                
+                <a href="{{ url_for('admin_shop.coupons') }}" class="menu-item {% if request.endpoint.startswith('admin_shop.coupon') %}active{% endif %}">
+                    <i class="fas fa-percent"></i>
+                    <span class="menu-text">Coupons</span>
+                </a>
+                
+                <!-- Site Management Section -->
+                <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">
+                    <span>Site Management</span>
+                </h6>
+                
+                <a href="{{ url_for('admin.users') }}" class="menu-item {% if request.endpoint.startswith('admin.user') %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">Users</span>
+                </a>
+                <a href="{{ url_for('main.index') }}" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span class="menu-text">Back to Site</span>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="menu-text">Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div class="mobile-sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content -->
+        <div class="admin-content" id="adminContent">
+            <!-- Header -->
+            <header class="admin-header">
+                <button class="toggle-sidebar" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="user-menu dropdown">
+                    <a href="#" class="dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="avatar">
+                            {{ current_user.username[0].upper() }}
+                        </div>
+                        <span>{{ current_user.username }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Profile</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                    </ul>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="admin-main">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Sidebar Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleSidebar = document.getElementById('toggleSidebar');
+            const adminSidebar = document.getElementById('adminSidebar');
+            const adminContent = document.getElementById('adminContent');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            toggleSidebar.addEventListener('click', function() {
+                if (window.innerWidth > 768) {
+                    // Desktop behavior
+                    adminSidebar.classList.toggle('collapsed');
+                    adminContent.classList.toggle('expanded');
+                } else {
+                    // Mobile behavior
+                    adminSidebar.classList.toggle('mobile-expanded');
+                    sidebarOverlay.classList.toggle('active');
+                }
+            });
+            
+            // Close sidebar when clicking on overlay
+            sidebarOverlay.addEventListener('click', function() {
+                adminSidebar.classList.remove('mobile-expanded');
+                sidebarOverlay.classList.remove('active');
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebarOverlay.classList.remove('active');
+                }
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

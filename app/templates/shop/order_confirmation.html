@@ -1,0 +1,609 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="order-confirmation-container">
+    <div class="confirmation-header">
+        <div class="confirmation-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1 class="page-title">
+            {% if lang == 'uk' %}
+                Дякуємо за ваше замовлення!
+            {% elif lang == 'de' %}
+                Vielen Dank für Ihre Bestellung!
+            {% else %}
+                Thank You for Your Order!
+            {% endif %}
+        </h1>
+        <p class="confirmation-message">
+            {% if lang == 'uk' %}
+                Ваше замовлення успішно оформлено та підтверджено. Ми надіслали деталі замовлення на вашу електронну пошту.
+            {% elif lang == 'de' %}
+                Ihre Bestellung wurde erfolgreich aufgegeben und bestätigt. Wir haben die Bestelldetails an Ihre E-Mail-Adresse gesendet.
+            {% else %}
+                Your order has been successfully placed and confirmed. We have sent the order details to your email address.
+            {% endif %}
+        </p>
+    </div>
+    
+    <div class="order-details">
+        <div class="order-section">
+            <h2>
+                {% if lang == 'uk' %}
+                    Інформація про замовлення
+                {% elif lang == 'de' %}
+                    Bestellinformationen
+                {% else %}
+                    Order Information
+                {% endif %}
+            </h2>
+            <div class="order-info-grid">
+                <div class="order-info-item">
+                    <div class="info-label">
+                        {% if lang == 'uk' %}Номер замовлення{% elif lang == 'de' %}Bestellnummer{% else %}Order Number{% endif %}:
+                    </div>
+                    <div class="info-value">#{{ order.order_number }}</div>
+                </div>
+                
+                <div class="order-info-item">
+                    <div class="info-label">
+                        {% if lang == 'uk' %}Дата{% elif lang == 'de' %}Datum{% else %}Date{% endif %}:
+                    </div>
+                    <div class="info-value">{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                </div>
+                
+                <div class="order-info-item">
+                    <div class="info-label">
+                        {% if lang == 'uk' %}Ім'я{% elif lang == 'de' %}Name{% else %}Name{% endif %}:
+                    </div>
+                    <div class="info-value">{{ order.first_name }} {{ order.last_name }}</div>
+                </div>
+                
+                <div class="order-info-item">
+                    <div class="info-label">
+                        {% if lang == 'uk' %}Email{% elif lang == 'de' %}E-Mail{% else %}Email{% endif %}:
+                    </div>
+                    <div class="info-value">{{ order.email }}</div>
+                </div>
+                
+                <div class="order-info-item">
+                    <div class="info-label">
+                        {% if lang == 'uk' %}Спосіб оплати{% elif lang == 'de' %}Zahlungsmethode{% else %}Payment Method{% endif %}:
+                    </div>
+                    <div class="info-value">
+                        {% if order.payment_method == 'stripe' %}
+                            {% if lang == 'uk' %}Кредитна / Дебетова карта{% elif lang == 'de' %}Kredit- / Debitkarte{% else %}Credit / Debit Card{% endif %}
+                        {% elif order.payment_method == 'paypal' %}
+                            PayPal
+                        {% elif order.payment_method == 'bank' %}
+                            {% if lang == 'uk' %}Банківський переказ{% elif lang == 'de' %}Banküberweisung{% else %}Bank Transfer{% endif %}
+                        {% else %}
+                            {{ order.payment_method }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="order-info-item">
+                    <div class="info-label">
+                        {% if lang == 'uk' %}Статус оплати{% elif lang == 'de' %}Zahlungsstatus{% else %}Payment Status{% endif %}:
+                    </div>
+                    <div class="info-value status-badge {{ order.payment_status }}">
+                        {% if order.payment_status == 'paid' %}
+                            {% if lang == 'uk' %}Оплачено{% elif lang == 'de' %}Bezahlt{% else %}Paid{% endif %}
+                        {% elif order.payment_status == 'pending' %}
+                            {% if lang == 'uk' %}Обробляється{% elif lang == 'de' %}In Bearbeitung{% else %}Pending{% endif %}
+                        {% elif order.payment_status == 'awaiting_payment' %}
+                            {% if lang == 'uk' %}Очікує оплати{% elif lang == 'de' %}Warten auf Zahlung{% else %}Awaiting Payment{% endif %}
+                        {% elif order.payment_status == 'failed' %}
+                            {% if lang == 'uk' %}Невдало{% elif lang == 'de' %}Fehlgeschlagen{% else %}Failed{% endif %}
+                        {% else %}
+                            {{ order.payment_status }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if order.payment_status == 'awaiting_payment' and order.payment_method == 'bank' %}
+            <div class="order-section">
+                <h2>
+                    {% if lang == 'uk' %}
+                        Інформація про оплату
+                    {% elif lang == 'de' %}
+                        Zahlungsinformationen
+                    {% else %}
+                        Payment Information
+                    {% endif %}
+                </h2>
+                <div class="bank-payment-info">
+                    <p>
+                        {% if lang == 'uk' %}
+                            Будь ласка, здійсніть оплату за допомогою банківського переказу, використовуючи наступні реквізити:
+                        {% elif lang == 'de' %}
+                            Bitte tätigen Sie die Zahlung per Banküberweisung mit den folgenden Angaben:
+                        {% else %}
+                            Please make your payment via bank transfer using the following details:
+                        {% endif %}
+                    </p>
+                    
+                    <div class="bank-details">
+                        <div class="bank-detail-row">
+                            <div class="bank-detail-label">
+                                {% if lang == 'uk' %}Банк{% elif lang == 'de' %}Bank{% else %}Bank{% endif %}:
+                            </div>
+                            <div class="bank-detail-value">Deutsche Bank</div>
+                        </div>
+                        <div class="bank-detail-row">
+                            <div class="bank-detail-label">IBAN:</div>
+                            <div class="bank-detail-value">DE12 3456 7890 1234 5678 90</div>
+                        </div>
+                        <div class="bank-detail-row">
+                            <div class="bank-detail-label">BIC:</div>
+                            <div class="bank-detail-value">DEUTDEDBXXX</div>
+                        </div>
+                        <div class="bank-detail-row">
+                            <div class="bank-detail-label">
+                                {% if lang == 'uk' %}Одержувач{% elif lang == 'de' %}Empfänger{% else %}Recipient{% endif %}:
+                            </div>
+                            <div class="bank-detail-value">Coaching Services GmbH</div>
+                        </div>
+                        <div class="bank-detail-row">
+                            <div class="bank-detail-label">
+                                {% if lang == 'uk' %}Призначення платежу{% elif lang == 'de' %}Verwendungszweck{% else %}Reference{% endif %}:
+                            </div>
+                            <div class="bank-detail-value">Order #{{ order.order_number }}</div>
+                        </div>
+                        <div class="bank-detail-row">
+                            <div class="bank-detail-label">
+                                {% if lang == 'uk' %}Сума{% elif lang == 'de' %}Betrag{% else %}Amount{% endif %}:
+                            </div>
+                            <div class="bank-detail-value">{{ "%.2f"|format(order.total) }} €</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bank-payment-note">
+                        {% if lang == 'uk' %}
+                            <strong>Важливо:</strong> Будь ласка, вкажіть номер замовлення в призначенні платежу. Ваше замовлення буде оброблено після підтвердження оплати.
+                        {% elif lang == 'de' %}
+                            <strong>Wichtig:</strong> Bitte geben Sie Ihre Bestellnummer im Verwendungszweck an. Ihre Bestellung wird nach Bestätigung der Zahlung bearbeitet.
+                        {% else %}
+                            <strong>Important:</strong> Please include your order number in the payment reference. Your order will be processed after payment confirmation.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="order-section">
+            <h2>
+                {% if lang == 'uk' %}
+                    Деталі замовлення
+                {% elif lang == 'de' %}
+                    Bestelldetails
+                {% else %}
+                    Order Details
+                {% endif %}
+            </h2>
+            <div class="order-items">
+                <div class="order-item-header">
+                    <div class="item-header-name">
+                        {% if lang == 'uk' %}Товар{% elif lang == 'de' %}Produkt{% else %}Product{% endif %}
+                    </div>
+                    <div class="item-header-price">
+                        {% if lang == 'uk' %}Ціна{% elif lang == 'de' %}Preis{% else %}Price{% endif %}
+                    </div>
+                    <div class="item-header-quantity">
+                        {% if lang == 'uk' %}Кількість{% elif lang == 'de' %}Menge{% else %}Quantity{% endif %}
+                    </div>
+                    <div class="item-header-total">
+                        {% if lang == 'uk' %}Сума{% elif lang == 'de' %}Summe{% else %}Total{% endif %}
+                    </div>
+                </div>
+                
+                {% for item in order.items %}
+                    <div class="order-item">
+                        <div class="item-name">
+                            {{ item.product_name }}
+                            {% if item.product_duration %}
+                                <span class="item-duration">{{ item.product_duration }} {% if lang == 'uk' %}хв.{% elif lang == 'de' %}Min.{% else %}min.{% endif %}</span>
+                            {% endif %}
+                        </div>
+                        <div class="item-price">
+                            {{ "%.2f"|format(item.price_per_unit) }} €
+                        </div>
+                        <div class="item-quantity">
+                            {{ item.quantity }}
+                        </div>
+                        <div class="item-total">
+                            {{ "%.2f"|format(item.total_price) }} €
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span>
+                            {% if lang == 'uk' %}Підсумок{% elif lang == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}
+                        </span>
+                        <span>{{ "%.2f"|format(order.subtotal) }} €</span>
+                    </div>
+                    
+                    {% if order.discount %}
+                        <div class="summary-row discount-row">
+                            <span>
+                                {% if lang == 'uk' %}Знижка{% elif lang == 'de' %}Rabatt{% else %}Discount{% endif %}
+                                {% if order.coupon_code %}
+                                    ({{ order.coupon_code }})
+                                {% endif %}
+                            </span>
+                            <span>-{{ "%.2f"|format(order.discount) }} €</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="summary-row">
+                        <span>
+                            {% if lang == 'uk' %}Податок{% elif lang == 'de' %}MwSt{% else %}Tax{% endif %} (19%)
+                        </span>
+                        <span>{{ "%.2f"|format(order.tax) }} €</span>
+                    </div>
+                    
+                    <div class="summary-row total-row">
+                        <span>
+                            {% if lang == 'uk' %}Загальна сума{% elif lang == 'de' %}Gesamtsumme{% else %}Total{% endif %}
+                        </span>
+                        <span>{{ "%.2f"|format(order.total) }} €</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if order.delivery_address %}
+            <div class="order-section">
+                <h2>
+                    {% if lang == 'uk' %}
+                        Адреса доставки
+                    {% elif lang == 'de' %}
+                        Lieferadresse
+                    {% else %}
+                        Delivery Address
+                    {% endif %}
+                </h2>
+                <div class="address-details">
+                    <p>{{ order.first_name }} {{ order.last_name }}</p>
+                    <p>{{ order.delivery_address.address_line1 }}</p>
+                    {% if order.delivery_address.address_line2 %}
+                        <p>{{ order.delivery_address.address_line2 }}</p>
+                    {% endif %}
+                    <p>{{ order.delivery_address.postal_code }} {{ order.delivery_address.city }}</p>
+                    <p>{{ order.delivery_address.country_name }}</p>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="order-actions">
+            <a href="{{ url_for('shop.products') }}" class="btn btn-continue-shopping">
+                <i class="fas fa-arrow-left"></i> 
+                {% if lang == 'uk' %}
+                    Продовжити покупки
+                {% elif lang == 'de' %}
+                    Weiter einkaufen
+                {% else %}
+                    Continue Shopping
+                {% endif %}
+            </a>
+            
+            {% if order.invoice_url %}
+                <a href="{{ order.invoice_url }}" class="btn btn-download-invoice" target="_blank">
+                    <i class="fas fa-file-invoice"></i> 
+                    {% if lang == 'uk' %}
+                        Завантажити рахунок
+                    {% elif lang == 'de' %}
+                        Rechnung herunterladen
+                    {% else %}
+                        Download Invoice
+                    {% endif %}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .order-confirmation-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .confirmation-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .confirmation-icon {
+        font-size: 5rem;
+        color: #0f0;
+        margin-bottom: 20px;
+    }
+    
+    .page-title {
+        color: #0f0;
+        margin-bottom: 15px;
+    }
+    
+    .confirmation-message {
+        color: #ccc;
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .order-details {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 8px;
+        padding: 30px;
+    }
+    
+    .order-section {
+        margin-bottom: 30px;
+    }
+    
+    .order-section h2 {
+        color: #0f0;
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(15, 255, 15, 0.3);
+    }
+    
+    .order-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px 30px;
+    }
+    
+    .order-info-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .info-label {
+        color: #999;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        color: #ccc;
+        font-weight: bold;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+    
+    .status-badge.paid {
+        background-color: rgba(0, 255, 0, 0.2);
+        color: #0f0;
+    }
+    
+    .status-badge.pending {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+    }
+    
+    .status-badge.awaiting_payment {
+        background-color: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+    }
+    
+    .status-badge.failed {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+    
+    .bank-payment-info {
+        color: #ccc;
+    }
+    
+    .bank-details {
+        background-color: rgba(0, 0, 0, 0.5);
+        border: 1px solid #333;
+        border-radius: 4px;
+        padding: 15px;
+        margin: 15px 0;
+    }
+    
+    .bank-detail-row {
+        display: flex;
+        margin-bottom: 8px;
+    }
+    
+    .bank-detail-label {
+        width: 160px;
+        color: #999;
+    }
+    
+    .bank-detail-value {
+        color: #ccc;
+        font-weight: bold;
+    }
+    
+    .bank-payment-note {
+        background-color: rgba(255, 193, 7, 0.1);
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin-top: 20px;
+        color: #ccc;
+        line-height: 1.6;
+    }
+    
+    .bank-payment-note strong {
+        color: #ffc107;
+    }
+    
+    .order-items {
+        margin-bottom: 20px;
+    }
+    
+    .order-item-header {
+        display: grid;
+        grid-template-columns: 3fr 1fr 1fr 1fr;
+        padding: 10px 0;
+        border-bottom: 1px solid #333;
+        color: #999;
+        font-weight: bold;
+    }
+    
+    .order-item {
+        display: grid;
+        grid-template-columns: 3fr 1fr 1fr 1fr;
+        padding: 15px 0;
+        border-bottom: 1px solid #333;
+        align-items: center;
+    }
+    
+    .item-name {
+        color: #ccc;
+    }
+    
+    .item-duration {
+        display: block;
+        color: #999;
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+    
+    .item-price, .item-quantity {
+        color: #ccc;
+    }
+    
+    .item-total {
+        color: #ccc;
+        font-weight: bold;
+    }
+    
+    .order-summary {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #333;
+        max-width: 300px;
+        margin-left: auto;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        color: #ccc;
+    }
+    
+    .discount-row {
+        color: #ff6b6b;
+    }
+    
+    .total-row {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #0f0;
+        border-top: 1px solid rgba(15, 255, 15, 0.3);
+        margin-top: 15px;
+        padding-top: 15px;
+    }
+    
+    .address-details {
+        color: #ccc;
+        line-height: 1.6;
+    }
+    
+    .order-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    
+    .btn-continue-shopping {
+        background-color: transparent;
+        color: #ccc;
+        border: 1px solid #555;
+        padding: 10px 20px;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-continue-shopping:hover {
+        color: #0f0;
+        border-color: #0f0;
+    }
+    
+    .btn-download-invoice {
+        background-color: transparent;
+        color: #0f0;
+        border: 1px solid #0f0;
+        padding: 10px 20px;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-download-invoice:hover {
+        background-color: rgba(0, 255, 0, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .order-info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .order-item-header {
+            display: none;
+        }
+        
+        .order-item {
+            grid-template-columns: 1fr;
+            gap: 8px;
+            padding: 15px 0;
+        }
+        
+        .item-price::before {
+            content: '{% if lang == "uk" %}Ціна{% elif lang == "de" %}Preis{% else %}Price{% endif %}: ';
+            color: #999;
+        }
+        
+        .item-quantity::before {
+            content: '{% if lang == "uk" %}Кількість{% elif lang == "de" %}Menge{% else %}Quantity{% endif %}: ';
+            color: #999;
+        }
+        
+        .item-total::before {
+            content: '{% if lang == "uk" %}Сума{% elif lang == "de" %}Summe{% else %}Total{% endif %}: ';
+            color: #999;
+        }
+        
+        .order-summary {
+            max-width: 100%;
+        }
+        
+        .order-actions {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .btn-continue-shopping,
+        .btn-download-invoice {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}

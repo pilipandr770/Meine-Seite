@@ -1,0 +1,242 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Gutschein {{ 'bearbeiten' if coupon else 'hinzufügen' }}
+    {% elif lang == 'uk' %}
+        {{ 'Редагувати' if coupon else 'Додати' }} купон
+    {% else %}
+        {{ 'Edit' if coupon else 'Add' }} Coupon
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">
+        {% if lang == 'de' %}
+            Gutschein {{ 'bearbeiten' if coupon else 'hinzufügen' }}
+        {% elif lang == 'uk' %}
+            {{ 'Редагувати' if coupon else 'Додати' }} купон
+        {% else %}
+            {{ 'Edit' if coupon else 'Add' }} Coupon
+        {% endif %}
+    </h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Gutscheindetails
+                {% elif lang == 'uk' %}
+                    Деталі купону
+                {% else %}
+                    Coupon Details
+                {% endif %}
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="code">
+                                {% if lang == 'de' %}
+                                    Code*
+                                {% elif lang == 'uk' %}
+                                    Код*
+                                {% else %}
+                                    Code*
+                                {% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="code" name="code" value="{{ coupon.code if coupon else '' }}" required>
+                            <small class="form-text text-muted">
+                                {% if lang == 'de' %}
+                                    Der Code, den Kunden verwenden werden. Wird automatisch in Großbuchstaben umgewandelt.
+                                {% elif lang == 'uk' %}
+                                    Код, який будуть використовувати клієнти. Автоматично перетвориться на великі літери.
+                                {% else %}
+                                    The code customers will use. Will be automatically converted to uppercase.
+                                {% endif %}
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">
+                                {% if lang == 'de' %}
+                                    Beschreibung
+                                {% elif lang == 'uk' %}
+                                    Опис
+                                {% else %}
+                                    Description
+                                {% endif %}
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ coupon.description if coupon else '' }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="discount_type">
+                                        {% if lang == 'de' %}
+                                            Rabatttyp*
+                                        {% elif lang == 'uk' %}
+                                            Тип знижки*
+                                        {% else %}
+                                            Discount Type*
+                                        {% endif %}
+                                    </label>
+                                    <select class="form-control" id="discount_type" name="discount_type" required>
+                                        <option value="percentage" {% if coupon and coupon.discount_type == 'percentage' %}selected{% endif %}>
+                                            {% if lang == 'de' %}
+                                                Prozent (%)
+                                            {% elif lang == 'uk' %}
+                                                Відсоток (%)
+                                            {% else %}
+                                                Percentage (%)
+                                            {% endif %}
+                                        </option>
+                                        <option value="fixed" {% if coupon and coupon.discount_type == 'fixed' %}selected{% endif %}>
+                                            {% if lang == 'de' %}
+                                                Festbetrag (€)
+                                            {% elif lang == 'uk' %}
+                                                Фіксована сума (€)
+                                            {% else %}
+                                                Fixed Amount (€)
+                                            {% endif %}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="discount_value">
+                                        {% if lang == 'de' %}
+                                            Rabattwert*
+                                        {% elif lang == 'uk' %}
+                                            Значення знижки*
+                                        {% else %}
+                                            Discount Value*
+                                        {% endif %}
+                                    </label>
+                                    <input type="number" step="0.01" min="0" class="form-control" id="discount_value" name="discount_value" value="{{ coupon.discount_value if coupon else '' }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="usage_limit">
+                                {% if lang == 'de' %}
+                                    Nutzungslimit
+                                {% elif lang == 'uk' %}
+                                    Ліміт використання
+                                {% else %}
+                                    Usage Limit
+                                {% endif %}
+                            </label>
+                            <input type="number" min="0" class="form-control" id="usage_limit" name="usage_limit" value="{{ coupon.usage_limit if coupon and coupon.usage_limit else '' }}">
+                            <small class="form-text text-muted">
+                                {% if lang == 'de' %}
+                                    Lassen Sie das Feld leer, um keine Begrenzung festzulegen
+                                {% elif lang == 'uk' %}
+                                    Залиште порожнім, щоб не встановлювати обмеження
+                                {% else %}
+                                    Leave empty for no limit
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="valid_from">
+                                {% if lang == 'de' %}
+                                    Gültig ab
+                                {% elif lang == 'uk' %}
+                                    Дійсний з
+                                {% else %}
+                                    Valid From
+                                {% endif %}
+                            </label>
+                            <input type="date" class="form-control" id="valid_from" name="valid_from" 
+                                value="{{ coupon.valid_from.strftime('%Y-%m-%d') if coupon and coupon.valid_from else '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="valid_to">
+                                {% if lang == 'de' %}
+                                    Gültig bis
+                                {% elif lang == 'uk' %}
+                                    Дійсний до
+                                {% else %}
+                                    Valid To
+                                {% endif %}
+                            </label>
+                            <input type="date" class="form-control" id="valid_to" name="valid_to" 
+                                value="{{ coupon.valid_to.strftime('%Y-%m-%d') if coupon and coupon.valid_to else '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" value="true" {% if coupon is none or coupon.is_active %}checked{% endif %}>
+                                <label class="custom-control-label" for="is_active">
+                                    {% if lang == 'de' %}
+                                        Aktiv
+                                    {% elif lang == 'uk' %}
+                                        Активний
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        {% if coupon and coupon.orders %}
+                        <div class="alert alert-info mt-3">
+                            <h6 class="alert-heading">
+                                {% if lang == 'de' %}
+                                    Verwendungsinformationen
+                                {% elif lang == 'uk' %}
+                                    Інформація про використання
+                                {% else %}
+                                    Usage Information
+                                {% endif %}
+                            </h6>
+                            <p>
+                                {% if lang == 'de' %}
+                                    Dieser Gutschein wurde in {{ coupon.orders|length }} Bestellungen verwendet.
+                                {% elif lang == 'uk' %}
+                                    Цей купон використано в {{ coupon.orders|length }} замовленнях.
+                                {% else %}
+                                    This coupon has been used in {{ coupon.orders|length }} orders.
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        {% if lang == 'de' %}
+                            {{ 'Aktualisieren' if coupon else 'Speichern' }}
+                        {% elif lang == 'uk' %}
+                            {{ 'Оновити' if coupon else 'Зберегти' }}
+                        {% else %}
+                            {{ 'Update' if coupon else 'Save' }}
+                        {% endif %}
+                    </button>
+                    <a href="{{ url_for('admin_shop.coupons') }}" class="btn btn-secondary ml-2">
+                        {% if lang == 'de' %}
+                            Abbrechen
+                        {% elif lang == 'uk' %}
+                            Скасувати
+                        {% else %}
+                            Cancel
+                        {% endif %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

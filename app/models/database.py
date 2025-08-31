@@ -5,10 +5,19 @@
 import os
 import logging
 import ssl
+from datetime import datetime
 from sqlalchemy import create_engine, event
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger(__name__)
+
+# Инициализация SQLAlchemy
+db = SQLAlchemy()
+
+class TimestampMixin:
+    """Mixin to add created_at and updated_at timestamps to models."""
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 def get_postgres_uri():
     """Возвращает URI подключения PostgreSQL. Если psycopg2 недоступен, форсируем драйвер pg8000."""
@@ -74,7 +83,6 @@ def create_db_engine(uri=None, schema=None, engine_options=None):
     return engine
 
 # Глобальный экземпляр SQLAlchemy для совместимости со стандартным кодом Flask-SQLAlchemy
-db = SQLAlchemy()
 
 def init_db(app):
     """Инициализирует базу данных: использует готовый URI из Config и engine options."""
@@ -91,7 +99,14 @@ def init_db(app):
     # Сразу прикрепляем событие при инициализации базы данных 
     uri = app.config['SQLALCHEMY_DATABASE_URI']
     search_path = app.config.get('DB_SEARCH_PATH') or os.getenv('POSTGRES_SCHEMA_CLIENTS')
-    if 'pg8000' in uri and search_path:
+
+    # Если используется SQLite (локальная разработка), пропускаем Postgres-специфичную логику
+    if uri.startswith('sqlite'):
+        logger.info("SQLite detected — skipping Postgres-specific schema setup.")
+        return db
+
+    # Продолжаем только для PostgreSQL (pg8000/psycopg2)
+    if 'postgresql' in uri and search_path:
         # Получаем движок сразу
         with app.app_context():
             engine = db.get_engine()
@@ -112,65 +127,63 @@ def init_db(app):
                 logger.info("Инициализация таблиц базы данных...")
                 from sqlalchemy import text
                 
-                # Создание схемы rozoom_clients, если она не существует
-                conn = engine.connect()
-                try:
-                    conn.execute(text("CREATE SCHEMA IF NOT EXISTS rozoom_clients"))
-                    conn.commit()
-                    logger.info("Схема rozoom_clients создана или уже существует")
-                except Exception as e:
-                    logger.error(f"Ошибка при создании схемы rozoom_clients: {e}")
+                # Создание дополнительных схем (clients + shop) если они указаны в конфиге
+                with engine.begin() as conn:
+                    client_schema = app.config.get('CLIENT_REQUESTS_SCHEMA')
+                    shop_schema = app.config.get('SHOP_SCHEMA')
+                    # Create client requests schema if configured
+                    if client_schema:
+                        try:
+                            conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {client_schema}"))
+                            logger.info(f"Схема {client_schema} создана или уже существует")
+                        except Exception as e:
+                            logger.error(f"Ошибка при создании схемы {client_schema}: {e}")
+                    # Create shop schema if configured
+                    if shop_schema:
+                        try:
+                            conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {shop_schema}"))
+                            logger.info(f"Схема {shop_schema} создана или уже существует")
+                        except Exception as e:
+                            logger.error(f"Ошибка при создании схемы {shop_schema}: {e}")
                 
-                # Создание таблицы client_requests
-                try:
-                    conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS rozoom_clients.client_requests (
-                        id SERIAL PRIMARY KEY,
-                        project_type VARCHAR(100) NOT NULL,
-                        project_name VARCHAR(200),
-                        task_description TEXT NOT NULL,
-                        key_features TEXT,
-                        design_preferences TEXT,
-                        platform VARCHAR(100),
-                        budget VARCHAR(100),
-                        timeline VARCHAR(100),
-                        integrations TEXT,
-                        contact_method VARCHAR(100) NOT NULL,
-                        contact_info VARCHAR(200),
-                        status VARCHAR(30) DEFAULT 'new',
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        deadline TIMESTAMP,
-                        priority INTEGER DEFAULT 1,
-                        tech_stack TEXT,
-                        acceptance_criteria TEXT,
-                        notes TEXT
-                    )
-                    """))
-                    conn.commit()
-                    logger.info("✅ Таблица rozoom_clients.client_requests создана или уже существует")
-                    
-                    # Проверка, что таблица действительно существует
-                    result = conn.execute(text("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'rozoom_clients' AND table_name = 'client_requests')")).scalar()
-                    if result:
-                        logger.info("✅ Подтверждено существование таблицы rozoom_clients.client_requests")
-                    else:
-                        logger.warning("⚠️ Таблица rozoom_clients.client_requests НЕ найдена в information_schema!")
-                    
-                    # Добавление тестовой записи для проверки доступа
-                    conn.execute(text("""
-                    INSERT INTO rozoom_clients.client_requests 
-                    (project_type, project_name, task_description, contact_method, contact_info)
-                    VALUES ('test', 'Тестовый проект', 'Тестовое задание', 'Email', 'test@example.com')
-                    ON CONFLICT DO NOTHING
-                    """))
-                    conn.commit()
-                    logger.info("✅ Тестовая запись добавлена или уже существует")
-                    
-                except Exception as e:
-                    logger.error(f"Ошибка при создании таблицы rozoom_clients.client_requests: {e}")
-                finally:
-                    conn.close()
+                # Use SQLAlchemy to create all tables
+                with app.app_context():
+                    # Drop all tables first to ensure foreign keys are updated
+                    db.drop_all()
+                    db.create_all()
+                    logger.info("✅ Все таблицы созданы или уже существуют")
+                
+                # Additional manual table creation for client_requests if needed
+                if client_schema:
+                    with engine.begin() as conn:
+                        try:
+                            conn.execute(text(f"""
+                            CREATE TABLE IF NOT EXISTS {client_schema}.client_requests (
+                                id SERIAL PRIMARY KEY,
+                                project_type VARCHAR(100) NOT NULL,
+                                project_name VARCHAR(200),
+                                task_description TEXT NOT NULL,
+                                key_features TEXT,
+                                design_preferences TEXT,
+                                platform VARCHAR(100),
+                                budget VARCHAR(100),
+                                timeline VARCHAR(100),
+                                integrations TEXT,
+                                contact_method VARCHAR(100) NOT NULL,
+                                contact_info VARCHAR(200),
+                                status VARCHAR(30) DEFAULT 'new',
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                deadline TIMESTAMP,
+                                priority INTEGER DEFAULT 1,
+                                tech_stack TEXT,
+                                acceptance_criteria TEXT,
+                                notes TEXT
+                            )
+                            """))
+                            logger.info(f"✅ Таблица {client_schema}.client_requests создана или уже существует")
+                        except Exception as e:
+                            logger.error(f"Ошибка при создании таблицы client_requests: {e}")
             except Exception as e:
                 logger.error(f"Общая ошибка при инициализации таблиц: {e}")
     

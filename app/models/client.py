@@ -20,13 +20,12 @@ class Client(db.Model):
 
 # Модель для збереження технічних завдань (ТЗ)
 class ClientRequest(db.Model):
-    base_table_name = 'client_requests'
-    _extra_schema = os.getenv('POSTGRES_SCHEMA_CLIENTS', 'rozoom_clients')
-    __tablename__ = base_table_name
-    if _extra_schema:
-        __table_args__ = {'schema': _extra_schema, 'extend_existing': True}
-    else:
-        __table_args__ = {'extend_existing': True}
+    """Client request / brief table.
+    Keep table definitions schema-agnostic for local SQLite development.
+    Postgres deployments should rely on search_path / migrations for schema placement.
+    """
+    __tablename__ = 'client_requests'
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     project_type = db.Column(db.String(100), nullable=False)  # Тип проєкту (web-dev, chatbots і т.д.)
     project_name = db.Column(db.String(200), nullable=True)  # Назва проекту

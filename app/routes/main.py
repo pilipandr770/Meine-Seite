@@ -15,6 +15,12 @@ def home():
     default_titles = {"de": "Startseite", "uk": "Головна", "en": "Home"}
     return render_template('index.html', title=default_titles.get(lang, "Startseite"), lang=lang)
 
+
+@main_bp.route('/index')
+def index():
+    """Alias endpoint so url_for('main.index') works across the codebase."""
+    return home()
+
 @main_bp.route('/set_language/<language>')
 def set_language(language):
     if language in Config.SUPPORTED_LANGUAGES:

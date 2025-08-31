@@ -1,0 +1,196 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Create Product | RoZoom Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-check-label {
+        cursor: pointer;
+    }
+    
+    .form-hint {
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h1>Create Product</h1>
+        <a href="{{ url_for('admin.products') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Products
+        </a>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" class="mt-4">
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <label for="{{ form.name.id }}" class="form-label">{{ form.name.label }} <span class="text-danger">*</span></label>
+                    {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                    {% if form.name.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.short_description.id }}" class="form-label">{{ form.short_description.label }} <span class="text-danger">*</span></label>
+                    {{ form.short_description(class="form-control" + (" is-invalid" if form.short_description.errors else ""), rows=2) }}
+                    {% if form.short_description.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.short_description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-hint">A brief description (shown in product listings).</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.description.id }}" class="form-label">{{ form.description.label }} <span class="text-danger">*</span></label>
+                    {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=5) }}
+                    {% if form.description.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-hint">Detailed product description (shown on the product page).</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.price.id }}" class="form-label">{{ form.price.label }} (€) <span class="text-danger">*</span></label>
+                            {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else "")) }}
+                            {% if form.price.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.price.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.sale_price.id }}" class="form-label">{{ form.sale_price.label }} (€)</label>
+                            {{ form.sale_price(class="form-control" + (" is-invalid" if form.sale_price.errors else "")) }}
+                            {% if form.sale_price.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.sale_price.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-hint">Leave blank if not on sale.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.stock.id }}" class="form-label">{{ form.stock.label }} <span class="text-danger">*</span></label>
+                            {{ form.stock(class="form-control" + (" is-invalid" if form.stock.errors else "")) }}
+                            {% if form.stock.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.stock.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-hint">Number of items available.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.duration.id }}" class="form-label">{{ form.duration.label }}</label>
+                            {{ form.duration(class="form-control" + (" is-invalid" if form.duration.errors else "")) }}
+                            {% if form.duration.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.duration.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-hint">For consultation services (in minutes).</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="{{ form.category_id.id }}" class="form-label">{{ form.category_id.label }} <span class="text-danger">*</span></label>
+                    {{ form.category_id(class="form-select" + (" is-invalid" if form.category_id.errors else "")) }}
+                    {% if form.category_id.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.category_id.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.image.id }}" class="form-label">{{ form.image.label }}</label>
+                    {{ form.image(class="form-control" + (" is-invalid" if form.image.errors else "")) }}
+                    {% if form.image.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.image.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-hint">Upload a product image (recommended).</div>
+                </div>
+                
+                <div class="card mt-3 mb-3">
+                    <div class="card-header">Product Settings</div>
+                    <div class="card-body">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" id="{{ form.is_active.id }}" name="{{ form.is_active.name }}" {% if form.is_active.data %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ form.is_active.id }}">
+                                {{ form.is_active.label }}
+                            </label>
+                            <div class="form-hint">Product will be visible on the site.</div>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" id="{{ form.is_featured.id }}" name="{{ form.is_featured.name }}" {% if form.is_featured.data %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ form.is_featured.id }}">
+                                {{ form.is_featured.label }}
+                            </label>
+                            <div class="form-hint">Product will be displayed in featured sections.</div>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" id="{{ form.is_virtual.id }}" name="{{ form.is_virtual.name }}" {% if form.is_virtual.data %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ form.is_virtual.id }}">
+                                {{ form.is_virtual.label }}
+                            </label>
+                            <div class="form-hint">Digital product or service (e.g. consultation hours).</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4 border-top pt-3">
+            <button type="submit" class="btn btn-primary">Create Product</button>
+            <a href="{{ url_for('admin.products') }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

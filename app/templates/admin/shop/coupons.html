@@ -1,0 +1,514 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Gutscheine verwalten
+    {% elif lang == 'uk' %}
+        Управління купонами
+    {% else %}
+        Manage Coupons
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">
+        {% if lang == 'de' %}
+            Gutscheine verwalten
+        {% elif lang == 'uk' %}
+            Управління купонами
+        {% else %}
+            Manage Coupons
+        {% endif %}
+    </h1>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Filter
+                {% elif lang == 'uk' %}
+                    Фільтр
+                {% else %}
+                    Filter
+                {% endif %}
+            </h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                    aria-labelledby="dropdownMenuLink">
+                    <a class="dropdown-item" href="{{ url_for('admin_shop.coupons') }}">
+                        {% if lang == 'de' %}
+                            Filter zurücksetzen
+                        {% elif lang == 'uk' %}
+                            Скинути фільтр
+                        {% else %}
+                            Reset Filters
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{{ url_for('admin_shop.coupons') }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="status">
+                                {% if lang == 'de' %}
+                                    Status
+                                {% elif lang == 'uk' %}
+                                    Статус
+                                {% else %}
+                                    Status
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="">
+                                    {% if lang == 'de' %}
+                                        Alle
+                                    {% elif lang == 'uk' %}
+                                        Всі
+                                    {% else %}
+                                        All
+                                    {% endif %}
+                                </option>
+                                <option value="active" {% if status == 'active' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Aktiv
+                                    {% elif lang == 'uk' %}
+                                        Активний
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </option>
+                                <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Inaktiv
+                                    {% elif lang == 'uk' %}
+                                        Неактивний
+                                    {% else %}
+                                        Inactive
+                                    {% endif %}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="sort">
+                                {% if lang == 'de' %}
+                                    Sortierung
+                                {% elif lang == 'uk' %}
+                                    Сортування
+                                {% else %}
+                                    Sort
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="sort" name="sort">
+                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Neueste zuerst
+                                    {% elif lang == 'uk' %}
+                                        Спочатку новіші
+                                    {% else %}
+                                        Newest First
+                                    {% endif %}
+                                </option>
+                                <option value="code" {% if sort == 'code' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Code (A-Z)
+                                    {% elif lang == 'uk' %}
+                                        Код (А-Я)
+                                    {% else %}
+                                        Code (A-Z)
+                                    {% endif %}
+                                </option>
+                                <option value="value_desc" {% if sort == 'value_desc' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Wert (Hoch nach Niedrig)
+                                    {% elif lang == 'uk' %}
+                                        Вартість (Від високої до низької)
+                                    {% else %}
+                                        Value (High to Low)
+                                    {% endif %}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    {% if lang == 'de' %}
+                        Anwenden
+                    {% elif lang == 'uk' %}
+                        Застосувати
+                    {% else %}
+                        Apply
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Coupons Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Gutscheinliste
+                {% elif lang == 'uk' %}
+                    Список купонів
+                {% else %}
+                    Coupon List
+                {% endif %}
+            </h6>
+            <a href="{{ url_for('admin_shop.add_coupon') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus fa-sm"></i> 
+                {% if lang == 'de' %}
+                    Gutschein hinzufügen
+                {% elif lang == 'uk' %}
+                    Додати купон
+                {% else %}
+                    Add Coupon
+                {% endif %}
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="coupons-table" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Code
+                                {% elif lang == 'uk' %}
+                                    Код
+                                {% else %}
+                                    Code
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Beschreibung
+                                {% elif lang == 'uk' %}
+                                    Опис
+                                {% else %}
+                                    Description
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Rabatt
+                                {% elif lang == 'uk' %}
+                                    Знижка
+                                {% else %}
+                                    Discount
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Gültigkeit
+                                {% elif lang == 'uk' %}
+                                    Термін дії
+                                {% else %}
+                                    Validity
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Verwendungen
+                                {% elif lang == 'uk' %}
+                                    Використання
+                                {% else %}
+                                    Usage
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Status
+                                {% elif lang == 'uk' %}
+                                    Статус
+                                {% else %}
+                                    Status
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Aktionen
+                                {% elif lang == 'uk' %}
+                                    Дії
+                                {% else %}
+                                    Actions
+                                {% endif %}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for coupon in coupons %}
+                        <tr>
+                            <td><code>{{ coupon.code }}</code></td>
+                            <td>
+                                {% if coupon.description %}
+                                {{ coupon.description|truncate(50) }}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if coupon.discount_type == 'percentage' %}
+                                {{ coupon.discount_value }}%
+                                {% else %}
+                                {{ coupon.discount_value }}€
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if coupon.valid_from or coupon.valid_to %}
+                                    {% if coupon.valid_from %}
+                                    <small>
+                                        {% if lang == 'de' %}
+                                            Von: {{ coupon.valid_from.strftime('%d.%m.%Y') }}
+                                        {% elif lang == 'uk' %}
+                                            Від: {{ coupon.valid_from.strftime('%d.%m.%Y') }}
+                                        {% else %}
+                                            From: {{ coupon.valid_from.strftime('%d.%m.%Y') }}
+                                        {% endif %}
+                                    </small>
+                                    {% endif %}
+                                    
+                                    {% if coupon.valid_to %}
+                                    <small>
+                                        {% if lang == 'de' %}
+                                            Bis: {{ coupon.valid_to.strftime('%d.%m.%Y') }}
+                                        {% elif lang == 'uk' %}
+                                            До: {{ coupon.valid_to.strftime('%d.%m.%Y') }}
+                                        {% else %}
+                                            To: {{ coupon.valid_to.strftime('%d.%m.%Y') }}
+                                        {% endif %}
+                                    </small>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">
+                                    {% if lang == 'de' %}
+                                        Keine Beschränkung
+                                    {% elif lang == 'uk' %}
+                                        Без обмежень
+                                    {% else %}
+                                        No restriction
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if coupon.usage_count is defined %}
+                                {{ coupon.usage_count }}
+                                {% else %}
+                                0
+                                {% endif %}
+                                {% if coupon.usage_limit %}
+                                / {{ coupon.usage_limit }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if coupon.is_active else 'danger' }}">
+                                    {% if coupon.is_active %}
+                                        {% if lang == 'de' %}
+                                            Aktiv
+                                        {% elif lang == 'uk' %}
+                                            Активний
+                                        {% else %}
+                                            Active
+                                        {% endif %}
+                                    {% else %}
+                                        {% if lang == 'de' %}
+                                            Inaktiv
+                                        {% elif lang == 'uk' %}
+                                            Неактивний
+                                        {% else %}
+                                            Inactive
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                                {% if coupon.is_expired %}
+                                <span class="badge badge-warning ml-1">
+                                    {% if lang == 'de' %}
+                                        Abgelaufen
+                                    {% elif lang == 'uk' %}
+                                        Закінчився
+                                    {% else %}
+                                        Expired
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                                {% if coupon.is_usage_exceeded %}
+                                <span class="badge badge-info ml-1">
+                                    {% if lang == 'de' %}
+                                        Limit erreicht
+                                    {% elif lang == 'uk' %}
+                                        Ліміт досягнуто
+                                    {% else %}
+                                        Limit reached
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_shop.edit_coupon', coupon_id=coupon.id) }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-danger btn-sm delete-coupon" data-id="{{ coupon.id }}" data-has-orders="{{ 1 if coupon.orders else 0 }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not coupons %}
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                {% if lang == 'de' %}
+                                    Keine Gutscheine gefunden
+                                {% elif lang == 'uk' %}
+                                    Купони не знайдено
+                                {% else %}
+                                    No coupons found
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Coupon Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    {% if lang == 'de' %}
+                        Gutschein löschen
+                    {% elif lang == 'uk' %}
+                        Видалити купон
+                    {% else %}
+                        Delete Coupon
+                    {% endif %}
+                </h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-warning">
+                    {% if lang == 'de' %}
+                        Sind Sie sicher, dass Sie diesen Gutschein löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden.
+                    {% elif lang == 'uk' %}
+                        Ви впевнені, що хочете видалити цей купон? Цю дію неможливо скасувати.
+                    {% else %}
+                        Are you sure you want to delete this coupon? This action cannot be undone.
+                    {% endif %}
+                </p>
+                <p id="orders-warning" class="text-danger d-none">
+                    {% if lang == 'de' %}
+                        Dieser Gutschein wurde bereits in Bestellungen verwendet und kann nicht gelöscht werden.
+                    {% elif lang == 'uk' %}
+                        Цей купон вже використовувався в замовленнях і не може бути видалений.
+                    {% else %}
+                        This coupon has been used in orders and cannot be deleted.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">
+                    {% if lang == 'de' %}
+                        Abbrechen
+                    {% elif lang == 'uk' %}
+                        Скасувати
+                    {% else %}
+                        Cancel
+                    {% endif %}
+                </button>
+                <button id="confirmDelete" class="btn btn-danger">
+                    {% if lang == 'de' %}
+                        Löschen
+                    {% elif lang == 'uk' %}
+                        Видалити
+                    {% else %}
+                        Delete
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    let couponIdToDelete = null;
+    let hasOrders = false;
+    
+    $('.delete-coupon').on('click', function() {
+        couponIdToDelete = $(this).data('id');
+        hasOrders = $(this).data('has-orders') === 1;
+        
+        if (hasOrders) {
+            $('#orders-warning').removeClass('d-none');
+            $('#confirmDelete').prop('disabled', true);
+        } else {
+            $('#orders-warning').addClass('d-none');
+            $('#confirmDelete').prop('disabled', false);
+        }
+        
+        $('#deleteModal').modal('show');
+    });
+    
+    $('#confirmDelete').on('click', function() {
+        if (couponIdToDelete && !hasOrders) {
+            $.ajax({
+                url: "{{ url_for('admin_shop.delete_coupon', coupon_id='') }}" + couponIdToDelete,
+                type: 'POST',
+                success: function(result) {
+                    if (result.success) {
+                        $('#deleteModal').modal('hide');
+                        // Reload page to reflect changes
+                        location.reload();
+                    } else {
+                        alert(result.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while deleting the coupon.');
+                }
+            });
+        }
+    });
+    
+    // Initialize DataTable
+    $('#coupons-table').DataTable({
+        "paging": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "language": {
+            "info": "{{ _('Showing _START_ to _END_ of _TOTAL_ coupons') }}",
+            "infoEmpty": "{{ _('Showing 0 to 0 of 0 coupons') }}",
+            "lengthMenu": "{{ _('Show _MENU_ coupons') }}",
+            "emptyTable": "{{ _('No coupons found') }}",
+            "paginate": {
+                "first": "{{ _('First') }}",
+                "last": "{{ _('Last') }}",
+                "next": "{{ _('Next') }}",
+                "previous": "{{ _('Previous') }}"
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

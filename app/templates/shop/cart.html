@@ -1,0 +1,808 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hidden element to pass authentication status to JavaScript -->
+<div id="user-auth-status" data-authenticated="{% if current_user.is_authenticated %}true{% else %}false{% endif %}" style="display: none;"></div>
+
+<div class="cart-container">
+    <h1 class="page-title">
+        {% if lang == 'uk' %}Кошик{% elif lang == 'de' %}Warenkorb{% else %}Shopping Cart{% endif %}
+    </h1>
+    
+    {% if cart_items %}
+        <div class="cart-content">
+            <div class="cart-items">
+                <div class="cart-header">
+                    <div class="cart-header-product">
+                        {% if lang == 'uk' %}Товар{% elif lang == 'de' %}Produkt{% else %}Product{% endif %}
+                    </div>
+                    <div class="cart-header-price">
+                        {% if lang == 'uk' %}Ціна{% elif lang == 'de' %}Preis{% else %}Price{% endif %}
+                    </div>
+                    <div class="cart-header-quantity">
+                        {% if lang == 'uk' %}Кількість{% elif lang == 'de' %}Menge{% else %}Quantity{% endif %}
+                    </div>
+                    <div class="cart-header-total">
+                        {% if lang == 'uk' %}Сума{% elif lang == 'de' %}Summe{% else %}Total{% endif %}
+                    </div>
+                    <div class="cart-header-action"></div>
+                </div>
+                
+                {% for item in cart_items %}
+                    <div class="cart-item" data-product-id="{{ item.product.id }}">
+                        <div class="cart-item-product">
+                            <div class="item-image">
+                                {% if item.product.image %}
+                                    <img src="{{ item.product.image }}" alt="{{ item.product.name }}">
+                                {% else %}
+                                    <div class="item-placeholder-image">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="item-info">
+                                <h4>{{ item.product.name }}</h4>
+                                {% if item.product.short_description %}
+                                    <p class="item-desc">{{ item.product.short_description|truncate(80) }}</p>
+                                {% endif %}
+                                {% if item.product.duration %}
+                                    <div class="item-duration">
+                                        <i class="fas fa-clock"></i> {{ item.product.duration }} {% if lang == 'uk' %}хв.{% elif lang == 'de' %}Min.{% else %}min.{% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="cart-item-price">
+                            {% if item.product.sale_price %}
+                                <span class="price-current">{{ "%.2f"|format(item.product.sale_price) }} €</span>
+                                <span class="price-original">{{ "%.2f"|format(item.product.price) }} €</span>
+                            {% else %}
+                                <span class="price-current">{{ "%.2f"|format(item.product.price) }} €</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="cart-item-quantity">
+                            <div class="quantity-controls">
+                                <button type="button" class="quantity-btn minus" data-product-id="{{ item.product.id }}">-</button>
+                                <input type="number" value="{{ item.quantity }}" min="1" max="10" class="quantity-input" data-product-id="{{ item.product.id }}">
+                                <button type="button" class="quantity-btn plus" data-product-id="{{ item.product.id }}">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="cart-item-total">
+                            {% if item.product.sale_price %}
+                                {{ "%.2f"|format(item.product.sale_price * item.quantity) }} €
+                            {% else %}
+                                {{ "%.2f"|format(item.product.price * item.quantity) }} €
+                            {% endif %}
+                        </div>
+                        
+                        <div class="cart-item-action">
+                            <button type="button" class="btn-remove" data-product-id="{{ item.product.id }}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <div class="cart-actions">
+                    <a href="{{ url_for('shop.products') }}" class="btn btn-continue">
+                        <i class="fas fa-arrow-left"></i> 
+                        {% if lang == 'uk' %}Продовжити покупки{% elif lang == 'de' %}Weiter einkaufen{% else %}Continue Shopping{% endif %}
+                    </a>
+                    <button type="button" class="btn btn-clear" id="clearCart">
+                        <i class="fas fa-times"></i> 
+                        {% if lang == 'uk' %}Очистити кошик{% elif lang == 'de' %}Warenkorb leeren{% else %}Clear Cart{% endif %}
+                    </button>
+                </div>
+            </div>
+            
+            <div class="cart-summary">
+                <h3>
+                    {% if lang == 'uk' %}Підсумок замовлення{% elif lang == 'de' %}Bestellübersicht{% else %}Order Summary{% endif %}
+                </h3>
+                
+                <div class="summary-row">
+                    <span>
+                        {% if lang == 'uk' %}Кількість товарів{% elif lang == 'de' %}Anzahl der Artikel{% else %}Number of items{% endif %}
+                    </span>
+                    <span>{{ total_quantity }}</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span>
+                        {% if lang == 'uk' %}Підсумок{% elif lang == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}
+                    </span>
+                    <span>{{ "%.2f"|format(subtotal) }} €</span>
+                </div>
+                
+                {% if discount %}
+                    <div class="summary-row discount-row">
+                        <span>
+                            {% if lang == 'uk' %}Знижка{% elif lang == 'de' %}Rabatt{% else %}Discount{% endif %}
+                        </span>
+                        <span>-{{ "%.2f"|format(discount) }} €</span>
+                    </div>
+                {% endif %}
+                
+                <div class="summary-row">
+                    <span>
+                        {% if lang == 'uk' %}Податок{% elif lang == 'de' %}MwSt{% else %}Tax{% endif %} (19%)
+                    </span>
+                    <span>{{ "%.2f"|format(tax) }} €</span>
+                </div>
+                
+                <div class="summary-row total-row">
+                    <span>
+                        {% if lang == 'uk' %}Загальна сума{% elif lang == 'de' %}Gesamtsumme{% else %}Total{% endif %}
+                    </span>
+                    <span>{{ "%.2f"|format(total) }} €</span>
+                </div>
+                
+                <div class="coupon-section">
+                    <h4>
+                        {% if lang == 'uk' %}Застосувати купон{% elif lang == 'de' %}Gutschein einlösen{% else %}Apply Coupon{% endif %}
+                    </h4>
+                    <form id="couponForm">
+                        <div class="coupon-input">
+                            <input type="text" id="couponCode" placeholder="{% if lang == 'uk' %}Код купона{% elif lang == 'de' %}Gutscheincode{% else %}Coupon code{% endif %}">
+                            <button type="submit" class="btn btn-apply-coupon">
+                                {% if lang == 'uk' %}Застосувати{% elif lang == 'de' %}Anwenden{% else %}Apply{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <button type="button" class="btn btn-checkout" id="checkoutBtn">
+                    {% if lang == 'uk' %}Оформити замовлення{% elif lang == 'de' %}Zur Kasse{% else %}Proceed to Checkout{% endif %}
+                </button>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-cart">
+            <div class="empty-cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h2>
+                {% if lang == 'uk' %}
+                    Ваш кошик порожній
+                {% elif lang == 'de' %}
+                    Ihr Warenkorb ist leer
+                {% else %}
+                    Your cart is empty
+                {% endif %}
+            </h2>
+            <p>
+                {% if lang == 'uk' %}
+                    Схоже, ви ще не додали жодного товару до кошика.
+                {% elif lang == 'de' %}
+                    Sie haben noch keine Produkte in Ihren Warenkorb gelegt.
+                {% else %}
+                    It looks like you haven't added any products to your cart yet.
+                {% endif %}
+            </p>
+            <a href="{{ url_for('shop.products') }}" class="btn btn-primary">
+                {% if lang == 'uk' %}
+                    Перейти до магазину
+                {% elif lang == 'de' %}
+                    Zum Shop
+                {% else %}
+                    Go to Shop
+                {% endif %}
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .cart-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .page-title {
+        color: #0f0;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .cart-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+    }
+    
+    .cart-header {
+        display: grid;
+        grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid rgba(15, 255, 15, 0.3);
+        color: #999;
+        font-weight: bold;
+    }
+    
+    .cart-item {
+        display: grid;
+        grid-template-columns: 3fr 1fr 1fr 1fr 0.5fr;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #333;
+    }
+    
+    .cart-item-product {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .item-image {
+        width: 80px;
+        height: 80px;
+        overflow: hidden;
+        border-radius: 8px;
+        background-color: #1a1a1a;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .item-placeholder-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f0;
+        font-size: 2rem;
+    }
+    
+    .item-info h4 {
+        color: #ccc;
+        margin-top: 0;
+        margin-bottom: 5px;
+        font-size: 1rem;
+    }
+    
+    .item-desc {
+        color: #999;
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+    
+    .item-duration {
+        color: #999;
+        font-size: 0.85rem;
+    }
+    
+    .item-duration i {
+        color: #0f0;
+        margin-right: 5px;
+    }
+    
+    .cart-item-price {
+        color: #ccc;
+    }
+    
+    .price-original {
+        color: #999;
+        text-decoration: line-through;
+        display: block;
+        font-size: 0.85rem;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        width: 100px;
+    }
+    
+    .quantity-btn {
+        width: 30px;
+        height: 30px;
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .quantity-btn.minus {
+        border-radius: 4px 0 0 4px;
+    }
+    
+    .quantity-btn.plus {
+        border-radius: 0 4px 4px 0;
+    }
+    
+    .quantity-input {
+        width: 40px;
+        height: 30px;
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-left: none;
+        border-right: none;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #ccc;
+        text-align: center;
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+    
+    .quantity-input::-webkit-outer-spin-button,
+    .quantity-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    .cart-item-total {
+        color: #0f0;
+        font-weight: bold;
+    }
+    
+    .btn-remove {
+        background: none;
+        border: none;
+        color: #ff6b6b;
+        cursor: pointer;
+        padding: 5px;
+        transition: color 0.3s;
+    }
+    
+    .btn-remove:hover {
+        color: #ff4757;
+    }
+    
+    .cart-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #333;
+    }
+    
+    .btn-continue {
+        background-color: transparent;
+        color: #ccc;
+        border: 1px solid #555;
+        padding: 10px 15px;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-continue:hover {
+        color: #0f0;
+        border-color: #0f0;
+    }
+    
+    .btn-clear {
+        background-color: transparent;
+        color: #ff6b6b;
+        border: 1px solid #ff6b6b;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-clear:hover {
+        background-color: rgba(255, 107, 107, 0.1);
+    }
+    
+    .cart-summary {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 8px;
+        padding: 20px;
+        align-self: flex-start;
+    }
+    
+    .cart-summary h3 {
+        color: #0f0;
+        margin-top: 0;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(15, 255, 15, 0.3);
+        padding-bottom: 10px;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        color: #ccc;
+    }
+    
+    .discount-row {
+        color: #ff6b6b;
+    }
+    
+    .total-row {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #0f0;
+        border-top: 1px solid rgba(15, 255, 15, 0.3);
+        margin-top: 15px;
+        padding-top: 15px;
+    }
+    
+    .coupon-section {
+        margin-top: 20px;
+        border-top: 1px solid #333;
+        padding-top: 20px;
+    }
+    
+    .coupon-section h4 {
+        color: #ccc;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    
+    .coupon-input {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .coupon-input input {
+        flex-grow: 1;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        color: #ccc;
+        border-radius: 4px;
+    }
+    
+    .coupon-input input:focus {
+        outline: none;
+        border-color: #0f0;
+    }
+    
+    .btn-apply-coupon {
+        background-color: transparent;
+        color: #0f0;
+        border: 1px solid #0f0;
+        padding: 0 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-apply-coupon:hover {
+        background-color: rgba(0, 255, 0, 0.1);
+    }
+    
+    .btn-checkout {
+        width: 100%;
+        background-color: #0f0;
+        color: #000;
+        padding: 15px;
+        border: none;
+        border-radius: 4px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: all 0.3s;
+    }
+    
+    .btn-checkout:hover {
+        background-color: #00cc00;
+    }
+    
+    .empty-cart {
+        text-align: center;
+        padding: 60px 0;
+        color: #ccc;
+    }
+    
+    .empty-cart-icon {
+        font-size: 5rem;
+        color: #0f0;
+        opacity: 0.7;
+        margin-bottom: 20px;
+    }
+    
+    .empty-cart h2 {
+        color: #0f0;
+        margin-bottom: 15px;
+    }
+    
+    .empty-cart p {
+        color: #999;
+        margin-bottom: 30px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    @media (max-width: 992px) {
+        .cart-content {
+            grid-template-columns: 1fr;
+        }
+        
+        .cart-summary {
+            order: -1;
+            margin-bottom: 30px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .cart-header {
+            display: none;
+        }
+        
+        .cart-item {
+            grid-template-columns: 1fr;
+            gap: 15px;
+            padding: 20px 0;
+        }
+        
+        .cart-item-product {
+            grid-column: 1 / -1;
+        }
+        
+        .cart-item-price,
+        .cart-item-quantity,
+        .cart-item-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cart-item-price::before {
+            content: '{% if lang == 'uk' %}Ціна{% elif lang == 'de' %}Preis{% else %}Price{% endif %}:';
+            color: #999;
+        }
+        
+        .cart-item-quantity::before {
+            content: '{% if lang == 'uk' %}Кількість{% elif lang == 'de' %}Menge{% else %}Quantity{% endif %}:';
+            color: #999;
+        }
+        
+        .cart-item-total::before {
+            content: '{% if lang == 'uk' %}Сума{% elif lang == 'de' %}Summe{% else %}Total{% endif %}:';
+            color: #999;
+        }
+        
+        .cart-item-action {
+            text-align: right;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update cart item quantity
+        function updateItemQuantity(productId, quantity) {
+            fetch('/shop/cart/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to update totals
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'An error occurred');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating item:', error);
+            });
+        }
+        
+        // Remove item from cart
+        function removeItem(productId) {
+            fetch('/shop/cart/remove', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    product_id: productId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'An error occurred');
+                }
+            })
+            .catch(error => {
+                console.error('Error removing item:', error);
+            });
+        }
+        
+        // Clear cart
+        function clearCart() {
+                if (confirm('{% if lang == "uk" %}Ви дійсно хочете очистити кошик?{% elif lang == "de" %}Möchten Sie wirklich Ihren Warenkorb leeren?{% else %}Are you sure you want to clear your cart?{% endif %}')) {
+                fetch('/shop/cart/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload the page
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error clearing cart:', error);
+                });
+            }
+        }
+        
+        // Quantity increment/decrement buttons
+        const minusBtns = document.querySelectorAll('.quantity-btn.minus');
+        const plusBtns = document.querySelectorAll('.quantity-btn.plus');
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+        
+        minusBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+                const currentValue = parseInt(input.value);
+                
+                if (currentValue > 1) {
+                    const newValue = currentValue - 1;
+                    input.value = newValue;
+                    updateItemQuantity(productId, newValue);
+                }
+            });
+        });
+        
+        plusBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+                const currentValue = parseInt(input.value);
+                const max = parseInt(input.getAttribute('max') || 10);
+                
+                if (currentValue < max) {
+                    const newValue = currentValue + 1;
+                    input.value = newValue;
+                    updateItemQuantity(productId, newValue);
+                }
+            });
+        });
+        
+        quantityInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const productId = this.dataset.productId;
+                const value = parseInt(this.value);
+                const min = parseInt(this.getAttribute('min') || 1);
+                const max = parseInt(this.getAttribute('max') || 10);
+                
+                // Validate input
+                if (isNaN(value) || value < min) {
+                    this.value = min;
+                    updateItemQuantity(productId, min);
+                } else if (value > max) {
+                    this.value = max;
+                    updateItemQuantity(productId, max);
+                } else {
+                    updateItemQuantity(productId, value);
+                }
+            });
+        });
+        
+        // Remove buttons
+        const removeBtns = document.querySelectorAll('.btn-remove');
+        
+        removeBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                removeItem(productId);
+            });
+        });
+        
+        // Clear cart button
+        const clearCartBtn = document.getElementById('clearCart');
+        
+        if (clearCartBtn) {
+            clearCartBtn.addEventListener('click', clearCart);
+        }
+        
+        // Coupon form
+        const couponForm = document.getElementById('couponForm');
+        
+        if (couponForm) {
+            couponForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const couponCode = document.getElementById('couponCode').value.trim();
+                
+                if (!couponCode) {
+                    alert('Please enter a coupon code');
+                    return;
+                }
+                
+                fetch('/shop/cart/apply-coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        coupon_code: couponCode
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error applying coupon:', error);
+                });
+            });
+        }
+        
+        // Checkout button
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', function() {
+                // If the user is authenticated, submit a POST to /shop/checkout so
+                // the server can create a Stripe Checkout session and redirect the browser.
+                // If guest, navigate to the checkout page to collect name/email first.
+                var isAuth = document.getElementById('user-auth-status').dataset.authenticated === 'true';
+                if (isAuth) {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ url_for("shop.checkout") }}';
+                    // CSRF token
+                    var csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = 'csrf_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    document.body.appendChild(form);
+                    form.submit();
+                } else {
+                    window.location.href = '{{ url_for("shop.checkout") }}';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

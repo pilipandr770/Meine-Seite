@@ -17,7 +17,11 @@
     <meta property="og:description" content="{{ meta_descriptions.get(lang, meta_descriptions['de']) }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="{{ 'de_DE' if lang=='de' else ('uk_UA' if lang=='uk' else 'en_US') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='header-styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}">
     <!-- Добавляем скрипты для работы с сайтом -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="{{ url_for('static', filename='qr.js') }}"></script>
@@ -44,6 +48,50 @@
             0% { transform: translateY(-100%); opacity: 0; }
             100% { transform: translateY(100vh); opacity: 1; }
         }
+        /* Стили для навигационного меню */
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-menu li {
+            margin: 0 10px;
+        }
+        
+        .nav-menu a {
+            color: #0f0;
+            text-decoration: none;
+            padding: 5px 10px;
+            transition: all 0.3s ease;
+            font-family: monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+        
+        .nav-menu a:hover {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(15, 255, 15, 0.7);
+        }
+        
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background-color: #0f0;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-menu a:hover::after {
+            width: 80%;
+        }
+        
         /* Стили для мобильного меню */
         .mobile-menu-toggle {
             display: none;
@@ -55,17 +103,27 @@
             .mobile-menu-toggle {
                 display: block;
             }
-            .header-nav ul {
+            .header-nav .nav-menu {
                 display: none;
                 flex-direction: column;
                 width: 100%;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                background-color: rgba(0, 0, 0, 0.9);
+                padding: 15px;
+                z-index: 100;
             }
-            .header-nav ul.mobile-active {
+            .header-nav .nav-menu.mobile-active {
                 display: flex;
             }
-            .header-nav li {
+            .header-nav .nav-menu li {
                 margin: 5px 0;
                 width: 100%;
+                text-align: center;
+            }
+            .nav-menu a::after {
+                bottom: -1px;
             }
         }
         
@@ -109,22 +167,49 @@
     <div class="page-wrapper">
         <header>
             <nav class="header-nav">
-                <a href="/" class="home-link">{% if lang == 'uk' %}Головна{% elif lang == 'de' %}Startseite{% else %}Home{% endif %}</a>
+                <div class="nav-left">
+                    <a href="/" class="home-link">{% if lang == 'uk' %}Головна{% elif lang == 'de' %}Startseite{% else %}Home{% endif %}</a>
+                </div>
                 
                 <!-- Гамбургер меню для мобильных устройств -->
                 <div class="mobile-menu-toggle" id="mobileMenuToggle">
                     ☰
                 </div>
                 
+                <!-- Основное меню навигации -->
+                <ul class="nav-menu" id="navMenu">
+                    <li><a href="/shop">{% if lang == 'uk' %}Магазин{% elif lang == 'de' %}Shop{% else %}Shop{% endif %}</a></li>
+                    <li><a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="/auth/profile">{% if lang == 'uk' %}Профіль{% elif lang == 'de' %}Profil{% else %}Profile{% endif %}</a></li>
+                        {% if current_user.is_admin %}
+                            <li><a href="/admin">{% if lang == 'uk' %}Адмін-панель{% elif lang == 'de' %}Admin-Panel{% else %}Admin Panel{% endif %}</a></li>
+                        {% endif %}
+                        <li><a href="/auth/logout">{% if lang == 'uk' %}Вихід{% elif lang == 'de' %}Abmelden{% else %}Logout{% endif %}</a></li>
+                    {% else %}
+                        <li><a href="/auth/login">{% if lang == 'uk' %}Вхід{% elif lang == 'de' %}Anmelden{% else %}Login{% endif %}</a></li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Cart icon -->
+                <div class="nav-right">
+                    <a href="/shop/cart" title="{% if lang == 'uk' %}Корзина{% elif lang == 'de' %}Warenkorb{% else %}Cart{% endif %}" class="cart-link">
+                        <div class="cart-icon-container">
+                            <img src="/static/icons/shopping-cart.svg" alt="Cart" class="cart-icon">
+                            <span class="cart-count">{{ cart_count }}</span>
+                        </div>
+                    </a>
+                </div>
+                
                 <div class="social-icons">
-                    <a href="https://www.linkedin.com" target="_blank">
-                        <img src="/static/icons/LinkedIn_logo_initials.png" alt="LinkedIn" class="mobile-image">
+                    <a href="https://www.linkedin.com" target="_blank" class="social-icon-link">
+                        <img src="/static/icons/LinkedIn_logo_initials.png" alt="LinkedIn" class="social-icon">
                     </a>
-                    <a href="https://t.me/Andrii_IT_bot" target="_blank" title="Telegram Bot">
-                        <img src="/static/icons/Telegram_logo.svg" alt="Telegram Bot">
+                    <a href="https://t.me/Andrii_IT_bot" target="_blank" title="Telegram Bot" class="social-icon-link">
+                        <img src="/static/icons/Telegram_logo.svg" alt="Telegram Bot" class="social-icon">
                     </a>
-                    <a href="https://wa.me/yourwhatsapp" target="_blank">
-                        <img src="/static/icons/whatsapp.svg" alt="WhatsApp">
+                    <a href="https://wa.me/yourwhatsapp" target="_blank" class="social-icon-link">
+                        <img src="/static/icons/whatsapp.svg" alt="WhatsApp" class="social-icon">
                     </a>
                 </div>
             </nav>
@@ -140,7 +225,7 @@
                 <a href="/privacy">{% if lang == 'uk' %}Політика конфіденційності{% elif lang == 'de' %}Datenschutz{% else %}Privacy Policy{% endif %}</a> |
                 <a href="/impressum">Impressum</a> |
                 <a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a> |
-                <a href="/qr-codes">{% if lang == 'uk' %}QR-коди{% elif lang == 'de' %}QR-Codes{% else %}QR Codes{% endif %}</a>
+                <a href="/shop">{% if lang == 'uk' %}Магазин{% elif lang == 'de' %}Shop{% else %}Shop{% endif %}</a>
             </p>
             <div class="language-switcher">
                 <select id="language-switcher" onchange="changeLanguage()">
@@ -243,7 +328,7 @@
         // Скрипт для мобильного меню
         document.addEventListener('DOMContentLoaded', function() {
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            const navMenu = document.querySelector('.header-nav ul');
+            const navMenu = document.getElementById('navMenu');
             
             if (mobileMenuToggle && navMenu) {
                 mobileMenuToggle.addEventListener('click', function() {

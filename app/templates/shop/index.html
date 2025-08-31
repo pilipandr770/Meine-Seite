@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="shop-hero">
+    <div class="shop-hero-content">
+        <h1>{% if lang == 'uk' %}Магазин консультацій{% elif lang == 'de' %}Beratungsshop{% else %}Consultation Shop{% endif %}</h1>
+        <p>{% if lang == 'uk' %}Виберіть та придбайте години консультацій з нашими експертами{% elif lang == 'de' %}Wählen und kaufen Sie Beratungsstunden mit unseren Experten{% else %}Select and purchase consultation hours with our experts{% endif %}</p>
+    </div>
+</section>
+
+<section class="featured-products">
+    <h2>{% if lang == 'uk' %}Рекомендовані послуги{% elif lang == 'de' %}Empfohlene Dienstleistungen{% else %}Featured Services{% endif %}</h2>
+    
+    <div class="products-grid">
+        {% if featured_products %}
+            {% for product in featured_products %}
+                <div class="product-card">
+                    {% if product.image %}
+                        <div class="product-image">
+                            <img src="{{ product.image }}" alt="{{ product.name }}">
+                        </div>
+                    {% else %}
+                        <div class="product-image product-image-placeholder">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="product-info">
+                        <h3>{{ product.name }}</h3>
+                        <p class="product-short-desc">{{ product.short_description }}</p>
+                        
+                        <div class="product-price">
+                            {% if product.sale_price %}
+                                <span class="price-current">{{ "%.2f"|format(product.sale_price) }} €</span>
+                                <span class="price-original">{{ "%.2f"|format(product.price) }} €</span>
+                            {% else %}
+                                <span class="price-current">{{ "%.2f"|format(product.price) }} €</span>
+                            {% endif %}
+                        </div>
+                        
+                        <a href="{{ url_for('shop.product_detail', slug=product.slug) }}" class="btn btn-primary">
+                            {% if lang == 'uk' %}Детальніше{% elif lang == 'de' %}Mehr Details{% else %}More Details{% endif %}
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-products">
+                <p>{% if lang == 'uk' %}Наразі немає рекомендованих послуг{% elif lang == 'de' %}Zurzeit keine empfohlenen Dienstleistungen{% else %}No featured services at the moment{% endif %}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="categories-section">
+    <h2>{% if lang == 'uk' %}Категорії консультацій{% elif lang == 'de' %}Beratungskategorien{% else %}Consultation Categories{% endif %}</h2>
+    
+    <div class="categories-grid">
+        {% if categories %}
+            {% for category in categories %}
+                <a href="{{ url_for('shop.products', category=category.slug) }}" class="category-card">
+                    {% if category.image %}
+                        <div class="category-image">
+                            <img src="{{ category.image }}" alt="{{ category.name }}">
+                        </div>
+                    {% else %}
+                        <div class="category-image category-image-placeholder">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <h3>{{ category.name }}</h3>
+                </a>
+            {% endfor %}
+        {% else %}
+            <div class="no-categories">
+                <p>{% if lang == 'uk' %}Наразі немає категорій{% elif lang == 'de' %}Zurzeit keine Kategorien{% else %}No categories at the moment{% endif %}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+    /* Shop styles */
+    .shop-hero {
+        padding: 60px 0;
+        background: linear-gradient(to right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9));
+        border-radius: 8px;
+        margin-bottom: 40px;
+        text-align: center;
+    }
+    
+    .shop-hero h1 {
+        color: #0f0;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .shop-hero p {
+        color: #fff;
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .featured-products,
+    .categories-section {
+        margin-bottom: 50px;
+    }
+    
+    .featured-products h2,
+    .categories-section h2 {
+        color: #0f0;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .products-grid,
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 30px;
+    }
+    
+    .product-card {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(15, 255, 15, 0.2);
+    }
+    
+    .product-image {
+        height: 200px;
+        overflow: hidden;
+    }
+    
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    
+    .product-card:hover .product-image img {
+        transform: scale(1.05);
+    }
+    
+    .product-image-placeholder {
+        background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .product-image-placeholder i {
+        font-size: 3rem;
+        color: #0f0;
+    }
+    
+    .product-info {
+        padding: 20px;
+    }
+    
+    .product-info h3 {
+        color: #0f0;
+        margin-bottom: 10px;
+        font-size: 1.3rem;
+    }
+    
+    .product-short-desc {
+        color: #ccc;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        height: 40px;
+        overflow: hidden;
+    }
+    
+    .product-price {
+        margin-bottom: 20px;
+    }
+    
+    .price-current {
+        color: #0f0;
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+    
+    .price-original {
+        color: #999;
+        text-decoration: line-through;
+        font-size: 1rem;
+        margin-left: 10px;
+    }
+    
+    .category-card {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 8px;
+        overflow: hidden;
+        text-decoration: none;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(15, 255, 15, 0.2);
+    }
+    
+    .category-image {
+        height: 150px;
+        overflow: hidden;
+    }
+    
+    .category-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    
+    .category-card:hover .category-image img {
+        transform: scale(1.05);
+    }
+    
+    .category-image-placeholder {
+        background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .category-image-placeholder i {
+        font-size: 3rem;
+        color: #0f0;
+    }
+    
+    .category-card h3 {
+        color: #0f0;
+        text-align: center;
+        padding: 15px;
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    
+    .no-products,
+    .no-categories {
+        grid-column: 1 / -1;
+        text-align: center;
+        color: #ccc;
+        padding: 40px 0;
+    }
+    
+    .btn-primary {
+        background-color: #0f0;
+        color: #000;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+        background-color: #00cc00;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px rgba(0, 204, 0, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .products-grid,
+        .categories-grid {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        
+        .shop-hero {
+            padding: 40px 20px;
+        }
+        
+        .shop-hero h1 {
+            font-size: 2rem;
+        }
+        
+        .shop-hero p {
+            font-size: 1rem;
+        }
+    }
+</style>
+{% endblock %}

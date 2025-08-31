@@ -8,6 +8,10 @@ document.addEventListener("DOMContentLoaded", function() {
     let audioChunks = [];
 
     // 🔹 Відправка текстового повідомлення
+    // Read CSRF token from meta tag so static JS can include it in POSTs
+    const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+    const CSRF_TOKEN = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : null;
+
     async function sendMessage() {
         if (!userInput.value.trim()) return;
 
@@ -18,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function() {
         try {
             const response = await fetch("/chatbot", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", ...(CSRF_TOKEN ? { 'X-CSRF-Token': CSRF_TOKEN } : {}) },
                 body: JSON.stringify({ message: userMessage })
             });
 
@@ -73,6 +77,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         try {
                             const response = await fetch("/chatbot/voice", {
                                 method: "POST",
+                                headers: CSRF_TOKEN ? { 'X-CSRF-Token': CSRF_TOKEN } : {},
                                 body: formData
                             });
 

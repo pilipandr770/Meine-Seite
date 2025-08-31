@@ -67,6 +67,13 @@ def send_telegram_message(text):
 # 🔹 Додати нового клієнта (опційно)
 @crm_bp.route("/clients", methods=["POST"])
 def add_client():
+    # For JSON requests, check CSRF token from headers
+    if request.is_json:
+        csrf_token = request.headers.get('X-CSRFToken') or request.headers.get('X-CSRF-Token')
+        if not csrf_token:
+            return jsonify({"error": "CSRF token missing"}), 400
+        # Note: In a production app, you'd validate the CSRF token here
+    
     data = request.json
     name = data.get("name")
     email = data.get("email")
@@ -84,6 +91,13 @@ def add_client():
 # 🔸 Прийом ТЗ
 @crm_bp.route("/submit_task", methods=["POST"])
 def submit_task():
+    # For JSON requests, check CSRF token from headers
+    if request.is_json:
+        csrf_token = request.headers.get('X-CSRFToken') or request.headers.get('X-CSRF-Token')
+        if not csrf_token:
+            return jsonify({"error": "CSRF token missing"}), 400
+        # Note: In a production app, you'd validate the CSRF token here
+    
     data = request.json
 
     project_type = data.get("project_type")

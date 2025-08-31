@@ -1,0 +1,265 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard | RoZoom Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .recent-orders-table th,
+    .recent-orders-table td {
+        padding: 10px 15px;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-processing {
+        background-color: #cce5ff;
+        color: #004085;
+    }
+    
+    .status-paid {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .low-stock-alert {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+    
+    .low-stock-alert h5 {
+        margin: 0 0 5px 0;
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+<!-- Stats Cards -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-icon blue">
+                <i class="fas fa-box-open"></i>
+            </div>
+            <div class="stats-info">
+                <h3>{{ products_count }}</h3>
+                <p>Products</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-icon green">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stats-info">
+                <h3>{{ orders_count }}</h3>
+                <p>Orders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-icon orange">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stats-info">
+                <h3>{{ users_count }}</h3>
+                <p>Users</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-icon green">
+                <i class="fas fa-euro-sign"></i>
+            </div>
+            <div class="stats-info">
+                <h3>{{ "%.2f"|format(total_revenue) }} €</h3>
+                <p>Revenue</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Sales Chart -->
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h2>Sales Overview (Last 30 Days)</h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Important Stats -->
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h2>Quick Stats</h2>
+            </div>
+            <div class="mb-4">
+                <h5 class="mb-2">Pending Orders</h5>
+                <div class="d-flex align-items-center">
+                    <div class="me-3" style="font-size: 2rem; color: var(--warning-color);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ pending_orders }}</h3>
+                        <p class="text-muted mb-0">Need attention</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h5 class="mb-2">Low Stock Alerts</h5>
+                {% if low_stock_products %}
+                    {% for product in low_stock_products %}
+                    <div class="low-stock-alert">
+                        <h5>{{ product.name }}</h5>
+                        <p class="mb-0">Only {{ product.stock }} left in stock</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No low stock alerts at this time.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders -->
+<div class="admin-card mt-4">
+    <div class="admin-card-header">
+        <h2>Recent Orders</h2>
+        <a href="{{ url_for('admin.orders') }}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover recent-orders-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if recent_orders %}
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.first_name }} {{ order.last_name }}</td>
+                        <td>{{ order.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                        <td>{{ "%.2f"|format(order.total) }} €</td>
+                        <td>
+                            <span class="status-badge status-{{ order.status }}">
+                                {{ order.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.view_order', id=order.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No orders yet</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch sales data for chart
+        fetch('/admin/api/dashboard/sales')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.dates,
+                        datasets: [{
+                            label: 'Sales (€)',
+                            data: data.sales,
+                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            borderColor: 'rgba(52, 152, 219, 1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + ' €';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.y + ' €';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching sales data:', error);
+            });
+    });
+</script>
+{% endblock %}

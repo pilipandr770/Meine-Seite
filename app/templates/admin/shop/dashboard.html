@@ -1,0 +1,444 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Shop-Dashboard
+    {% elif lang == 'uk' %}
+        Дашборд магазину
+    {% else %}
+        Shop Dashboard
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">
+        {% if lang == 'de' %}
+            Shop-Dashboard
+        {% elif lang == 'uk' %}
+            Дашборд магазину
+        {% else %}
+            Shop Dashboard
+        {% endif %}
+    </h1>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Total Orders Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                {% if lang == 'de' %}
+                                    Bestellungen gesamt
+                                {% elif lang == 'uk' %}
+                                    Всього замовлень
+                                {% else %}
+                                    Total Orders
+                                {% endif %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_orders }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Orders Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                {% if lang == 'de' %}
+                                    Abgeschlossene Bestellungen
+                                {% elif lang == 'uk' %}
+                                    Завершені замовлення
+                                {% else %}
+                                    Completed Orders
+                                {% endif %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completed_orders }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Orders Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                {% if lang == 'de' %}
+                                    Ausstehende Bestellungen
+                                {% elif lang == 'uk' %}
+                                    Очікуючі замовлення
+                                {% else %}
+                                    Pending Orders
+                                {% endif %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_orders }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                {% if lang == 'de' %}
+                                    Umsatz
+                                {% elif lang == 'uk' %}
+                                    Дохід
+                                {% else %}
+                                    Revenue
+                                {% endif %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ revenue }}€</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-euro-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Recent Orders -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if lang == 'de' %}
+                            Aktuelle Bestellungen
+                        {% elif lang == 'uk' %}
+                            Останні замовлення
+                        {% else %}
+                            Recent Orders
+                        {% endif %}
+                    </h6>
+                    <a href="{{ url_for('admin_shop.orders') }}" class="btn btn-sm btn-primary">
+                        {% if lang == 'de' %}
+                            Alle ansehen
+                        {% elif lang == 'uk' %}
+                            Переглянути всі
+                        {% else %}
+                            View All
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            #
+                                        {% elif lang == 'uk' %}
+                                            №
+                                        {% else %}
+                                            #
+                                        {% endif %}
+                                    </th>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Kunde
+                                        {% elif lang == 'uk' %}
+                                            Клієнт
+                                        {% else %}
+                                            Customer
+                                        {% endif %}
+                                    </th>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Datum
+                                        {% elif lang == 'uk' %}
+                                            Дата
+                                        {% else %}
+                                            Date
+                                        {% endif %}
+                                    </th>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Status
+                                        {% elif lang == 'uk' %}
+                                            Статус
+                                        {% else %}
+                                            Status
+                                        {% endif %}
+                                    </th>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Betrag
+                                        {% elif lang == 'uk' %}
+                                            Сума
+                                        {% else %}
+                                            Amount
+                                        {% endif %}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('admin_shop.view_order', order_id=order.id) }}">
+                                            {{ order.order_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ order.first_name }} {{ order.last_name }}</td>
+                                    <td>{{ order.created_at.strftime('%d.%m.%Y') }}</td>
+                                    <td>
+                                        <span class="badge badge-pill 
+                                            {% if order.order_status == 'pending' %}badge-warning
+                                            {% elif order.order_status == 'processing' %}badge-info
+                                            {% elif order.order_status == 'completed' %}badge-success
+                                            {% elif order.order_status == 'cancelled' %}badge-danger
+                                            {% else %}badge-secondary{% endif %}">
+                                            {% if order.order_status == 'pending' %}
+                                                {% if lang == 'de' %}
+                                                    Ausstehend
+                                                {% elif lang == 'uk' %}
+                                                    В очікуванні
+                                                {% else %}
+                                                    Pending
+                                                {% endif %}
+                                            {% elif order.order_status == 'processing' %}
+                                                {% if lang == 'de' %}
+                                                    In Bearbeitung
+                                                {% elif lang == 'uk' %}
+                                                    В обробці
+                                                {% else %}
+                                                    Processing
+                                                {% endif %}
+                                            {% elif order.order_status == 'completed' %}
+                                                {% if lang == 'de' %}
+                                                    Abgeschlossen
+                                                {% elif lang == 'uk' %}
+                                                    Завершено
+                                                {% else %}
+                                                    Completed
+                                                {% endif %}
+                                            {% elif order.order_status == 'cancelled' %}
+                                                {% if lang == 'de' %}
+                                                    Storniert
+                                                {% elif lang == 'uk' %}
+                                                    Скасовано
+                                                {% else %}
+                                                    Cancelled
+                                                {% endif %}
+                                            {% else %}
+                                                {{ order.order_status|capitalize }}
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.total }}€</td>
+                                </tr>
+                                {% endfor %}
+                                {% if not recent_orders %}
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        {% if lang == 'de' %}
+                                            Keine Bestellungen gefunden
+                                        {% elif lang == 'uk' %}
+                                            Замовлення не знайдено
+                                        {% else %}
+                                            No orders found
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Products -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if lang == 'de' %}
+                            Top Produkte
+                        {% elif lang == 'uk' %}
+                            Найпопулярніші продукти
+                        {% else %}
+                            Top Products
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if top_products %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Produkt
+                                        {% elif lang == 'uk' %}
+                                            Продукт
+                                        {% else %}
+                                            Product
+                                        {% endif %}
+                                    </th>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Verkauft
+                                        {% elif lang == 'uk' %}
+                                            Продано
+                                        {% else %}
+                                            Sold
+                                        {% endif %}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product, quantity in top_products %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('admin_shop.edit_product', product_id=product.id) }}">
+                                            {{ product.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ quantity }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        {% if lang == 'de' %}
+                            Noch keine Verkäufe
+                        {% elif lang == 'uk' %}
+                            Поки що немає продажів
+                        {% else %}
+                            No sales yet
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Reviews -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if lang == 'de' %}
+                            Aktuelle Bewertungen
+                        {% elif lang == 'uk' %}
+                            Останні відгуки
+                        {% else %}
+                            Recent Reviews
+                        {% endif %}
+                        {% if pending_reviews > 0 %}
+                        <span class="badge badge-warning ml-2">{{ pending_reviews }}</span>
+                        {% endif %}
+                    </h6>
+                    <a href="{{ url_for('admin_shop.reviews') }}" class="btn btn-sm btn-primary">
+                        {% if lang == 'de' %}
+                            Alle ansehen
+                        {% elif lang == 'uk' %}
+                            Переглянути всі
+                        {% else %}
+                            View All
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_reviews %}
+                    <div class="reviews-list">
+                        {% for review in recent_reviews %}
+                        <div class="review-item p-3 {% if not loop.last %}border-bottom{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ review.name }}</strong>
+                                    <div class="text-warning">
+                                        {% for i in range(5) %}
+                                            {% if i < review.rating %}
+                                            <i class="fas fa-star"></i>
+                                            {% else %}
+                                            <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <small class="text-muted">{{ review.created_at.strftime('%d.%m.%Y') }}</small>
+                                    {% if not review.is_approved %}
+                                    <span class="badge badge-warning ml-2">
+                                        {% if lang == 'de' %}
+                                            Ausstehend
+                                        {% elif lang == 'uk' %}
+                                            В очікуванні
+                                        {% else %}
+                                            Pending
+                                        {% endif %}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="mb-1">{{ review.comment|truncate(100) }}</p>
+                            <small class="text-muted">
+                                {% if lang == 'de' %}
+                                    Produkt:
+                                {% elif lang == 'uk' %}
+                                    Продукт:
+                                {% else %}
+                                    Product:
+                                {% endif %}
+                                {% if review.product %}
+                                <a href="{{ url_for('admin_shop.edit_product', product_id=review.product.id) }}">
+                                    {{ review.product.name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Product deleted</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        {% if lang == 'de' %}
+                            Noch keine Bewertungen
+                        {% elif lang == 'uk' %}
+                            Поки що немає відгуків
+                        {% else %}
+                            No reviews yet
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

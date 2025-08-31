@@ -17,15 +17,20 @@ def initialize_db_schema():
         # Получаем URL базы данных из конфигурации
         db_url = current_app.config['SQLALCHEMY_DATABASE_URI']
         schema_name = os.environ.get('POSTGRES_SCHEMA', 'rozoom_schema')
-        
+
+        # Skip schema creation on SQLite
+        if db_url.startswith('sqlite'):
+            logger.info('SQLite detected — skipping Postgres schema initialization in db_adapter.')
+            return True
+
         # Создаем движок SQLAlchemy
         engine = create_engine(db_url)
-        
+
         # Создаем схему, если она не существует
         with engine.connect() as conn:
             conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
             conn.commit()
-            
+
         logger.info(f"Схема {schema_name} успешно создана или уже существует")
         return True
     except Exception as e:

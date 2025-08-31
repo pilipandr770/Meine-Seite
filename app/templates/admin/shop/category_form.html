@@ -1,0 +1,161 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Kategorie {{ 'bearbeiten' if category else 'hinzufügen' }}
+    {% elif lang == 'uk' %}
+        {{ 'Редагувати' if category else 'Додати' }} категорію
+    {% else %}
+        {{ 'Edit' if category else 'Add' }} Category
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">
+        {% if lang == 'de' %}
+            Kategorie {{ 'bearbeiten' if category else 'hinzufügen' }}
+        {% elif lang == 'uk' %}
+            {{ 'Редагувати' if category else 'Додати' }} категорію
+        {% else %}
+            {{ 'Edit' if category else 'Add' }} Category
+        {% endif %}
+    </h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Kategoriedetails
+                {% elif lang == 'uk' %}
+                    Деталі категорії
+                {% else %}
+                    Category Details
+                {% endif %}
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">
+                                {% if lang == 'de' %}
+                                    Name*
+                                {% elif lang == 'uk' %}
+                                    Назва*
+                                {% else %}
+                                    Name*
+                                {% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ category.name if category else '' }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">
+                                {% if lang == 'de' %}
+                                    Beschreibung
+                                {% elif lang == 'uk' %}
+                                    Опис
+                                {% else %}
+                                    Description
+                                {% endif %}
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="4">{{ category.description if category else '' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" value="true" {% if category is none or category.is_active %}checked{% endif %}>
+                                <label class="custom-control-label" for="is_active">
+                                    {% if lang == 'de' %}
+                                        Aktiv
+                                    {% elif lang == 'uk' %}
+                                        Активна
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="image">
+                                {% if lang == 'de' %}
+                                    Bild
+                                {% elif lang == 'uk' %}
+                                    Зображення
+                                {% else %}
+                                    Image
+                                {% endif %}
+                            </label>
+                            <input type="file" class="form-control-file" id="image" name="image">
+                            {% if category and category.image %}
+                            <div class="mt-2">
+                                <p>
+                                    {% if lang == 'de' %}
+                                        Aktuelles Bild:
+                                    {% elif lang == 'uk' %}
+                                        Поточне зображення:
+                                    {% else %}
+                                        Current Image:
+                                    {% endif %}
+                                </p>
+                                <img src="{{ category.image }}" alt="{{ category.name }}" class="img-thumbnail" style="max-width: 200px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if category and category.products %}
+                        <div class="alert alert-info mt-3">
+                            <h6 class="alert-heading">
+                                {% if lang == 'de' %}
+                                    Zugehörige Produkte
+                                {% elif lang == 'uk' %}
+                                    Пов'язані продукти
+                                {% else %}
+                                    Associated Products
+                                {% endif %}
+                            </h6>
+                            <p>
+                                {% if lang == 'de' %}
+                                    Diese Kategorie enthält {{ category.products|length }} Produkte.
+                                {% elif lang == 'uk' %}
+                                    Ця категорія містить {{ category.products|length }} продуктів.
+                                {% else %}
+                                    This category contains {{ category.products|length }} products.
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        {% if lang == 'de' %}
+                            {{ 'Aktualisieren' if category else 'Speichern' }}
+                        {% elif lang == 'uk' %}
+                            {{ 'Оновити' if category else 'Зберегти' }}
+                        {% else %}
+                            {{ 'Update' if category else 'Save' }}
+                        {% endif %}
+                    </button>
+                    <a href="{{ url_for('admin_shop.categories') }}" class="btn btn-secondary ml-2">
+                        {% if lang == 'de' %}
+                            Abbrechen
+                        {% elif lang == 'uk' %}
+                            Скасувати
+                        {% else %}
+                            Cancel
+                        {% endif %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

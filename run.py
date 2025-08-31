@@ -9,12 +9,21 @@ import os
 import sys
 import logging
 
+# Load environment variables from .env file FIRST, before any other imports
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    logger = logging.getLogger(__name__)
+    logger.info("Loaded environment variables from .env file")
+except ImportError:
+    logger = logging.getLogger(__name__)
+    logger.warning("python-dotenv not installed, .env file not loaded")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
 
 # Add the current directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -32,6 +41,32 @@ logger.info("Initializing Flask application...")
 from app.app import create_app
 app = create_app()
 logger.info(f"Flask application initialized with config: {app.config['ENVIRONMENT'] if 'ENVIRONMENT' in app.config else 'default'}")
+
+# Create admin user if it doesn't exist
+with app.app_context():
+    try:
+        from app.models.user import User
+        from app.models.database import db
+        from werkzeug.security import generate_password_hash
+        
+        existing_admin = User.query.filter_by(email='pilipandr79@icloud.com').first()
+        if not existing_admin:
+            admin_user = User(
+                email='pilipandr79@icloud.com',
+                username='admin',
+                password='Dnepr75ok10',
+                first_name='Admin',
+                last_name='User',
+                is_admin=True
+            )
+            admin_user.is_active = True  # Set is_active after creation
+            db.session.add(admin_user)
+            db.session.commit()
+            logger.info("✅ Admin user created: pilipandr79@icloud.com")
+        else:
+            logger.info("Admin user already exists")
+    except Exception as e:
+        logger.error(f"Failed to create admin user: {e}")
 
 # Run the app if executed directly
 if __name__ == "__main__":

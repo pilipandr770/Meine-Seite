@@ -1,0 +1,499 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Produkte verwalten
+    {% elif lang == 'uk' %}
+        Управління продуктами
+    {% else %}
+        Manage Products
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">
+        {% if lang == 'de' %}
+            Produkte verwalten
+        {% elif lang == 'uk' %}
+            Управління продуктами
+        {% else %}
+            Manage Products
+        {% endif %}
+    </h1>
+
+    <!-- Filters and Search -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Filter und Suche
+                {% elif lang == 'uk' %}
+                    Фільтр та пошук
+                {% else %}
+                    Filter and Search
+                {% endif %}
+            </h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                    aria-labelledby="dropdownMenuLink">
+                    <a class="dropdown-item" href="{{ url_for('admin_shop.products') }}">
+                        {% if lang == 'de' %}
+                            Filter zurücksetzen
+                        {% elif lang == 'uk' %}
+                            Скинути фільтр
+                        {% else %}
+                            Reset Filters
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{{ url_for('admin_shop.products') }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="search">
+                                {% if lang == 'de' %}
+                                    Suche
+                                {% elif lang == 'uk' %}
+                                    Пошук
+                                {% else %}
+                                    Search
+                                {% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="search" name="search" value="{{ search if search }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="category">
+                                {% if lang == 'de' %}
+                                    Kategorie
+                                {% elif lang == 'uk' %}
+                                    Категорія
+                                {% else %}
+                                    Category
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="category" name="category">
+                                <option value="">
+                                    {% if lang == 'de' %}
+                                        Alle Kategorien
+                                    {% elif lang == 'uk' %}
+                                        Всі категорії
+                                    {% else %}
+                                        All Categories
+                                    {% endif %}
+                                </option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if category_id == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="status">
+                                {% if lang == 'de' %}
+                                    Status
+                                {% elif lang == 'uk' %}
+                                    Статус
+                                {% else %}
+                                    Status
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="">
+                                    {% if lang == 'de' %}
+                                        Alle Status
+                                    {% elif lang == 'uk' %}
+                                        Всі статуси
+                                    {% else %}
+                                        All Statuses
+                                    {% endif %}
+                                </option>
+                                <option value="active" {% if status == 'active' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Aktiv
+                                    {% elif lang == 'uk' %}
+                                        Активний
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </option>
+                                <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Inaktiv
+                                    {% elif lang == 'uk' %}
+                                        Неактивний
+                                    {% else %}
+                                        Inactive
+                                    {% endif %}
+                                </option>
+                                <option value="featured" {% if status == 'featured' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Empfohlen
+                                    {% elif lang == 'uk' %}
+                                        Рекомендовані
+                                    {% else %}
+                                        Featured
+                                    {% endif %}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="sort">
+                                {% if lang == 'de' %}
+                                    Sortierung
+                                {% elif lang == 'uk' %}
+                                    Сортування
+                                {% else %}
+                                    Sort
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="sort" name="sort">
+                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Neueste zuerst
+                                    {% elif lang == 'uk' %}
+                                        Спочатку новіші
+                                    {% else %}
+                                        Newest First
+                                    {% endif %}
+                                </option>
+                                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Name (A-Z)
+                                    {% elif lang == 'uk' %}
+                                        Назва (А-Я)
+                                    {% else %}
+                                        Name (A-Z)
+                                    {% endif %}
+                                </option>
+                                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Name (Z-A)
+                                    {% elif lang == 'uk' %}
+                                        Назва (Я-А)
+                                    {% else %}
+                                        Name (Z-A)
+                                    {% endif %}
+                                </option>
+                                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Preis (Niedrig nach Hoch)
+                                    {% elif lang == 'uk' %}
+                                        Ціна (Від низької до високої)
+                                    {% else %}
+                                        Price (Low to High)
+                                    {% endif %}
+                                </option>
+                                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Preis (Hoch nach Niedrig)
+                                    {% elif lang == 'uk' %}
+                                        Ціна (Від високої до низької)
+                                    {% else %}
+                                        Price (High to Low)
+                                    {% endif %}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    {% if lang == 'de' %}
+                        Anwenden
+                    {% elif lang == 'uk' %}
+                        Застосувати
+                    {% else %}
+                        Apply
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Produktliste
+                {% elif lang == 'uk' %}
+                    Список продуктів
+                {% else %}
+                    Product List
+                {% endif %}
+            </h6>
+            <a href="{{ url_for('admin_shop.add_product') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus fa-sm"></i> 
+                {% if lang == 'de' %}
+                    Produkt hinzufügen
+                {% elif lang == 'uk' %}
+                    Додати продукт
+                {% else %}
+                    Add Product
+                {% endif %}
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="products-table" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Bild
+                                {% elif lang == 'uk' %}
+                                    Зображення
+                                {% else %}
+                                    Image
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Name
+                                {% elif lang == 'uk' %}
+                                    Назва
+                                {% else %}
+                                    Name
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Kategorie
+                                {% elif lang == 'uk' %}
+                                    Категорія
+                                {% else %}
+                                    Category
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Preis
+                                {% elif lang == 'uk' %}
+                                    Ціна
+                                {% else %}
+                                    Price
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Status
+                                {% elif lang == 'uk' %}
+                                    Статус
+                                {% else %}
+                                    Status
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Aktionen
+                                {% elif lang == 'uk' %}
+                                    Дії
+                                {% else %}
+                                    Actions
+                                {% endif %}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                                {% if product.image %}
+                                <img src="{{ product.image }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 50px;">
+                                {% else %}
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-image fa-2x"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.category.name if product.category else '-' }}</td>
+                            <td>
+                                {% if product.sale_price %}
+                                <span class="text-decoration-line-through text-muted">{{ product.price }}€</span>
+                                <span class="text-danger">{{ product.sale_price }}€</span>
+                                {% else %}
+                                {{ product.price }}€
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if product.is_active else 'danger' }}">
+                                    {% if product.is_active %}
+                                        {% if lang == 'de' %}
+                                            Aktiv
+                                        {% elif lang == 'uk' %}
+                                            Активний
+                                        {% else %}
+                                            Active
+                                        {% endif %}
+                                    {% else %}
+                                        {% if lang == 'de' %}
+                                            Inaktiv
+                                        {% elif lang == 'uk' %}
+                                            Неактивний
+                                        {% else %}
+                                            Inactive
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                                {% if product.is_featured %}
+                                <span class="badge badge-info ml-1">
+                                    {% if lang == 'de' %}
+                                        Empfohlen
+                                    {% elif lang == 'uk' %}
+                                        Рекомендовані
+                                    {% else %}
+                                        Featured
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_shop.edit_product', product_id=product.id) }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-danger btn-sm delete-product" data-id="{{ product.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not products %}
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                {% if lang == 'de' %}
+                                    Keine Produkte gefunden
+                                {% elif lang == 'uk' %}
+                                    Продукти не знайдено
+                                {% else %}
+                                    No products found
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Product Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    {% if lang == 'de' %}
+                        Produkt löschen
+                    {% elif lang == 'uk' %}
+                        Видалити продукт
+                    {% else %}
+                        Delete Product
+                    {% endif %}
+                </h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% if lang == 'de' %}
+                    Sind Sie sicher, dass Sie dieses Produkt löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden.
+                {% elif lang == 'uk' %}
+                    Ви впевнені, що хочете видалити цей продукт? Цю дію неможливо скасувати.
+                {% else %}
+                    Are you sure you want to delete this product? This action cannot be undone.
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">
+                    {% if lang == 'de' %}
+                        Abbrechen
+                    {% elif lang == 'uk' %}
+                        Скасувати
+                    {% else %}
+                        Cancel
+                    {% endif %}
+                </button>
+                <button id="confirmDelete" class="btn btn-danger">
+                    {% if lang == 'de' %}
+                        Löschen
+                    {% elif lang == 'uk' %}
+                        Видалити
+                    {% else %}
+                        Delete
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    let productIdToDelete = null;
+    
+    $('.delete-product').on('click', function() {
+        productIdToDelete = $(this).data('id');
+        $('#deleteModal').modal('show');
+    });
+    
+    $('#confirmDelete').on('click', function() {
+        if (productIdToDelete) {
+            $.ajax({
+                url: "{{ url_for('admin_shop.delete_product', product_id='') }}" + productIdToDelete,
+                type: 'POST',
+                success: function(result) {
+                    if (result.success) {
+                        $('#deleteModal').modal('hide');
+                        // Reload page to reflect changes
+                        location.reload();
+                    } else {
+                        alert(result.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while deleting the product.');
+                }
+            });
+        }
+    });
+    
+    // Initialize DataTable
+    $('#products-table').DataTable({
+        "paging": true,
+        "searching": false, // We have our own search
+        "ordering": false, // We handle sorting via URL params
+        "info": true,
+        "language": {
+            "info": "{{ _('Showing _START_ to _END_ of _TOTAL_ products') }}",
+            "infoEmpty": "{{ _('Showing 0 to 0 of 0 products') }}",
+            "lengthMenu": "{{ _('Show _MENU_ products') }}",
+            "emptyTable": "{{ _('No products found') }}",
+            "paginate": {
+                "first": "{{ _('First') }}",
+                "last": "{{ _('Last') }}",
+                "next": "{{ _('Next') }}",
+                "previous": "{{ _('Previous') }}"
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

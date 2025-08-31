@@ -1,0 +1,1128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="product-detail-container">
+    <div class="product-breadcrumbs">
+        <a href="{{ url_for('shop.products') }}">
+            {% if lang == 'uk' %}Магазин{% elif lang == 'de' %}Shop{% else %}Shop{% endif %}
+        </a> &gt; 
+        {% if product.category %}
+            <a href="{{ url_for('shop.products', category=product.category.slug) }}">{{ product.category.name }}</a> &gt; 
+        {% endif %}
+        <span>{{ product.name }}</span>
+    </div>
+    
+    <div class="product-content">
+        <div class="product-gallery">
+            {% if product.image %}
+                <div class="product-main-image">
+                    <img src="{{ product.image }}" alt="{{ product.name }}">
+                </div>
+                {% if product.gallery_images %}
+                    <div class="product-thumbnails">
+                        <img src="{{ product.image }}" alt="{{ product.name }}" class="thumbnail active" data-main-image="{{ product.image }}">
+                        {% for image in product.gallery_images %}
+                            <img src="{{ image.url }}" alt="{{ product.name }}" class="thumbnail" data-main-image="{{ image.url }}">
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="product-main-image product-image-placeholder">
+                    <i class="fas fa-clock"></i>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="product-info">
+            <h1>{{ product.name }}</h1>
+            
+            <div class="product-meta">
+                {% if product.duration %}
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ product.duration }} {% if lang == 'uk' %}хв.{% elif lang == 'de' %}Min.{% else %}min.{% endif %}</span>
+                    </div>
+                {% endif %}
+                
+                {% if product.sku %}
+                    <div class="meta-item">
+                        <span class="meta-label">SKU:</span>
+                        <span>{{ product.sku }}</span>
+                    </div>
+                {% endif %}
+                
+                {% if product.category %}
+                    <div class="meta-item">
+                        <span class="meta-label">
+                            {% if lang == 'uk' %}Категорія:{% elif lang == 'de' %}Kategorie:{% else %}Category:{% endif %}
+                        </span>
+                        <a href="{{ url_for('shop.products', category=product.category.slug) }}">{{ product.category.name }}</a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="product-price">
+                {% if product.sale_price %}
+                    <span class="price-current">{{ "%.2f"|format(product.sale_price) }} €</span>
+                    <span class="price-original">{{ "%.2f"|format(product.price) }} €</span>
+                    <span class="price-saving">
+                        {% if lang == 'uk' %}Економія{% elif lang == 'de' %}Sparen Sie{% else %}Save{% endif %}
+                        {{ "%.2f"|format(product.price - product.sale_price) }} € 
+                        ({{ "%.0f"|format((1 - product.sale_price / product.price) * 100) }}%)
+                    </span>
+                {% else %}
+                    <span class="price-current">{{ "%.2f"|format(product.price) }} €</span>
+                {% endif %}
+            </div>
+            
+            <div class="product-availability">
+                {% if product.in_stock %}
+                    <span class="in-stock">
+                        <i class="fas fa-check-circle"></i>
+                        {% if lang == 'uk' %}Доступно{% elif lang == 'de' %}Verfügbar{% else %}Available{% endif %}
+                    </span>
+                {% else %}
+                    <span class="out-of-stock">
+                        <i class="fas fa-times-circle"></i>
+                        {% if lang == 'uk' %}Немає в наявності{% elif lang == 'de' %}Nicht verfügbar{% else %}Out of stock{% endif %}
+                    </span>
+                {% endif %}
+            </div>
+            
+            <div class="product-short-description">
+                {{ product.short_description }}
+            </div>
+            
+            <form class="add-to-cart-form" id="addToCartForm">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group quantity-selector">
+                    <label for="quantity">
+                        {% if lang == 'uk' %}Кількість{% elif lang == 'de' %}Menge{% else %}Quantity{% endif %}:
+                    </label>
+                    <div class="quantity-controls">
+                        <button type="button" class="quantity-btn minus">-</button>
+                        <input type="number" id="quantity" name="quantity" value="1" min="1" {% if product.stock and product.stock > 0 %}max="{{ product.stock }}"{% else %}max="999"{% endif %}>
+                        <button type="button" class="quantity-btn plus">+</button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-add-to-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    {% if lang == 'uk' %}Додати до кошика{% elif lang == 'de' %}In den Warenkorb{% else %}Add to Cart{% endif %}
+                </button>
+            </form>
+            
+            <div class="product-actions">
+                <button class="btn-action wishlist" id="addToWishlist" data-product-id="{{ product.id }}">
+                    <i class="far fa-heart"></i>
+                    {% if lang == 'uk' %}До списку бажань{% elif lang == 'de' %}Zur Wunschliste hinzufügen{% else %}Add to Wishlist{% endif %}
+                </button>
+                <button class="btn-action share" id="shareProduct">
+                    <i class="fas fa-share-alt"></i>
+                    {% if lang == 'uk' %}Поділитися{% elif lang == 'de' %}Teilen{% else %}Share{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="product-tabs">
+        <div class="tabs-header">
+            <button class="tab-btn active" data-tab="description">
+                {% if lang == 'uk' %}Опис{% elif lang == 'de' %}Beschreibung{% else %}Description{% endif %}
+            </button>
+            <button class="tab-btn" data-tab="details">
+                {% if lang == 'uk' %}Деталі{% elif lang == 'de' %}Details{% else %}Details{% endif %}
+            </button>
+            <button class="tab-btn" data-tab="reviews">
+                {% if lang == 'uk' %}Відгуки{% elif lang == 'de' %}Bewertungen{% else %}Reviews{% endif %}
+                {% if product.reviews %}({{ product.reviews|length }}){% endif %}
+            </button>
+        </div>
+        
+        <div class="tabs-content">
+            <div class="tab-panel active" id="tab-description">
+                <div class="product-description">
+                    {{ product.description|safe }}
+                </div>
+            </div>
+            
+            <div class="tab-panel" id="tab-details">
+                <div class="product-specifications">
+                    <table class="specs-table">
+                        <tbody>
+                            {% if product.duration %}
+                                <tr>
+                                    <th>{% if lang == 'uk' %}Тривалість{% elif lang == 'de' %}Dauer{% else %}Duration{% endif %}</th>
+                                    <td>{{ product.duration }} {% if lang == 'uk' %}хвилин{% elif lang == 'de' %}Minuten{% else %}minutes{% endif %}</td>
+                                </tr>
+                            {% endif %}
+                            {% if product.format %}
+                                <tr>
+                                    <th>{% if lang == 'uk' %}Формат{% elif lang == 'de' %}Format{% else %}Format{% endif %}</th>
+                                    <td>{{ product.format }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if product.language %}
+                                <tr>
+                                    <th>{% if lang == 'uk' %}Мова{% elif lang == 'de' %}Sprache{% else %}Language{% endif %}</th>
+                                    <td>{{ product.language }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if product.prerequisites %}
+                                <tr>
+                                    <th>{% if lang == 'uk' %}Передумови{% elif lang == 'de' %}Voraussetzungen{% else %}Prerequisites{% endif %}</th>
+                                    <td>{{ product.prerequisites }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if product.includes %}
+                                <tr>
+                                    <th>{% if lang == 'uk' %}Включає{% elif lang == 'de' %}Beinhaltet{% else %}Includes{% endif %}</th>
+                                    <td>{{ product.includes }}</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="tab-panel" id="tab-reviews">
+                <div class="product-reviews">
+                    {% if product.reviews %}
+                        <div class="reviews-list">
+                            {% for review in product.reviews %}
+                                <div class="review-item">
+                                    <div class="review-header">
+                                        <div class="review-rating">
+                                            {% for i in range(5) %}
+                                                <i class="fa{% if i < review.rating %}s{% else %}r{% endif %} fa-star"></i>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="review-author">
+                                            <strong>{{ review.author_name }}</strong>
+                                        </div>
+                                        <div class="review-date">
+                                            {{ review.created_at.strftime('%d.%m.%Y') }}
+                                        </div>
+                                    </div>
+                                    <div class="review-content">
+                                        {{ review.content }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="no-reviews">
+                            <p>
+                                {% if lang == 'uk' %}
+                                    Цей товар ще не має відгуків. Будьте першим, хто залишить відгук!
+                                {% elif lang == 'de' %}
+                                    Dieses Produkt hat noch keine Bewertungen. Seien Sie der Erste, der eine Bewertung abgibt!
+                                {% else %}
+                                    This product has no reviews yet. Be the first to leave a review!
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="write-review">
+                        <h3>
+                            {% if lang == 'uk' %}
+                                Написати відгук
+                            {% elif lang == 'de' %}
+                                Bewertung schreiben
+                            {% else %}
+                                Write a Review
+                            {% endif %}
+                        </h3>
+                        <form id="reviewForm">
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            
+                            <div class="form-group">
+                                <label for="reviewRating">
+                                    {% if lang == 'uk' %}
+                                        Рейтинг
+                                    {% elif lang == 'de' %}
+                                        Bewertung
+                                    {% else %}
+                                        Rating
+                                    {% endif %}
+                                </label>
+                                <div class="rating-selector">
+                                    <div class="stars">
+                                        {% for i in range(5) %}
+                                            <i class="far fa-star" data-rating="{{ i+1 }}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <input type="hidden" id="reviewRating" name="rating" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reviewName">
+                                    {% if lang == 'uk' %}
+                                        Ваше ім'я
+                                    {% elif lang == 'de' %}
+                                        Ihr Name
+                                    {% else %}
+                                        Your Name
+                                    {% endif %}
+                                </label>
+                                <input type="text" id="reviewName" name="author_name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reviewEmail">
+                                    {% if lang == 'uk' %}
+                                        Ваш Email
+                                    {% elif lang == 'de' %}
+                                        Ihre Email
+                                    {% else %}
+                                        Your Email
+                                    {% endif %}
+                                </label>
+                                <input type="email" id="reviewEmail" name="author_email" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reviewContent">
+                                    {% if lang == 'uk' %}
+                                        Ваш відгук
+                                    {% elif lang == 'de' %}
+                                        Ihre Bewertung
+                                    {% else %}
+                                        Your Review
+                                    {% endif %}
+                                </label>
+                                <textarea id="reviewContent" name="content" rows="5" required></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                {% if lang == 'uk' %}
+                                    Відправити
+                                {% elif lang == 'de' %}
+                                    Absenden
+                                {% else %}
+                                    Submit
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if related_products %}
+        <div class="related-products">
+            <h2>
+                {% if lang == 'uk' %}
+                    Пов'язані товари
+                {% elif lang == 'de' %}
+                    Verwandte Produkte
+                {% else %}
+                    Related Products
+                {% endif %}
+            </h2>
+            
+            <div class="products-slider">
+                {% for related in related_products %}
+                    <div class="product-card">
+                        {% if related.image %}
+                            <div class="product-image">
+                                <img src="{{ related.image }}" alt="{{ related.name }}">
+                            </div>
+                        {% else %}
+                            <div class="product-image product-image-placeholder">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="product-info">
+                            <h3>{{ related.name }}</h3>
+                            
+                            <div class="product-price">
+                                {% if related.sale_price %}
+                                    <span class="price-current">{{ "%.2f"|format(related.sale_price) }} €</span>
+                                    <span class="price-original">{{ "%.2f"|format(related.price) }} €</span>
+                                {% else %}
+                                    <span class="price-current">{{ "%.2f"|format(related.price) }} €</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="product-actions">
+                                {% if related.slug %}
+                                <a href="{{ url_for('shop.product_detail', slug=related.slug) }}" class="btn btn-outline">
+                                    {% if lang == 'uk' %}Детальніше{% elif lang == 'de' %}Details{% else %}Details{% endif %}
+                                </a>
+                                {% else %}
+                                <a href="#" class="btn btn-outline disabled" title="Product currently unavailable">
+                                    {% if lang == 'uk' %}Недоступно{% elif lang == 'de' %}Nicht verfügbar{% else %}Unavailable{% endif %}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .product-detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .product-breadcrumbs {
+        margin-bottom: 20px;
+        color: #999;
+    }
+    
+    .product-breadcrumbs a {
+        color: #ccc;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    
+    .product-breadcrumbs a:hover {
+        color: #0f0;
+    }
+    
+    .product-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+    
+    .product-gallery {
+        position: relative;
+    }
+    
+    .product-main-image {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 8px;
+        overflow: hidden;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+    
+    .product-main-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .product-image-placeholder {
+        color: #0f0;
+        font-size: 5rem;
+    }
+    
+    .product-thumbnails {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+    }
+    
+    .product-thumbnails .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 2px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: border-color 0.3s;
+    }
+    
+    .product-thumbnails .thumbnail.active {
+        border-color: #0f0;
+    }
+    
+    .product-info h1 {
+        color: #0f0;
+        margin-top: 0;
+        margin-bottom: 20px;
+    }
+    
+    .product-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+        color: #ccc;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    .meta-item i {
+        color: #0f0;
+        margin-right: 5px;
+    }
+    
+    .meta-label {
+        color: #999;
+        margin-right: 5px;
+    }
+    
+    .product-price {
+        margin-bottom: 20px;
+    }
+    
+    .price-current {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #0f0;
+        margin-right: 10px;
+    }
+    
+    .price-original {
+        color: #999;
+        text-decoration: line-through;
+    }
+    
+    .price-saving {
+        display: block;
+        color: #ff6b6b;
+        margin-top: 5px;
+    }
+    
+    .product-availability {
+        margin-bottom: 20px;
+    }
+    
+    .in-stock {
+        color: #0f0;
+    }
+    
+    .out-of-stock {
+        color: #ff6b6b;
+    }
+    
+    .product-availability i {
+        margin-right: 5px;
+    }
+    
+    .product-short-description {
+        color: #ccc;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+    
+    .add-to-cart-form {
+        margin-bottom: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #ccc;
+    }
+    
+    .quantity-selector {
+        max-width: 150px;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .quantity-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #0f0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+    }
+    
+    .quantity-btn:hover {
+        background-color: rgba(15, 255, 15, 0.2);
+    }
+    
+    .quantity-btn:active {
+        transform: scale(0.95);
+        background-color: rgba(15, 255, 15, 0.3);
+    }
+    
+    .quantity-btn.minus {
+        border-radius: 4px 0 0 4px;
+    }
+    
+    .quantity-btn.plus {
+        border-radius: 0 4px 4px 0;
+    }
+    
+    input[type="number"] {
+        width: 60px;
+        height: 40px;
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        text-align: center;
+        font-size: 1.2rem;
+        color: #0f0;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-left: none;
+        border-right: none;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #ccc;
+        text-align: center;
+    -moz-appearance: textfield;
+    appearance: textfield;
+    }
+    
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+        margin: 0;
+    }
+    
+    .btn-add-to-cart {
+        width: 100%;
+        padding: 12px;
+    }
+    
+    .btn-add-to-cart:disabled {
+        background-color: #555;
+        cursor: not-allowed;
+    }
+    
+    .product-actions {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .btn-action {
+        background-color: transparent;
+        color: #ccc;
+        border: 1px solid #555;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+    
+    .btn-action i {
+        margin-right: 5px;
+    }
+    
+    .btn-action:hover {
+        color: #0f0;
+        border-color: #0f0;
+    }
+    
+    .product-tabs {
+        margin-bottom: 40px;
+    }
+    
+    .tabs-header {
+        display: flex;
+        border-bottom: 1px solid rgba(15, 255, 15, 0.3);
+        margin-bottom: 20px;
+    }
+    
+    .tab-btn {
+        padding: 10px 20px;
+        border: none;
+        background-color: transparent;
+        color: #ccc;
+        cursor: pointer;
+        font-size: 1.1rem;
+        position: relative;
+        transition: color 0.3s;
+    }
+    
+    .tab-btn.active {
+        color: #0f0;
+    }
+    
+    .tab-btn.active::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #0f0;
+    }
+    
+    .tab-panel {
+        display: none;
+    }
+    
+    .tab-panel.active {
+        display: block;
+    }
+    
+    .product-description {
+        color: #ccc;
+        line-height: 1.7;
+    }
+    
+    .product-description h2, 
+    .product-description h3 {
+        color: #0f0;
+        margin-top: 25px;
+    }
+    
+    .specs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .specs-table th, 
+    .specs-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #333;
+    }
+    
+    .specs-table th {
+        color: #999;
+        width: 30%;
+    }
+    
+    .specs-table td {
+        color: #ccc;
+    }
+    
+    .reviews-list {
+        margin-bottom: 30px;
+    }
+    
+    .review-item {
+        padding: 20px 0;
+        border-bottom: 1px solid #333;
+    }
+    
+    .review-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    
+    .review-rating {
+        color: #f5b100;
+    }
+    
+    .review-author {
+        color: #ccc;
+    }
+    
+    .review-date {
+        color: #777;
+        font-size: 0.9rem;
+    }
+    
+    .review-content {
+        color: #ccc;
+        line-height: 1.6;
+    }
+    
+    .no-reviews {
+        text-align: center;
+        padding: 40px 0;
+        color: #999;
+    }
+    
+    .write-review h3 {
+        color: #0f0;
+        margin-bottom: 20px;
+    }
+    
+    .rating-selector {
+        margin-bottom: 15px;
+    }
+    
+    .rating-selector .stars {
+        display: flex;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #f5b100;
+    }
+    
+    .rating-selector .stars i {
+        margin-right: 5px;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    textarea {
+        width: 100%;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        color: #ccc;
+        border-radius: 4px;
+    }
+    
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    textarea:focus {
+        border-color: #0f0;
+        outline: none;
+    }
+    
+    .related-products h2 {
+        color: #0f0;
+        margin-bottom: 20px;
+    }
+    
+    .products-slider {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .product-content {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Product thumbnails
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        const mainImage = document.querySelector('.product-main-image img');
+        
+        if (thumbnails.length > 0 && mainImage) {
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    // Update main image
+                    mainImage.src = this.dataset.mainImage;
+                    
+                    // Update active class
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+        
+        // Quantity selector
+        const minusBtn = document.querySelector('.quantity-btn.minus');
+        const plusBtn = document.querySelector('.quantity-btn.plus');
+        const quantityInput = document.querySelector('#quantity');
+        
+        if (minusBtn && plusBtn && quantityInput) {
+            minusBtn.addEventListener('click', function() {
+                const currentValue = parseInt(quantityInput.value) || 1;
+                if (currentValue > 1) {
+                    quantityInput.value = currentValue - 1;
+                } else {
+                    quantityInput.value = 1; // Make sure we always have at least 1
+                }
+            });
+            
+            plusBtn.addEventListener('click', function() {
+                const currentValue = parseInt(quantityInput.value) || 1;
+                const maxAttr = quantityInput.getAttribute('max');
+                // If max is 0 or not set, allow any increase (treat as unlimited)
+                const max = maxAttr ? parseInt(maxAttr) : 999;
+                
+                if (max <= 0 || currentValue < max) {
+                    quantityInput.value = currentValue + 1;
+                }
+            });
+            
+            // Also handle direct input changes to ensure valid values
+            quantityInput.addEventListener('change', function() {
+                let value = parseInt(this.value) || 1;
+                const max = parseInt(this.getAttribute('max')) || 999;
+                
+                // Enforce minimum of 1
+                if (value < 1) value = 1;
+                
+                // Enforce maximum if set and > 0
+                if (max > 0 && value > max) value = max;
+                
+                // Update the input with the validated value
+                this.value = value;
+            });
+        }
+        
+        // Tab functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active class on buttons
+                tabBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show active tab panel
+                const tabId = this.dataset.tab;
+                const panels = document.querySelectorAll('.tab-panel');
+                panels.forEach(panel => panel.classList.remove('active'));
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+            });
+        });
+        
+        // Rating selector
+        const stars = document.querySelectorAll('.rating-selector .stars i');
+        const ratingInput = document.getElementById('reviewRating');
+        
+        stars.forEach(star => {
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.dataset.rating);
+                
+                // Reset all stars
+                stars.forEach(s => s.className = 'far fa-star');
+                
+                // Fill stars up to this one
+                for (let i = 0; i < rating; i++) {
+                    stars[i].className = 'fas fa-star';
+                }
+            });
+            
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.dataset.rating);
+                ratingInput.value = rating;
+                
+                // Save the state
+                stars.forEach((s, index) => {
+                    if (index < rating) {
+                        s.className = 'fas fa-star';
+                    } else {
+                        s.className = 'far fa-star';
+                    }
+                });
+            });
+        });
+        
+        // Review form submission
+        const reviewForm = document.getElementById('reviewForm');
+        
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(reviewForm);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+                
+                fetch('/shop/product/review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        reviewForm.reset();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting review:', error);
+                });
+            });
+        }
+        
+        // Add to cart form
+        const addToCartForm = document.getElementById('addToCartForm');
+        
+        if (addToCartForm) {
+            addToCartForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get product ID and ensure it's a number
+                const productIdInput = this.querySelector('input[name="product_id"]');
+                const productId = productIdInput ? parseInt(productIdInput.value, 10) : null;
+                
+                // Get quantity and ensure it's a number
+                const quantityInput = this.querySelector('input[name="quantity"]');
+                const quantity = quantityInput ? parseInt(quantityInput.value, 10) : 1;
+                
+                // Get CSRF token
+                const csrfTokenInput = this.querySelector('input[name="_csrf_token"]');
+                const csrfToken = csrfTokenInput ? csrfTokenInput.value : '{{ csrf_token() }}';
+                
+                // Validate data before sending
+                if (!productId || isNaN(productId) || productId <= 0) {
+                    console.error('Invalid product ID:', productId);
+                    alert('Invalid product selected');
+                    return;
+                }
+                
+                // Make sure quantity is valid
+                let finalQuantity = quantity;
+                if (!finalQuantity || isNaN(finalQuantity) || finalQuantity < 1) {
+                    console.log('Invalid quantity, defaulting to 1:', finalQuantity);
+                    finalQuantity = 1;
+                    if (quantityInput) quantityInput.value = 1;
+                }
+                
+                console.log('Submitting with quantity:', finalQuantity);
+                
+                console.log('Adding to cart:', { product_id: productId, quantity: quantity });
+                
+                // Disable the submit button and show loading state
+                const submitButton = this.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                }
+                
+                // Make the cart add request with improved error handling
+                fetch('/shop/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        quantity: finalQuantity
+                    })
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    
+                    // Check if response is ok (status in the range 200-299)
+                    if (!response.ok) {
+                        // If we get a non-2xx status, throw an error with the status
+                        return response.json().then(data => {
+                            throw new Error(`${response.status}: ${data.message || 'Unknown error'}`);
+                        });
+                    }
+                    
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        // Show success message
+                        alert(data.message);
+                        
+                        // Update cart count in all cart count elements
+                        const cartCountElements = document.querySelectorAll('.cart-count');
+                        if (cartCountElements.length > 0 && data.cart_count !== undefined) {
+                            cartCountElements.forEach(el => {
+                                el.textContent = data.cart_count;
+                            });
+                        }
+                        
+                        // Reset quantity back to 1
+                        const quantityInput = document.getElementById('quantity');
+                        if (quantityInput) {
+                            quantityInput.value = 1;
+                        }
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding item to cart:', error);
+                    alert(`Failed to add item to cart: ${error.message || 'Please try again.'}`);
+                })
+                .finally(() => {
+                    // Re-enable the submit button and restore original text
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = `
+                            {% if lang == 'uk' %}Додати в кошик{% elif lang == 'de' %}In den Warenkorb{% else %}Add to cart{% endif %}
+                        `;
+                    }
+                });
+            });
+        }
+        
+        // Add to wishlist button
+        const wishlistBtn = document.getElementById('addToWishlist');
+        
+        if (wishlistBtn) {
+            wishlistBtn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                
+                fetch('/shop/wishlist/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        product_id: productId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the icon
+                        this.querySelector('i').className = 'fas fa-heart';
+                        alert(data.message);
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding item to wishlist:', error);
+                });
+            });
+        }
+        
+        // Share button
+        const shareBtn = document.getElementById('shareProduct');
+        
+        if (shareBtn && navigator.share) {
+            shareBtn.addEventListener('click', function() {
+                navigator.share({
+                    title: '{{ product.name }}',
+                    text: '{{ product.short_description }}',
+                    url: window.location.href
+                })
+                .catch(error => console.error('Error sharing:', error));
+            });
+        } else if (shareBtn) {
+            shareBtn.addEventListener('click', function() {
+                // Fallback for browsers that don't support Web Share API
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = window.location.href;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+                
+                alert('Link copied to clipboard!');
+            });
+        }
+    });
+</script>
+
+<!-- Fix for None links in related products -->
+<script src="{{ url_for('static', filename='js/fix-none-links.js') }}"></script>
+{% endblock %}

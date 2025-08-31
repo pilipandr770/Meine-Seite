@@ -1,0 +1,38 @@
+/* Shop styles */
+
+/* Disabled link styling */
+a.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Unavailable badge styling */
+.unavailable-badge {
+    display: inline-block;
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+}
+
+/* Styling for product cards with unavailable items */
+.product-card.unavailable {
+    opacity: 0.7;
+    position: relative;
+}
+
+.product-card.unavailable::after {
+    content: "Unavailable";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ff6b6b;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}

@@ -13,22 +13,23 @@ logger = logging.getLogger(__name__)
 REQUESTS_SCHEMA = os.getenv('POSTGRES_SCHEMA_CLIENTS')
 BASE_SCHEMA = os.getenv('POSTGRES_SCHEMA')  # может быть None, тогда search_path
 
+# If the configured database isn't PostgreSQL, avoid using schema-qualified
+# table names because SQLite doesn't support schemas the same way.
+_db_url = os.getenv('DATABASE_URL') or os.getenv('DATABASE_URI') or ''
+if not ('postgres' in _db_url or 'postgresql' in _db_url):
+    REQUESTS_SCHEMA = None
+    BASE_SCHEMA = None
+
 class Project(db.Model):
     """Модель проекта, связана с клиентом и заявкой (ClientRequest)."""
     __tablename__ = 'project'
-    # Храним проект в базовой схеме (если указана)
-    if BASE_SCHEMA:
-        __table_args__ = {'schema': BASE_SCHEMA, 'extend_existing': True}
-    else:
-        __table_args__ = {'extend_existing': True}
+    # Keep table args simple for SQLite/dev. Schema placement handled by PG search_path in production.
+    __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=True)
-    # Схема client_requests может отличаться -> квалифицируем имя
-    if REQUESTS_SCHEMA:
-        request_id = db.Column(db.Integer, db.ForeignKey(f"{REQUESTS_SCHEMA}.client_requests.id"), nullable=True)
-    else:
-        request_id = db.Column(db.Integer, db.ForeignKey('client_requests.id'), nullable=True)
+    # Use unqualified FK targets so SQLite metadata doesn't include schema names.
+    request_id = db.Column(db.Integer, db.ForeignKey('client_requests.id'), nullable=True)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(50), default='new')
@@ -69,16 +70,11 @@ class Project(db.Model):
 class ProjectStage(db.Model):
     """Модель стадии проекта"""
     __tablename__ = 'project_stage'
-    if BASE_SCHEMA:
-        __table_args__ = {'schema': BASE_SCHEMA, 'extend_existing': True}
-    else:
-        __table_args__ = {'extend_existing': True}
+    __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    if BASE_SCHEMA:
-        project_id = db.Column(db.Integer, db.ForeignKey(f"{BASE_SCHEMA}.project.id"), nullable=False)
-    else:
-        project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    # Unqualified FK target for portability
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')

@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="shop-container">
+    <div class="shop-sidebar">
+        <div class="sidebar-block">
+            <h3>{% if lang == 'uk' %}Категорії{% elif lang == 'de' %}Kategorien{% else %}Categories{% endif %}</h3>
+            <ul class="category-list">
+                <li>
+                    <a href="{{ url_for('shop.products') }}" class="{{ 'active' if not selected_category else '' }}">
+                        {% if lang == 'uk' %}Усі категорії{% elif lang == 'de' %}Alle Kategorien{% else %}All Categories{% endif %}
+                    </a>
+                </li>
+                {% for cat in categories %}
+                    <li>
+                        <a href="{{ url_for('shop.products', category=cat.slug) }}" class="{{ 'active' if selected_category and selected_category.id == cat.id else '' }}">
+                            {{ cat.name }} ({{ cat.products|length }})
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="sidebar-block">
+            <h3>{% if lang == 'uk' %}Фільтри{% elif lang == 'de' %}Filter{% else %}Filters{% endif %}</h3>
+            <form action="{{ url_for('shop.products') }}" method="get" id="filterForm">
+                {% if selected_category %}
+                    <input type="hidden" name="category" value="{{ selected_category.slug }}">
+                {% endif %}
+                
+                <div class="filter-group">
+                    <label>{% if lang == 'uk' %}Сортувати за{% elif lang == 'de' %}Sortieren nach{% else %}Sort by{% endif %}:</label>
+                    <select name="sort" onchange="document.getElementById('filterForm').submit()">
+                        <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>
+                            {% if lang == 'uk' %}Назва (А-Я){% elif lang == 'de' %}Name (A-Z){% else %}Name (A-Z){% endif %}
+                        </option>
+                        <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>
+                            {% if lang == 'uk' %}Назва (Я-А){% elif lang == 'de' %}Name (Z-A){% else %}Name (Z-A){% endif %}
+                        </option>
+                        <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>
+                            {% if lang == 'uk' %}Ціна (від нижчої){% elif lang == 'de' %}Preis (aufsteigend){% else %}Price (low to high){% endif %}
+                        </option>
+                        <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>
+                            {% if lang == 'uk' %}Ціна (від вищої){% elif lang == 'de' %}Preis (absteigend){% else %}Price (high to low){% endif %}
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>{% if lang == 'uk' %}Тривалість (хв){% elif lang == 'de' %}Dauer (Min){% else %}Duration (min){% endif %}:</label>
+                    <div class="range-slider">
+                        <input type="range" name="duration" min="15" max="180" step="15" value="{{ request.args.get('duration', 180) }}" 
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output>{{ request.args.get('duration', 180) }}</output>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-filter">
+                    {% if lang == 'uk' %}Застосувати{% elif lang == 'de' %}Anwenden{% else %}Apply{% endif %}
+                </button>
+                
+                <a href="{{ url_for('shop.products') }}" class="btn btn-secondary btn-filter-reset">
+                    {% if lang == 'uk' %}Скинути{% elif lang == 'de' %}Zurücksetzen{% else %}Reset{% endif %}
+                </a>
+            </form>
+        </div>
+    </div>
+    
+    <div class="shop-main">
+        <div class="shop-header">
+            <h1>
+                {% if selected_category %}
+                    {{ selected_category.name }}
+                {% else %}
+                    {% if lang == 'uk' %}Усі консультаційні послуги{% elif lang == 'de' %}Alle Beratungsleistungen{% else %}All Consultation Services{% endif %}
+                {% endif %}
+            </h1>
+            
+            {% if selected_category and selected_category.description %}
+                <p class="category-description">{{ selected_category.description }}</p>
+            {% endif %}
+            
+            <div class="products-count">
+                {{ products|length }} {% if lang == 'uk' %}послуг{% elif lang == 'de' %}Dienstleistungen{% else %}services{% endif %}
+            </div>
+        </div>
+        
+        <div class="products-grid">
+            {% if products %}
+                {% for product in products %}
+                    <div class="product-card">
+                        {% if product.image %}
+                            <div class="product-image">
+                                <img src="{{ product.image }}" alt="{{ product.name }}">
+                            </div>
+                        {% else %}
+                            <div class="product-image product-image-placeholder">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="product-info">
+                            <h3>{{ product.name }}</h3>
+                            <p class="product-short-desc">{{ product.short_description }}</p>
+                            
+                            <div class="product-price">
+                                {% if product.sale_price %}
+                                    <span class="price-current">{{ "%.2f"|format(product.sale_price) }} €</span>
+                                    <span class="price-original">{{ "%.2f"|format(product.price) }} €</span>
+                                {% else %}
+                                    <span class="price-current">{{ "%.2f"|format(product.price) }} €</span>
+                                {% endif %}
+                            </div>
+
+                            {% if product.duration %}
+                                <div class="product-duration">
+                                    <i class="fas fa-clock"></i> {{ product.duration }} {% if lang == 'uk' %}хв.{% elif lang == 'de' %}Min.{% else %}min.{% endif %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="product-actions">
+                                {% if product.slug %}
+                                <a href="{{ url_for('shop.product_detail', slug=product.slug) }}" class="btn btn-outline">
+                                    {% if lang == 'uk' %}Детальніше{% elif lang == 'de' %}Details{% else %}Details{% endif %}
+                                </a>
+                                {% else %}
+                                <a href="#" class="btn btn-outline disabled" title="Product currently unavailable">
+                                    {% if lang == 'uk' %}Недоступно{% elif lang == 'de' %}Nicht verfügbar{% else %}Unavailable{% endif %}
+                                </a>
+                                {% endif %}
+                                
+                                <button class="btn btn-primary add-to-cart-btn" data-product-id="{{ product.id }}"
+                                        {% if not product.slug %}disabled title="Product currently unavailable"{% endif %}>
+                                    {% if lang == 'uk' %}У кошик{% elif lang == 'de' %}In den Warenkorb{% else %}Add to cart{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-products">
+                    <p>{% if lang == 'uk' %}Товарів не знайдено{% elif lang == 'de' %}Keine Produkte gefunden{% else %}No products found{% endif %}</p>
+                    <a href="{{ url_for('shop.products') }}" class="btn btn-primary">
+                        {% if lang == 'uk' %}Переглянути всі товари{% elif lang == 'de' %}Alle Produkte anzeigen{% else %}View all products{% endif %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .shop-container {
+        display: flex;
+        gap: 30px;
+    }
+    
+    .shop-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+    }
+    
+    .shop-main {
+        flex-grow: 1;
+    }
+    
+    .sidebar-block {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .sidebar-block h3 {
+        color: #0f0;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.2rem;
+        border-bottom: 1px solid rgba(15, 255, 15, 0.3);
+        padding-bottom: 10px;
+    }
+    
+    .category-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .category-list li {
+        margin-bottom: 8px;
+    }
+    
+    .category-list a {
+        color: #ccc;
+        text-decoration: none;
+        transition: color 0.3s;
+        display: block;
+        padding: 5px 0;
+    }
+    
+    .category-list a:hover,
+    .category-list a.active {
+        color: #0f0;
+    }
+    
+    .filter-group {
+        margin-bottom: 15px;
+    }
+    
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #ccc;
+    }
+    
+    .filter-group select {
+        width: 100%;
+        padding: 8px;
+        background-color: #1a1a1a;
+        color: #ccc;
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 4px;
+        outline: none;
+    }
+    
+    .filter-group select:focus {
+        border-color: #0f0;
+    }
+    
+    .range-slider {
+        width: 100%;
+    }
+    
+    .range-slider input[type="range"] {
+        width: 100%;
+        margin-bottom: 5px;
+        background-color: #1a1a1a;
+    }
+    
+    .range-slider output {
+        color: #0f0;
+    }
+    
+    .btn-filter {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .btn-filter-reset {
+        width: 100%;
+        background-color: transparent;
+        color: #ccc;
+        border: 1px solid #ccc;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        padding: 8px 0;
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+    
+    .btn-filter-reset:hover {
+        background-color: #2a2a2a;
+        color: #0f0;
+        border-color: #0f0;
+    }
+    
+    .shop-header {
+        margin-bottom: 30px;
+    }
+    
+    .shop-header h1 {
+        color: #0f0;
+        margin-bottom: 15px;
+    }
+    
+    .category-description {
+        color: #ccc;
+        margin-bottom: 15px;
+    }
+    
+    .products-count {
+        color: #999;
+        font-style: italic;
+    }
+    
+    .product-card {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .product-image {
+        height: 200px;
+        overflow: hidden;
+    }
+    
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    
+    .product-info {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    
+    .product-short-desc {
+        color: #ccc;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+    }
+    
+    .product-duration {
+        color: #999;
+        margin-bottom: 15px;
+    }
+    
+    .product-duration i {
+        color: #0f0;
+        margin-right: 5px;
+    }
+    
+    .product-actions {
+        margin-top: auto;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-outline {
+        background-color: transparent;
+        color: #0f0;
+        border: 1px solid #0f0;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        text-align: center;
+        flex: 1;
+        transition: all 0.3s;
+    }
+    
+    .btn-outline:hover {
+        background-color: rgba(0, 255, 0, 0.1);
+    }
+    
+    .add-to-cart-btn {
+        flex: 1;
+    }
+    
+    .no-products {
+        grid-column: 1 / -1;
+        text-align: center;
+        color: #ccc;
+        padding: 40px 0;
+    }
+    
+    @media (max-width: 992px) {
+        .shop-container {
+            flex-direction: column;
+        }
+        
+        .shop-sidebar {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    // Add to cart functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+        
+        addToCartBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Skip if button is disabled
+                if (btn.disabled || btn.classList.contains('disabled')) {
+                    console.log('Button is disabled, skipping cart add');
+                    return;
+                }
+                
+                const productId = this.dataset.productId;
+                
+                // Show loading state
+                const originalText = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                
+                console.log(`Adding product ID ${productId} to cart`);
+                
+                // Send AJAX request to add item to cart
+                fetch('/shop/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        product_id: parseInt(productId, 10),
+                        quantity: 1
+                    })
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    
+                    // Check if response is ok (status in the range 200-299)
+                    if (!response.ok) {
+                        // If we get a non-2xx status, throw an error with the status
+                        return response.json().then(data => {
+                            throw new Error(`${response.status}: ${data.message || 'Unknown error'}`);
+                        });
+                    }
+                    
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        // Show success message
+                        alert(data.message);
+                        
+                        // Update all cart count elements
+                        const cartCountElements = document.querySelectorAll('.cart-count');
+                        if (cartCountElements.length > 0 && data.cart_count !== undefined) {
+                            cartCountElements.forEach(el => {
+                                el.textContent = data.cart_count;
+                            });
+                        }
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding item to cart:', error);
+                    alert(`Failed to add item to cart: ${error.message || 'Please try again.'}`);
+                })
+                .finally(() => {
+                    // Restore button state
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                });
+            });
+        });
+    });
+</script>
+
+<!-- Fix for None links in product listings -->
+<script src="{{ url_for('static', filename='js/fix-none-links.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,326 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Produkt {{ 'bearbeiten' if product else 'hinzufügen' }}
+    {% elif lang == 'uk' %}
+        {{ 'Редагувати' if product else 'Додати' }} продукт
+    {% else %}
+        {{ 'Edit' if product else 'Add' }} Product
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">
+        {% if lang == 'de' %}
+            Produkt {{ 'bearbeiten' if product else 'hinzufügen' }}
+        {% elif lang == 'uk' %}
+            {{ 'Редагувати' if product else 'Додати' }} продукт
+        {% else %}
+            {{ 'Edit' if product else 'Add' }} Product
+        {% endif %}
+    </h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Produktdetails
+                {% elif lang == 'uk' %}
+                    Деталі продукту
+                {% else %}
+                    Product Details
+                {% endif %}
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">
+                                {% if lang == 'de' %}
+                                    Name*
+                                {% elif lang == 'uk' %}
+                                    Назва*
+                                {% else %}
+                                    Name*
+                                {% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ product.name if product else '' }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category_id">
+                                {% if lang == 'de' %}
+                                    Kategorie
+                                {% elif lang == 'uk' %}
+                                    Категорія
+                                {% else %}
+                                    Category
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="category_id" name="category_id">
+                                <option value="">
+                                    {% if lang == 'de' %}
+                                        Keine Kategorie
+                                    {% elif lang == 'uk' %}
+                                        Без категорії
+                                    {% else %}
+                                        No Category
+                                    {% endif %}
+                                </option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if product and product.category_id == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="price">
+                                {% if lang == 'de' %}
+                                    Preis (€)*
+                                {% elif lang == 'uk' %}
+                                    Ціна (€)*
+                                {% else %}
+                                    Price (€)*
+                                {% endif %}
+                            </label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="price" name="price" value="{{ product.price if product else '' }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sale_price">
+                                {% if lang == 'de' %}
+                                    Angebotspreis (€)
+                                {% elif lang == 'uk' %}
+                                    Ціна зі знижкою (€)
+                                {% else %}
+                                    Sale Price (€)
+                                {% endif %}
+                            </label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="sale_price" name="sale_price" value="{{ product.sale_price if product and product.sale_price else '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="duration">
+                                {% if lang == 'de' %}
+                                    Dauer (Minuten)
+                                {% elif lang == 'uk' %}
+                                    Тривалість (хвилини)
+                                {% else %}
+                                    Duration (minutes)
+                                {% endif %}
+                            </label>
+                            <input type="number" min="0" class="form-control" id="duration" name="duration" value="{{ product.duration if product and product.duration else '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="format">
+                                {% if lang == 'de' %}
+                                    Format
+                                {% elif lang == 'uk' %}
+                                    Формат
+                                {% else %}
+                                    Format
+                                {% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="format" name="format" value="{{ product.format if product else '' }}">
+                            <small class="form-text text-muted">
+                                {% if lang == 'de' %}
+                                    z.B. Online, Persönlich, Video, etc.
+                                {% elif lang == 'uk' %}
+                                    Наприклад, Онлайн, Особисто, Відео тощо.
+                                {% else %}
+                                    e.g., Online, In-person, Video, etc.
+                                {% endif %}
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="language">
+                                {% if lang == 'de' %}
+                                    Sprache
+                                {% elif lang == 'uk' %}
+                                    Мова
+                                {% else %}
+                                    Language
+                                {% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="language" name="language" value="{{ product.language if product else '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="short_description">
+                                {% if lang == 'de' %}
+                                    Kurzbeschreibung
+                                {% elif lang == 'uk' %}
+                                    Короткий опис
+                                {% else %}
+                                    Short Description
+                                {% endif %}
+                            </label>
+                            <textarea class="form-control" id="short_description" name="short_description" rows="3">{{ product.short_description if product else '' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">
+                                {% if lang == 'de' %}
+                                    Beschreibung
+                                {% elif lang == 'uk' %}
+                                    Опис
+                                {% else %}
+                                    Description
+                                {% endif %}
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="6">{{ product.description if product else '' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="prerequisites">
+                                {% if lang == 'de' %}
+                                    Voraussetzungen
+                                {% elif lang == 'uk' %}
+                                    Передумови
+                                {% else %}
+                                    Prerequisites
+                                {% endif %}
+                            </label>
+                            <textarea class="form-control" id="prerequisites" name="prerequisites" rows="3">{{ product.prerequisites if product else '' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="includes">
+                                {% if lang == 'de' %}
+                                    Beinhaltet
+                                {% elif lang == 'uk' %}
+                                    Включає
+                                {% else %}
+                                    Includes
+                                {% endif %}
+                            </label>
+                            <textarea class="form-control" id="includes" name="includes" rows="3">{{ product.includes if product else '' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="image">
+                                {% if lang == 'de' %}
+                                    Bild
+                                {% elif lang == 'uk' %}
+                                    Зображення
+                                {% else %}
+                                    Image
+                                {% endif %}
+                            </label>
+                            <input type="file" class="form-control-file" id="image" name="image">
+                            {% if product and product.image %}
+                            <div class="mt-2">
+                                <p>
+                                    {% if lang == 'de' %}
+                                        Aktuelles Bild:
+                                    {% elif lang == 'uk' %}
+                                        Поточне зображення:
+                                    {% else %}
+                                        Current Image:
+                                    {% endif %}
+                                </p>
+                                <img src="{{ product.image }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 200px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <hr>
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" value="true" {% if product is none or product.is_active %}checked{% endif %}>
+                                <label class="custom-control-label" for="is_active">
+                                    {% if lang == 'de' %}
+                                        Aktiv
+                                    {% elif lang == 'uk' %}
+                                        Активний
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="is_featured" name="is_featured" value="true" {% if product and product.is_featured %}checked{% endif %}>
+                                <label class="custom-control-label" for="is_featured">
+                                    {% if lang == 'de' %}
+                                        Empfohlen
+                                    {% elif lang == 'uk' %}
+                                        Рекомендований
+                                    {% else %}
+                                        Featured
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="in_stock" name="in_stock" value="true" {% if product is none or product.in_stock %}checked{% endif %}>
+                                <label class="custom-control-label" for="in_stock">
+                                    {% if lang == 'de' %}
+                                        Auf Lager
+                                    {% elif lang == 'uk' %}
+                                        В наявності
+                                    {% else %}
+                                        In Stock
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        {% if lang == 'de' %}
+                            {{ 'Aktualisieren' if product else 'Speichern' }}
+                        {% elif lang == 'uk' %}
+                            {{ 'Оновити' if product else 'Зберегти' }}
+                        {% else %}
+                            {{ 'Update' if product else 'Save' }}
+                        {% endif %}
+                    </button>
+                    <a href="{{ url_for('admin_shop.products') }}" class="btn btn-secondary ml-2">
+                        {% if lang == 'de' %}
+                            Abbrechen
+                        {% elif lang == 'uk' %}
+                            Скасувати
+                        {% else %}
+                            Cancel
+                        {% endif %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.ckeditor.com/4.16.0/standard/ckeditor.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize CKEditor for rich text editing
+        CKEDITOR.replace('description');
+        CKEDITOR.replace('prerequisites');
+        CKEDITOR.replace('includes');
+    });
+</script>
+{% endblock %}

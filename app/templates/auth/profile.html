@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile | RoZoom{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Profile Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-circle mx-auto mb-3" style="width: 100px; height: 100px; background-color: #3498db; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: white; font-size: 40px; font-weight: bold;">{{ current_user.username[0].upper() }}</span>
+                        </div>
+                        <h3 class="h4">{{ current_user.username }}</h3>
+                        <p class="text-muted">{{ current_user.email }}</p>
+                        
+                        {% if current_user.is_admin %}
+                            <span class="badge bg-danger">Administrator</span>
+                        {% endif %}
+                    </div>
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Member since
+                            <span>{{ current_user.created_at.strftime('%d %b %Y') }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Last login
+                            <span>{{ current_user.last_login.strftime('%d %b %Y, %H:%M') if current_user.last_login else 'Never' }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            {% if current_user.is_admin %}
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h2 class="h5 mb-0">Admin Panel</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>You have administrative privileges.</p>
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-danger w-100">
+                            <i class="fas fa-tachometer-alt me-2"></i> Go to Admin Dashboard
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">My Orders</h2>
+                </div>
+                <div class="card-body">
+                    {% if current_user.orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Date</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in current_user.orders %}
+                                        <tr>
+                                            <td>#{{ order.id }}</td>
+                                            <td>{{ order.created_at.strftime('%d %b %Y') }}</td>
+                                            <td>{{ "%.2f"|format(order.total) }} €</td>
+                                            <td>
+                                                <span class="badge bg-{{ 
+                                                    'success' if order.status == 'paid' else
+                                                    'warning' if order.status == 'pending' else
+                                                    'info' if order.status == 'processing' else
+                                                    'danger' if order.status == 'cancelled' else
+                                                    'secondary'
+                                                }}">
+                                                    {{ order.status|capitalize }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('shop.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <a href="{{ url_for('shop.orders') }}" class="btn btn-outline-primary">
+                            View All Orders
+                        </a>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                            <p class="lead">You haven't placed any orders yet.</p>
+                            <a href="{{ url_for('shop.products') }}" class="btn btn-primary">
+                                Browse Products
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Account Security</h2>
+                </div>
+                <div class="card-body">
+                    <p>Manage your account security settings.</p>
+                    
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">Change Password</h5>
+                                <p class="mb-0 small text-muted">Update your password regularly for better security</p>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">Email Preferences</h5>
+                                <p class="mb-0 small text-muted">Manage notifications and marketing emails</p>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        
+                        <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-danger">
+                            <div>
+                                <h5 class="mb-1">Log Out</h5>
+                                <p class="mb-0 small">Sign out of your account</p>
+                            </div>
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

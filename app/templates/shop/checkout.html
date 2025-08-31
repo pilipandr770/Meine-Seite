@@ -1,0 +1,939 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="checkout-container">
+    <h1 class="page-title">
+        {% if lang == 'uk' %}Оформлення замовлення{% elif lang == 'de' %}Zur Kasse{% else %}Checkout{% endif %}
+    </h1>
+    
+    {% if cart_items %}
+        <div class="checkout-content">
+            <form id="checkoutForm" class="checkout-form">
+                <div class="checkout-section">
+                    <h2>
+                        {% if lang == 'uk' %}Особисті дані{% elif lang == 'de' %}Persönliche Daten{% else %}Personal Details{% endif %}
+                    </h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">
+                                {% if lang == 'uk' %}Ім'я{% elif lang == 'de' %}Vorname{% else %}First Name{% endif %} *
+                            </label>
+                            <input type="text" id="firstName" name="first_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">
+                                {% if lang == 'uk' %}Прізвище{% elif lang == 'de' %}Nachname{% else %}Last Name{% endif %} *
+                            </label>
+                            <input type="text" id="lastName" name="last_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">
+                                {% if lang == 'uk' %}Email{% elif lang == 'de' %}E-Mail{% else %}Email{% endif %} *
+                            </label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">
+                                {% if lang == 'uk' %}Телефон{% elif lang == 'de' %}Telefon{% else %}Phone{% endif %} *
+                            </label>
+                            <input type="tel" id="phone" name="phone" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checkout-section">
+                    <h2>
+                        {% if lang == 'uk' %}Адреса{% elif lang == 'de' %}Adresse{% else %}Address{% endif %}
+                    </h2>
+                    
+                    <div class="form-group">
+                        <label for="addressLine1">
+                            {% if lang == 'uk' %}Адреса 1{% elif lang == 'de' %}Adresse 1{% else %}Address Line 1{% endif %} *
+                        </label>
+                        <input type="text" id="addressLine1" name="address_line1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addressLine2">
+                            {% if lang == 'uk' %}Адреса 2{% elif lang == 'de' %}Adresse 2{% else %}Address Line 2{% endif %}
+                        </label>
+                        <input type="text" id="addressLine2" name="address_line2">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">
+                                {% if lang == 'uk' %}Місто{% elif lang == 'de' %}Stadt{% else %}City{% endif %} *
+                            </label>
+                            <input type="text" id="city" name="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="postalCode">
+                                {% if lang == 'uk' %}Поштовий індекс{% elif lang == 'de' %}Postleitzahl{% else %}Postal Code{% endif %} *
+                            </label>
+                            <input type="text" id="postalCode" name="postal_code" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="country">
+                            {% if lang == 'uk' %}Країна{% elif lang == 'de' %}Land{% else %}Country{% endif %} *
+                        </label>
+                        <select id="country" name="country" required>
+                            <option value="">{% if lang == 'uk' %}Виберіть країну{% elif lang == 'de' %}Land auswählen{% else %}Select Country{% endif %}</option>
+                            <option value="DE">Deutschland</option>
+                            <option value="AT">Österreich</option>
+                            <option value="CH">Schweiz</option>
+                            <option value="UA">Україна</option>
+                            <option value="PL">Polska</option>
+                            <option value="GB">United Kingdom</option>
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="FR">France</option>
+                            <option value="IT">Italia</option>
+                            <option value="ES">España</option>
+                            <option value="NL">Nederland</option>
+                            <option value="BE">Belgique</option>
+                            <option value="SE">Sverige</option>
+                            <option value="NO">Norge</option>
+                            <option value="DK">Danmark</option>
+                            <option value="FI">Suomi</option>
+                            <option value="CZ">Česká republika</option>
+                            <option value="SK">Slovensko</option>
+                            <option value="HU">Magyarország</option>
+                            <option value="RO">România</option>
+                            <option value="BG">България</option>
+                            <option value="GR">Ελλάδα</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="checkout-section">
+                    <h2>
+                        {% if lang == 'uk' %}Спосіб оплати{% elif lang == 'de' %}Zahlungsmethode{% else %}Payment Method{% endif %}
+                    </h2>
+                    
+                    <div class="payment-methods">
+                        <div class="payment-method">
+                            <input type="radio" id="paymentStripe" name="payment_method" value="stripe" checked>
+                            <label for="paymentStripe">
+                                <span class="payment-logo stripe-logo">Stripe</span>
+                                <span class="payment-name">
+                                    {% if lang == 'uk' %}Кредитна / Дебетова карта{% elif lang == 'de' %}Kredit- / Debitkarte{% else %}Credit / Debit Card{% endif %}
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <div class="payment-method">
+                            <input type="radio" id="paymentPaypal" name="payment_method" value="paypal">
+                            <label for="paymentPaypal">
+                                <span class="payment-logo paypal-logo">PayPal</span>
+                                <span class="payment-name">PayPal</span>
+                            </label>
+                        </div>
+                        
+                        <div class="payment-method">
+                            <input type="radio" id="paymentBank" name="payment_method" value="bank">
+                            <label for="paymentBank">
+                                <span class="payment-logo bank-logo">
+                                    <i class="fas fa-university"></i>
+                                </span>
+                                <span class="payment-name">
+                                    {% if lang == 'uk' %}Банківський переказ{% elif lang == 'de' %}Banküberweisung{% else %}Bank Transfer{% endif %}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="stripePaymentForm" class="payment-details active">
+                        <div id="stripe-card-element">
+                            <!-- Stripe Elements will be inserted here -->
+                            <div class="card-placeholder">
+                                <div class="placeholder-line"></div>
+                                <div class="placeholder-line short"></div>
+                                <div class="placeholder-details">
+                                    <div class="placeholder-line short"></div>
+                                    <div class="placeholder-line short"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="card-errors" class="payment-errors" role="alert"></div>
+                    </div>
+                    
+                    <div id="paypalPaymentForm" class="payment-details">
+                        <p class="payment-info">
+                            {% if lang == 'uk' %}
+                                Ви будете перенаправлені на сайт PayPal для завершення оплати після підтвердження замовлення.
+                            {% elif lang == 'de' %}
+                                Sie werden zur PayPal-Website weitergeleitet, um die Zahlung nach der Bestellbestätigung abzuschließen.
+                            {% else %}
+                                You will be redirected to the PayPal website to complete payment after order confirmation.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div id="bankPaymentForm" class="payment-details">
+                        <p class="payment-info">
+                            {% if lang == 'uk' %}
+                                Будь ласка, скористайтеся наступними банківськими реквізитами для оплати:
+                            {% elif lang == 'de' %}
+                                Bitte verwenden Sie die folgenden Bankdaten für die Überweisung:
+                            {% else %}
+                                Please use the following bank details to make your payment:
+                            {% endif %}
+                        </p>
+                        <div class="bank-details">
+                            <div class="bank-detail-row">
+                                <div class="bank-detail-label">
+                                    {% if lang == 'uk' %}Банк{% elif lang == 'de' %}Bank{% else %}Bank{% endif %}:
+                                </div>
+                                <div class="bank-detail-value">Deutsche Bank</div>
+                            </div>
+                            <div class="bank-detail-row">
+                                <div class="bank-detail-label">IBAN:</div>
+                                <div class="bank-detail-value">DE12 3456 7890 1234 5678 90</div>
+                            </div>
+                            <div class="bank-detail-row">
+                                <div class="bank-detail-label">BIC:</div>
+                                <div class="bank-detail-value">DEUTDEDBXXX</div>
+                            </div>
+                            <div class="bank-detail-row">
+                                <div class="bank-detail-label">
+                                    {% if lang == 'uk' %}Одержувач{% elif lang == 'de' %}Empfänger{% else %}Recipient{% endif %}:
+                                </div>
+                                <div class="bank-detail-value">Coaching Services GmbH</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checkout-section">
+                    <h2>
+                        {% if lang == 'uk' %}Додаткова інформація{% elif lang == 'de' %}Zusätzliche Informationen{% else %}Additional Information{% endif %}
+                    </h2>
+                    
+                    <div class="form-group">
+                        <label for="notes">
+                            {% if lang == 'uk' %}Примітки до замовлення{% elif lang == 'de' %}Anmerkungen zur Bestellung{% else %}Order Notes{% endif %}
+                        </label>
+                        <textarea id="notes" name="notes" rows="4"></textarea>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="termsAgree" name="terms_agree" required>
+                        <label for="termsAgree">
+                            {% if lang == 'uk' %}
+                                Я прочитав(ла) і погоджуюся з <a href="{{ url_for('main.privacy') }}" target="_blank">умовами та політикою конфіденційності</a> *
+                            {% elif lang == 'de' %}
+                                Ich habe die <a href="{{ url_for('main.privacy') }}" target="_blank">Allgemeinen Geschäftsbedingungen und Datenschutzbestimmungen</a> gelesen und stimme ihnen zu *
+                            {% else %}
+                                I have read and agree to the <a href="{{ url_for('main.privacy') }}" target="_blank">terms and privacy policy</a> *
+                            {% endif %}
+                        </label>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="newsletterSubscribe" name="newsletter_subscribe">
+                        <label for="newsletterSubscribe">
+                            {% if lang == 'uk' %}
+                                Я хочу підписатися на розсилку новин і спеціальних пропозицій
+                            {% elif lang == 'de' %}
+                                Ich möchte Newsletter und Sonderangebote erhalten
+                            {% else %}
+                                I want to receive newsletters and special offers
+                            {% endif %}
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-place-order" id="placeOrderBtn">
+                    {% if lang == 'uk' %}Підтвердити замовлення{% elif lang == 'de' %}Bestellung aufgeben{% else %}Place Order{% endif %}
+                </button>
+            </form>
+            
+            <div class="order-summary">
+                <div class="summary-section">
+                    <h3>
+                        {% if lang == 'uk' %}Ваше замовлення{% elif lang == 'de' %}Ihre Bestellung{% else %}Your Order{% endif %}
+                    </h3>
+                    
+                    <div class="order-items">
+                        {% for item in cart_items %}
+                            <div class="order-item">
+                                <div class="item-details">
+                                    <span class="item-quantity">{{ item.quantity }}x</span>
+                                    <span class="item-name">{{ item.product.name }}</span>
+                                    {% if item.product.duration %}
+                                        <span class="item-duration">{{ item.product.duration }} {% if lang == 'uk' %}хв.{% elif lang == 'de' %}Min.{% else %}min.{% endif %}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="item-price">
+                                    {% if item.product.sale_price %}
+                                        {{ "%.2f"|format(item.product.sale_price * item.quantity) }} €
+                                    {% else %}
+                                        {{ "%.2f"|format(item.product.price * item.quantity) }} €
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <div class="summary-row">
+                        <span>
+                            {% if lang == 'uk' %}Підсумок{% elif lang == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}
+                        </span>
+                        <span>{{ "%.2f"|format(subtotal) }} €</span>
+                    </div>
+                    
+                    {% if discount %}
+                        <div class="summary-row discount-row">
+                            <span>
+                                {% if lang == 'uk' %}Знижка{% elif lang == 'de' %}Rabatt{% else %}Discount{% endif %}
+                            </span>
+                            <span>-{{ "%.2f"|format(discount) }} €</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="summary-row">
+                        <span>
+                            {% if lang == 'uk' %}Податок{% elif lang == 'de' %}MwSt{% else %}Tax{% endif %} (19%)
+                        </span>
+                        <span>{{ "%.2f"|format(tax) }} €</span>
+                    </div>
+                    
+                    <div class="summary-row total-row">
+                        <span>
+                            {% if lang == 'uk' %}Загальна сума{% elif lang == 'de' %}Gesamtsumme{% else %}Total{% endif %}
+                        </span>
+                        <span>{{ "%.2f"|format(total) }} €</span>
+                    </div>
+                </div>
+                
+                {% if applied_coupon %}
+                    <div class="summary-section coupon-section">
+                        <div class="coupon-badge">
+                            <i class="fas fa-tag"></i>
+                            {% if lang == 'uk' %}Застосований купон{% elif lang == 'de' %}Angewandter Gutschein{% else %}Applied Coupon{% endif %}:
+                            <span>{{ applied_coupon.code }}</span>
+                            <button type="button" class="btn-remove-coupon" id="removeCoupon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-checkout">
+            <div class="empty-checkout-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h2>
+                {% if lang == 'uk' %}
+                    Ваш кошик порожній
+                {% elif lang == 'de' %}
+                    Ihr Warenkorb ist leer
+                {% else %}
+                    Your cart is empty
+                {% endif %}
+            </h2>
+            <p>
+                {% if lang == 'uk' %}
+                    Схоже, ви ще не додали жодного товару до кошика.
+                {% elif lang == 'de' %}
+                    Sie haben noch keine Produkte in Ihren Warenkorb gelegt.
+                {% else %}
+                    It looks like you haven't added any products to your cart yet.
+                {% endif %}
+            </p>
+            <a href="{{ url_for('shop.products') }}" class="btn btn-primary">
+                {% if lang == 'uk' %}
+                    Перейти до магазину
+                {% elif lang == 'de' %}
+                    Zum Shop
+                {% else %}
+                    Go to Shop
+                {% endif %}
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .checkout-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .page-title {
+        color: #0f0;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .checkout-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+    }
+    
+    .checkout-section {
+        margin-bottom: 30px;
+    }
+    
+    .checkout-section h2 {
+        color: #0f0;
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(15, 255, 15, 0.3);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #ccc;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    select,
+    textarea {
+        width: 100%;
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        color: #ccc;
+        border-radius: 4px;
+    }
+    
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="tel"]:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #0f0;
+        outline: none;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        margin-top: 4px;
+        margin-right: 10px;
+        accent-color: #0f0;
+    }
+    
+    .checkbox-group label {
+        margin-bottom: 0;
+    }
+    
+    .checkbox-group a {
+        color: #0f0;
+        text-decoration: none;
+    }
+    
+    .checkbox-group a:hover {
+        text-decoration: underline;
+    }
+    
+    .payment-methods {
+        margin-bottom: 20px;
+    }
+    
+    .payment-method {
+        display: block;
+        margin-bottom: 15px;
+    }
+    
+    .payment-method input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .payment-method label {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .payment-method input[type="radio"]:checked + label {
+        border-color: #0f0;
+        background-color: rgba(0, 255, 0, 0.05);
+    }
+    
+    .payment-logo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 30px;
+        margin-right: 15px;
+        background-color: #fff;
+        border-radius: 4px;
+        padding: 5px;
+    }
+    
+    .payment-logo.stripe-logo {
+        color: #6772e5;
+        font-weight: bold;
+    }
+    
+    .payment-logo.paypal-logo {
+        color: #003087;
+        font-weight: bold;
+    }
+    
+    .payment-logo.bank-logo {
+        background-color: transparent;
+        color: #0f0;
+        font-size: 1.5rem;
+    }
+    
+    .payment-details {
+        display: none;
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.4);
+        border: 1px solid #333;
+        border-radius: 4px;
+    }
+    
+    .payment-details.active {
+        display: block;
+    }
+    
+    .card-placeholder {
+        background-color: #1a1a1a;
+        border-radius: 4px;
+        padding: 15px;
+    }
+    
+    .placeholder-line {
+        height: 10px;
+        background-color: #333;
+        border-radius: 2px;
+        margin-bottom: 15px;
+    }
+    
+    .placeholder-line.short {
+        width: 60%;
+    }
+    
+    .placeholder-details {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .payment-errors {
+        color: #ff6b6b;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .payment-info {
+        color: #ccc;
+        line-height: 1.6;
+    }
+    
+    .bank-details {
+        margin-top: 15px;
+        padding: 15px;
+        background-color: #1a1a1a;
+        border-radius: 4px;
+    }
+    
+    .bank-detail-row {
+        display: flex;
+        margin-bottom: 8px;
+    }
+    
+    .bank-detail-label {
+        width: 120px;
+        color: #999;
+    }
+    
+    .bank-detail-value {
+        color: #ccc;
+        font-weight: bold;
+    }
+    
+    .btn-place-order {
+        width: 100%;
+        background-color: #0f0;
+        color: #000;
+        padding: 15px;
+        border: none;
+        border-radius: 4px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-place-order:hover {
+        background-color: #00cc00;
+    }
+    
+    .order-summary {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(15, 255, 15, 0.3);
+        border-radius: 8px;
+        padding: 20px;
+        align-self: flex-start;
+    }
+    
+    .summary-section {
+        margin-bottom: 20px;
+    }
+    
+    .summary-section h3 {
+        color: #0f0;
+        margin-top: 0;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(15, 255, 15, 0.3);
+        padding-bottom: 10px;
+    }
+    
+    .order-items {
+        margin-bottom: 15px;
+    }
+    
+    .order-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #333;
+    }
+    
+    .item-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .item-quantity {
+        color: #0f0;
+        font-weight: bold;
+        margin-right: 5px;
+    }
+    
+    .item-name {
+        color: #ccc;
+        flex: 1;
+    }
+    
+    .item-duration {
+        color: #999;
+        font-size: 0.85rem;
+        width: 100%;
+        margin-left: 25px;
+    }
+    
+    .item-price {
+        color: #ccc;
+        font-weight: bold;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        color: #ccc;
+    }
+    
+    .discount-row {
+        color: #ff6b6b;
+    }
+    
+    .total-row {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #0f0;
+        border-top: 1px solid rgba(15, 255, 15, 0.3);
+        margin-top: 15px;
+        padding-top: 15px;
+    }
+    
+    .coupon-badge {
+        display: flex;
+        align-items: center;
+        background-color: rgba(0, 255, 0, 0.1);
+        padding: 10px;
+        border-radius: 4px;
+        color: #0f0;
+    }
+    
+    .coupon-badge i {
+        margin-right: 5px;
+    }
+    
+    .coupon-badge span {
+        font-weight: bold;
+        margin: 0 5px;
+    }
+    
+    .btn-remove-coupon {
+        background: none;
+        border: none;
+        color: #ccc;
+        cursor: pointer;
+        margin-left: auto;
+        transition: color 0.3s;
+    }
+    
+    .btn-remove-coupon:hover {
+        color: #ff6b6b;
+    }
+    
+    .empty-checkout {
+        text-align: center;
+        padding: 60px 0;
+        color: #ccc;
+    }
+    
+    .empty-checkout-icon {
+        font-size: 5rem;
+        color: #0f0;
+        opacity: 0.7;
+        margin-bottom: 20px;
+    }
+    
+    .empty-checkout h2 {
+        color: #0f0;
+        margin-bottom: 15px;
+    }
+    
+    .empty-checkout p {
+        color: #999;
+        margin-bottom: 30px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    @media (max-width: 992px) {
+        .checkout-content {
+            grid-template-columns: 1fr;
+        }
+        
+        .order-summary {
+            order: -1;
+            margin-bottom: 30px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Payment method selection
+        const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+        const paymentForms = document.querySelectorAll('.payment-details');
+        
+        paymentMethods.forEach(method => {
+            method.addEventListener('change', function() {
+                // Hide all payment forms
+                paymentForms.forEach(form => {
+                    form.classList.remove('active');
+                });
+                
+                // Show selected payment form
+                const selectedForm = document.getElementById(`${this.value}PaymentForm`);
+                if (selectedForm) {
+                    selectedForm.classList.add('active');
+                }
+            });
+        });
+        
+        // Remove coupon
+        const removeCouponBtn = document.getElementById('removeCoupon');
+        
+        if (removeCouponBtn) {
+            removeCouponBtn.addEventListener('click', function() {
+                fetch('/shop/cart/remove-coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing coupon:', error);
+                });
+            });
+        }
+        
+        // Form submission
+        const checkoutForm = document.getElementById('checkoutForm');
+        
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate form fields
+                const requiredFields = checkoutForm.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.style.borderColor = '#ff6b6b';
+                        isValid = false;
+                    } else {
+                        field.style.borderColor = '';
+                    }
+                });
+                
+                if (!isValid) {
+                    alert(
+                        '{% if lang == "uk" %}Будь ласка, заповніть усі обов\'язкові поля{% elif lang == "de" %}Bitte füllen Sie alle Pflichtfelder aus{% else %}Please fill in all required fields{% endif %}'
+                    );
+                    return;
+                }
+                
+                // Collect form data
+                const formData = new FormData(checkoutForm);
+                const orderData = {};
+                formData.forEach((value, key) => {
+                    orderData[key] = value;
+                });
+                
+                // Process payment based on selected method
+                const selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+                
+                switch (selectedPaymentMethod) {
+                    case 'stripe':
+                        // In a real implementation, this would handle Stripe payment processing
+                        processStripePayment(orderData);
+                        break;
+                    case 'paypal':
+                        // Redirect to PayPal
+                        processPaypalPayment(orderData);
+                        break;
+                    case 'bank':
+                        // Process bank transfer order
+                        processBankTransferOrder(orderData);
+                        break;
+                }
+            });
+        }
+        
+        function processStripePayment(orderData) {
+            // This is a placeholder for Stripe integration
+            // In a real implementation, you would create a payment intent and confirm the payment
+            
+            fetch('/shop/order/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    ...orderData,
+                    payment_status: 'pending'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.message || 'An error occurred during payment processing');
+                }
+            })
+            .catch(error => {
+                console.error('Error processing payment:', error);
+            });
+        }
+        
+        function processPaypalPayment(orderData) {
+            // Create order first
+            fetch('/shop/order/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    ...orderData,
+                    payment_status: 'pending'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Redirect to PayPal
+                    window.location.href = data.paypal_url;
+                } else {
+                    alert(data.message || 'An error occurred during order creation');
+                }
+            })
+            .catch(error => {
+                console.error('Error creating order:', error);
+            });
+        }
+        
+        function processBankTransferOrder(orderData) {
+            fetch('/shop/order/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    ...orderData,
+                    payment_status: 'awaiting_payment'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.message || 'An error occurred during order creation');
+                }
+            })
+            .catch(error => {
+                console.error('Error creating order:', error);
+            });
+        }
+    });
+</script>
+{% endblock %}

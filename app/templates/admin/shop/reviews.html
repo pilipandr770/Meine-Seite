@@ -1,0 +1,502 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Reviews verwalten
+    {% elif lang == 'uk' %}
+        Управління відгуками
+    {% else %}
+        Manage Reviews
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">
+        {% if lang == 'de' %}
+            Reviews verwalten
+        {% elif lang == 'uk' %}
+            Управління відгуками
+        {% else %}
+            Manage Reviews
+        {% endif %}
+    </h1>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Filter
+                {% elif lang == 'uk' %}
+                    Фільтр
+                {% else %}
+                    Filter
+                {% endif %}
+            </h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                    aria-labelledby="dropdownMenuLink">
+                    <a class="dropdown-item" href="{{ url_for('admin_shop.reviews') }}">
+                        {% if lang == 'de' %}
+                            Filter zurücksetzen
+                        {% elif lang == 'uk' %}
+                            Скинути фільтр
+                        {% else %}
+                            Reset Filters
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{{ url_for('admin_shop.reviews') }}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="status">
+                                {% if lang == 'de' %}
+                                    Status
+                                {% elif lang == 'uk' %}
+                                    Статус
+                                {% else %}
+                                    Status
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="">
+                                    {% if lang == 'de' %}
+                                        Alle
+                                    {% elif lang == 'uk' %}
+                                        Всі
+                                    {% else %}
+                                        All
+                                    {% endif %}
+                                </option>
+                                <option value="approved" {% if status == 'approved' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Genehmigt
+                                    {% elif lang == 'uk' %}
+                                        Схвалено
+                                    {% else %}
+                                        Approved
+                                    {% endif %}
+                                </option>
+                                <option value="pending" {% if status == 'pending' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Ausstehend
+                                    {% elif lang == 'uk' %}
+                                        В очікуванні
+                                    {% else %}
+                                        Pending
+                                    {% endif %}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="product_id">
+                                {% if lang == 'de' %}
+                                    Produkt
+                                {% elif lang == 'uk' %}
+                                    Продукт
+                                {% else %}
+                                    Product
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="product_id" name="product_id">
+                                <option value="">
+                                    {% if lang == 'de' %}
+                                        Alle Produkte
+                                    {% elif lang == 'uk' %}
+                                        Всі продукти
+                                    {% else %}
+                                        All Products
+                                    {% endif %}
+                                </option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}" {% if product_id == product.id %}selected{% endif %}>
+                                    {{ product.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="sort">
+                                {% if lang == 'de' %}
+                                    Sortierung
+                                {% elif lang == 'uk' %}
+                                    Сортування
+                                {% else %}
+                                    Sort
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="sort" name="sort">
+                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Neueste zuerst
+                                    {% elif lang == 'uk' %}
+                                        Спочатку новіші
+                                    {% else %}
+                                        Newest First
+                                    {% endif %}
+                                </option>
+                                <option value="rating_desc" {% if sort == 'rating_desc' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Bewertung (Hoch nach Niedrig)
+                                    {% elif lang == 'uk' %}
+                                        Рейтинг (Від високого до низького)
+                                    {% else %}
+                                        Rating (High to Low)
+                                    {% endif %}
+                                </option>
+                                <option value="rating_asc" {% if sort == 'rating_asc' %}selected{% endif %}>
+                                    {% if lang == 'de' %}
+                                        Bewertung (Niedrig nach Hoch)
+                                    {% elif lang == 'uk' %}
+                                        Рейтинг (Від низького до високого)
+                                    {% else %}
+                                        Rating (Low to High)
+                                    {% endif %}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    {% if lang == 'de' %}
+                        Anwenden
+                    {% elif lang == 'uk' %}
+                        Застосувати
+                    {% else %}
+                        Apply
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reviews Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Kundenbewertungen
+                {% elif lang == 'uk' %}
+                    Відгуки клієнтів
+                {% else %}
+                    Customer Reviews
+                {% endif %}
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="reviews-table" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Produkt
+                                {% elif lang == 'uk' %}
+                                    Продукт
+                                {% else %}
+                                    Product
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Kunde
+                                {% elif lang == 'uk' %}
+                                    Клієнт
+                                {% else %}
+                                    Customer
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Bewertung
+                                {% elif lang == 'uk' %}
+                                    Рейтинг
+                                {% else %}
+                                    Rating
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Kommentar
+                                {% elif lang == 'uk' %}
+                                    Коментар
+                                {% else %}
+                                    Comment
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Datum
+                                {% elif lang == 'uk' %}
+                                    Дата
+                                {% else %}
+                                    Date
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Status
+                                {% elif lang == 'uk' %}
+                                    Статус
+                                {% else %}
+                                    Status
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Aktionen
+                                {% elif lang == 'uk' %}
+                                    Дії
+                                {% else %}
+                                    Actions
+                                {% endif %}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in reviews %}
+                        <tr>
+                            <td>
+                                {% if review.product %}
+                                <a href="{{ url_for('admin_shop.edit_product', product_id=review.product.id) }}">
+                                    {{ review.product.name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Product deleted</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ review.name }}<br>
+                                <small>{{ review.email }}</small>
+                            </td>
+                            <td>
+                                <div class="text-warning">
+                                    {% for i in range(5) %}
+                                        {% if i < review.rating %}
+                                        <i class="fas fa-star"></i>
+                                        {% else %}
+                                        <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>{{ review.comment|truncate(100) }}</td>
+                            <td>{{ review.created_at.strftime('%d.%m.%Y') }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if review.is_approved else 'warning' }}">
+                                    {% if review.is_approved %}
+                                        {% if lang == 'de' %}
+                                            Genehmigt
+                                        {% elif lang == 'uk' %}
+                                            Схвалено
+                                        {% else %}
+                                            Approved
+                                        {% endif %}
+                                    {% else %}
+                                        {% if lang == 'de' %}
+                                            Ausstehend
+                                        {% elif lang == 'uk' %}
+                                            В очікуванні
+                                        {% else %}
+                                            Pending
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if not review.is_approved %}
+                                <button class="btn btn-success btn-sm approve-review" data-id="{{ review.id }}">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% else %}
+                                <button class="btn btn-warning btn-sm reject-review" data-id="{{ review.id }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-danger btn-sm delete-review" data-id="{{ review.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not reviews %}
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                {% if lang == 'de' %}
+                                    Keine Bewertungen gefunden
+                                {% elif lang == 'uk' %}
+                                    Відгуки не знайдено
+                                {% else %}
+                                    No reviews found
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Review Modal -->
+<div class="modal fade" id="deleteReviewModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    {% if lang == 'de' %}
+                        Bewertung löschen
+                    {% elif lang == 'uk' %}
+                        Видалити відгук
+                    {% else %}
+                        Delete Review
+                    {% endif %}
+                </h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% if lang == 'de' %}
+                    Sind Sie sicher, dass Sie diese Bewertung löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden.
+                {% elif lang == 'uk' %}
+                    Ви впевнені, що хочете видалити цей відгук? Цю дію неможливо скасувати.
+                {% else %}
+                    Are you sure you want to delete this review? This action cannot be undone.
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">
+                    {% if lang == 'de' %}
+                        Abbrechen
+                    {% elif lang == 'uk' %}
+                        Скасувати
+                    {% else %}
+                        Cancel
+                    {% endif %}
+                </button>
+                <button id="confirmDeleteReview" class="btn btn-danger">
+                    {% if lang == 'de' %}
+                        Löschen
+                    {% elif lang == 'uk' %}
+                        Видалити
+                    {% else %}
+                        Delete
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    let reviewIdToDelete = null;
+    
+    // Approve review
+    $('.approve-review').on('click', function() {
+        const reviewId = $(this).data('id');
+        
+        $.ajax({
+            url: "{{ url_for('admin_shop.approve_review', review_id='') }}" + reviewId,
+            type: 'POST',
+            success: function(result) {
+                if (result.success) {
+                    // Reload page to reflect changes
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            },
+            error: function() {
+                alert('An error occurred while approving the review.');
+            }
+        });
+    });
+    
+    // Reject review
+    $('.reject-review').on('click', function() {
+        const reviewId = $(this).data('id');
+        
+        $.ajax({
+            url: "{{ url_for('admin_shop.reject_review', review_id='') }}" + reviewId,
+            type: 'POST',
+            success: function(result) {
+                if (result.success) {
+                    // Reload page to reflect changes
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            },
+            error: function() {
+                alert('An error occurred while rejecting the review.');
+            }
+        });
+    });
+    
+    // Delete review
+    $('.delete-review').on('click', function() {
+        reviewIdToDelete = $(this).data('id');
+        $('#deleteReviewModal').modal('show');
+    });
+    
+    $('#confirmDeleteReview').on('click', function() {
+        if (reviewIdToDelete) {
+            $.ajax({
+                url: "{{ url_for('admin_shop.delete_review', review_id='') }}" + reviewIdToDelete,
+                type: 'POST',
+                success: function(result) {
+                    if (result.success) {
+                        $('#deleteReviewModal').modal('hide');
+                        // Reload page to reflect changes
+                        location.reload();
+                    } else {
+                        alert(result.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while deleting the review.');
+                }
+            });
+        }
+    });
+    
+    // Initialize DataTable
+    $('#reviews-table').DataTable({
+        "paging": true,
+        "searching": false, // We have our own search
+        "ordering": false, // We handle sorting via URL params
+        "info": true,
+        "language": {
+            "info": "{{ _('Showing _START_ to _END_ of _TOTAL_ reviews') }}",
+            "infoEmpty": "{{ _('Showing 0 to 0 of 0 reviews') }}",
+            "lengthMenu": "{{ _('Show _MENU_ reviews') }}",
+            "emptyTable": "{{ _('No reviews found') }}",
+            "paginate": {
+                "first": "{{ _('First') }}",
+                "last": "{{ _('Last') }}",
+                "next": "{{ _('Next') }}",
+                "previous": "{{ _('Previous') }}"
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

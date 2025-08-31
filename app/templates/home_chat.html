@@ -21,7 +21,7 @@
         try {
             const response = await fetch("/chatbot", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", "X-CSRF-Token": "{{ csrf_token() }}" },
                 body: JSON.stringify({ message: userMessage })
             });
             const data = await response.json();

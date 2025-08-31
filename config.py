@@ -3,6 +3,13 @@ import logging
 import sys
 import ssl
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, continue with system env vars
+
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,6 +28,7 @@ class Config:
     
     # Если есть переменная DATABASE_URI или DATABASE_URL и она PostgreSQL, используем её
     if database_uri and database_uri.startswith('postgres'):
+        logger.info(f"PostgreSQL detected: {database_uri[:50]}...")
         # Если указана POSTGRES_SCHEMA, добавляем настройку search_path
         if ON_RENDER:
             schema = os.environ.get("POSTGRES_SCHEMA", "render_schema")
@@ -30,11 +38,19 @@ class Config:
             logger.info(f"Running locally, base schema: {schema}")
 
         client_schema = os.environ.get('POSTGRES_SCHEMA_CLIENTS')
+        # New: optional separate schema for shop data
+        shop_schema = os.environ.get('POSTGRES_SCHEMA_SHOP')
+
+        # Build search_path: prefer client schema, then shop schema (if any), then base schema
+        parts = []
         if client_schema and client_schema != schema:
-            combined_search_path = f"{client_schema},{schema}"
+            parts.append(client_schema)
             logger.info(f"Additional client requests schema detected: {client_schema}")
-        else:
-            combined_search_path = schema
+        if shop_schema and shop_schema != schema and shop_schema not in parts:
+            parts.append(shop_schema)
+            logger.info(f"Shop schema detected: {shop_schema}")
+        parts.append(schema)
+        combined_search_path = ','.join(parts)
         
         # Нормализуем префикс
         if database_uri.startswith('postgres://'):
@@ -60,6 +76,7 @@ class Config:
 
         SQLALCHEMY_DATABASE_URI = database_uri
         CLIENT_REQUESTS_SCHEMA = client_schema
+        SHOP_SCHEMA = shop_schema
         DB_SEARCH_PATH = combined_search_path
         logger.info(f"Configured PostgreSQL search_path: {combined_search_path}")
         SQLALCHEMY_ENGINE_OPTIONS = {

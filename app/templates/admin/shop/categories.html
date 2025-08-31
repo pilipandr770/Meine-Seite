@@ -1,0 +1,310 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Kategorien verwalten
+    {% elif lang == 'uk' %}
+        Управління категоріями
+    {% else %}
+        Manage Categories
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">
+        {% if lang == 'de' %}
+            Kategorien verwalten
+        {% elif lang == 'uk' %}
+            Управління категоріями
+        {% else %}
+            Manage Categories
+        {% endif %}
+    </h1>
+
+    <!-- Categories Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if lang == 'de' %}
+                    Kategorieliste
+                {% elif lang == 'uk' %}
+                    Список категорій
+                {% else %}
+                    Category List
+                {% endif %}
+            </h6>
+            <a href="{{ url_for('admin_shop.add_category') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus fa-sm"></i> 
+                {% if lang == 'de' %}
+                    Kategorie hinzufügen
+                {% elif lang == 'uk' %}
+                    Додати категорію
+                {% else %}
+                    Add Category
+                {% endif %}
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="categories-table" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Bild
+                                {% elif lang == 'uk' %}
+                                    Зображення
+                                {% else %}
+                                    Image
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Name
+                                {% elif lang == 'uk' %}
+                                    Назва
+                                {% else %}
+                                    Name
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Beschreibung
+                                {% elif lang == 'uk' %}
+                                    Опис
+                                {% else %}
+                                    Description
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Produkte
+                                {% elif lang == 'uk' %}
+                                    Продукти
+                                {% else %}
+                                    Products
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Status
+                                {% elif lang == 'uk' %}
+                                    Статус
+                                {% else %}
+                                    Status
+                                {% endif %}
+                            </th>
+                            <th>
+                                {% if lang == 'de' %}
+                                    Aktionen
+                                {% elif lang == 'uk' %}
+                                    Дії
+                                {% else %}
+                                    Actions
+                                {% endif %}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>
+                                {% if category.image %}
+                                <img src="{{ category.image }}" alt="{{ category.name }}" class="img-thumbnail" style="max-width: 50px;">
+                                {% else %}
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-folder fa-2x"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ category.name }}</td>
+                            <td>
+                                {% if category.description %}
+                                {{ category.description|truncate(50) }}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-info">
+                                    {{ category.products|length }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if category.is_active else 'danger' }}">
+                                    {% if category.is_active %}
+                                        {% if lang == 'de' %}
+                                            Aktiv
+                                        {% elif lang == 'uk' %}
+                                            Активна
+                                        {% else %}
+                                            Active
+                                        {% endif %}
+                                    {% else %}
+                                        {% if lang == 'de' %}
+                                            Inaktiv
+                                        {% elif lang == 'uk' %}
+                                            Неактивна
+                                        {% else %}
+                                            Inactive
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_shop.edit_category', category_id=category.id) }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-danger btn-sm delete-category" data-id="{{ category.id }}" data-products="{{ category.products|length }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not categories %}
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                {% if lang == 'de' %}
+                                    Keine Kategorien gefunden
+                                {% elif lang == 'uk' %}
+                                    Категорії не знайдено
+                                {% else %}
+                                    No categories found
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Category Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    {% if lang == 'de' %}
+                        Kategorie löschen
+                    {% elif lang == 'uk' %}
+                        Видалити категорію
+                    {% else %}
+                        Delete Category
+                    {% endif %}
+                </h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-warning">
+                    {% if lang == 'de' %}
+                        Sind Sie sicher, dass Sie diese Kategorie löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden.
+                    {% elif lang == 'uk' %}
+                        Ви впевнені, що хочете видалити цю категорію? Цю дію неможливо скасувати.
+                    {% else %}
+                        Are you sure you want to delete this category? This action cannot be undone.
+                    {% endif %}
+                </p>
+                <p id="products-warning" class="text-danger d-none">
+                    {% if lang == 'de' %}
+                        Diese Kategorie enthält Produkte. Sie müssen zuerst die zugehörigen Produkte entfernen oder einer anderen Kategorie zuweisen.
+                    {% elif lang == 'uk' %}
+                        Ця категорія містить продукти. Спочатку потрібно видалити пов'язані продукти або призначити їх іншій категорії.
+                    {% else %}
+                        This category contains products. You need to remove the associated products or assign them to another category first.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">
+                    {% if lang == 'de' %}
+                        Abbrechen
+                    {% elif lang == 'uk' %}
+                        Скасувати
+                    {% else %}
+                        Cancel
+                    {% endif %}
+                </button>
+                <button id="confirmDelete" class="btn btn-danger">
+                    {% if lang == 'de' %}
+                        Löschen
+                    {% elif lang == 'uk' %}
+                        Видалити
+                    {% else %}
+                        Delete
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    let categoryIdToDelete = null;
+    let hasProducts = false;
+    
+    $('.delete-category').on('click', function() {
+        categoryIdToDelete = $(this).data('id');
+        hasProducts = $(this).data('products') > 0;
+        
+        if (hasProducts) {
+            $('#products-warning').removeClass('d-none');
+            $('#confirmDelete').prop('disabled', true);
+        } else {
+            $('#products-warning').addClass('d-none');
+            $('#confirmDelete').prop('disabled', false);
+        }
+        
+        $('#deleteModal').modal('show');
+    });
+    
+    $('#confirmDelete').on('click', function() {
+        if (categoryIdToDelete && !hasProducts) {
+            $.ajax({
+                url: "{{ url_for('admin_shop.delete_category', category_id='') }}" + categoryIdToDelete,
+                type: 'POST',
+                success: function(result) {
+                    if (result.success) {
+                        $('#deleteModal').modal('hide');
+                        // Reload page to reflect changes
+                        location.reload();
+                    } else {
+                        alert(result.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while deleting the category.');
+                }
+            });
+        }
+    });
+    
+    // Initialize DataTable
+    $('#categories-table').DataTable({
+        "paging": true,
+        "ordering": true,
+        "info": true,
+        "language": {
+            "info": "{{ _('Showing _START_ to _END_ of _TOTAL_ categories') }}",
+            "infoEmpty": "{{ _('Showing 0 to 0 of 0 categories') }}",
+            "lengthMenu": "{{ _('Show _MENU_ categories') }}",
+            "emptyTable": "{{ _('No categories found') }}",
+            "paginate": {
+                "first": "{{ _('First') }}",
+                "last": "{{ _('Last') }}",
+                "next": "{{ _('Next') }}",
+                "previous": "{{ _('Previous') }}"
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

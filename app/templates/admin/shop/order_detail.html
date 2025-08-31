@@ -1,0 +1,594 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if lang == 'de' %}
+        Bestelldetails #{{ order.order_number }}
+    {% elif lang == 'uk' %}
+        Деталі замовлення #{{ order.order_number }}
+    {% else %}
+        Order Details #{{ order.order_number }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Expose order id via data attribute to avoid embedding Jinja in JS -->
+    <div id="order-data" data-order-id="{{ order.id }}" style="display:none"></div>
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            {% if lang == 'de' %}
+                Bestelldetails #{{ order.order_number }}
+            {% elif lang == 'uk' %}
+                Деталі замовлення #{{ order.order_number }}
+            {% else %}
+                Order Details #{{ order.order_number }}
+            {% endif %}
+        </h1>
+        <a href="{{ url_for('admin_shop.orders') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> 
+            {% if lang == 'de' %}
+                Zurück zu Bestellungen
+            {% elif lang == 'uk' %}
+                Назад до замовлень
+            {% else %}
+                Back to Orders
+            {% endif %}
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Order Status -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if lang == 'de' %}
+                            Bestellstatus
+                        {% elif lang == 'uk' %}
+                            Статус замовлення
+                        {% else %}
+                            Order Status
+                        {% endif %}
+                    </h6>
+                    <span class="badge badge-pill 
+                        {% if order.order_status == 'pending' %}badge-warning
+                        {% elif order.order_status == 'processing' %}badge-info
+                        {% elif order.order_status == 'completed' %}badge-success
+                        {% elif order.order_status == 'cancelled' %}badge-danger
+                        {% else %}badge-secondary{% endif %}">
+                        {% if order.order_status == 'pending' %}
+                            {% if lang == 'de' %}
+                                Ausstehend
+                            {% elif lang == 'uk' %}
+                                В очікуванні
+                            {% else %}
+                                Pending
+                            {% endif %}
+                        {% elif order.order_status == 'processing' %}
+                            {% if lang == 'de' %}
+                                In Bearbeitung
+                            {% elif lang == 'uk' %}
+                                В обробці
+                            {% else %}
+                                Processing
+                            {% endif %}
+                        {% elif order.order_status == 'completed' %}
+                            {% if lang == 'de' %}
+                                Abgeschlossen
+                            {% elif lang == 'uk' %}
+                                Завершено
+                            {% else %}
+                                Completed
+                            {% endif %}
+                        {% elif order.order_status == 'cancelled' %}
+                            {% if lang == 'de' %}
+                                Storniert
+                            {% elif lang == 'uk' %}
+                                Скасовано
+                            {% else %}
+                                Cancelled
+                            {% endif %}
+                        {% else %}
+                            {{ order.order_status|capitalize }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="orderStatus">
+                                {% if lang == 'de' %}
+                                    Status ändern
+                                {% elif lang == 'uk' %}
+                                    Змінити статус
+                                {% else %}
+                                    Change Status
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="orderStatus">
+                                {% for status in ['pending', 'processing', 'completed', 'cancelled'] %}
+                                <option value="{{ status }}" {% if order.order_status == status %}selected{% endif %}>
+                                    {% if status == 'pending' %}
+                                        {% if lang == 'de' %}
+                                            Ausstehend
+                                        {% elif lang == 'uk' %}
+                                            В очікуванні
+                                        {% else %}
+                                            Pending
+                                        {% endif %}
+                                    {% elif status == 'processing' %}
+                                        {% if lang == 'de' %}
+                                            In Bearbeitung
+                                        {% elif lang == 'uk' %}
+                                            В обробці
+                                        {% else %}
+                                            Processing
+                                        {% endif %}
+                                    {% elif status == 'completed' %}
+                                        {% if lang == 'de' %}
+                                            Abgeschlossen
+                                        {% elif lang == 'uk' %}
+                                            Завершено
+                                        {% else %}
+                                            Completed
+                                        {% endif %}
+                                    {% elif status == 'cancelled' %}
+                                        {% if lang == 'de' %}
+                                            Storniert
+                                        {% elif lang == 'uk' %}
+                                            Скасовано
+                                        {% else %}
+                                            Cancelled
+                                        {% endif %}
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" id="updateOrderStatus" class="btn btn-primary">
+                            {% if lang == 'de' %}
+                                Status aktualisieren
+                            {% elif lang == 'uk' %}
+                                Оновити статус
+                            {% else %}
+                                Update Status
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Payment Status -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if lang == 'de' %}
+                            Zahlungsstatus
+                        {% elif lang == 'uk' %}
+                            Статус оплати
+                        {% else %}
+                            Payment Status
+                        {% endif %}
+                    </h6>
+                    <span class="badge badge-pill 
+                        {% if order.payment_status == 'pending' %}badge-warning
+                        {% elif order.payment_status == 'paid' %}badge-success
+                        {% elif order.payment_status == 'failed' %}badge-danger
+                        {% elif order.payment_status == 'refunded' %}badge-info
+                        {% else %}badge-secondary{% endif %}">
+                        {% if order.payment_status == 'pending' %}
+                            {% if lang == 'de' %}
+                                Ausstehend
+                            {% elif lang == 'uk' %}
+                                В очікуванні
+                            {% else %}
+                                Pending
+                            {% endif %}
+                        {% elif order.payment_status == 'paid' %}
+                            {% if lang == 'de' %}
+                                Bezahlt
+                            {% elif lang == 'uk' %}
+                                Оплачено
+                            {% else %}
+                                Paid
+                            {% endif %}
+                        {% elif order.payment_status == 'failed' %}
+                            {% if lang == 'de' %}
+                                Fehlgeschlagen
+                            {% elif lang == 'uk' %}
+                                Невдало
+                            {% else %}
+                                Failed
+                            {% endif %}
+                        {% elif order.payment_status == 'refunded' %}
+                            {% if lang == 'de' %}
+                                Erstattet
+                            {% elif lang == 'uk' %}
+                                Повернуто
+                            {% else %}
+                                Refunded
+                            {% endif %}
+                        {% else %}
+                            {{ order.payment_status|capitalize }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>
+                            {% if lang == 'de' %}
+                                Zahlungsmethode:
+                            {% elif lang == 'uk' %}
+                                Спосіб оплати:
+                            {% else %}
+                                Payment Method:
+                            {% endif %}
+                        </strong> 
+                        {{ order.payment_method }}
+                    </div>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label for="paymentStatus">
+                                {% if lang == 'de' %}
+                                    Status ändern
+                                {% elif lang == 'uk' %}
+                                    Змінити статус
+                                {% else %}
+                                    Change Status
+                                {% endif %}
+                            </label>
+                            <select class="form-control" id="paymentStatus">
+                                {% for status in ['pending', 'paid', 'failed', 'refunded'] %}
+                                <option value="{{ status }}" {% if order.payment_status == status %}selected{% endif %}>
+                                    {% if status == 'pending' %}
+                                        {% if lang == 'de' %}
+                                            Ausstehend
+                                        {% elif lang == 'uk' %}
+                                            В очікуванні
+                                        {% else %}
+                                            Pending
+                                        {% endif %}
+                                    {% elif status == 'paid' %}
+                                        {% if lang == 'de' %}
+                                            Bezahlt
+                                        {% elif lang == 'uk' %}
+                                            Оплачено
+                                        {% else %}
+                                            Paid
+                                        {% endif %}
+                                    {% elif status == 'failed' %}
+                                        {% if lang == 'de' %}
+                                            Fehlgeschlagen
+                                        {% elif lang == 'uk' %}
+                                            Невдало
+                                        {% else %}
+                                            Failed
+                                        {% endif %}
+                                    {% elif status == 'refunded' %}
+                                        {% if lang == 'de' %}
+                                            Erstattet
+                                        {% elif lang == 'uk' %}
+                                            Повернуто
+                                        {% else %}
+                                            Refunded
+                                        {% endif %}
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" id="updatePaymentStatus" class="btn btn-primary">
+                            {% if lang == 'de' %}
+                                Status aktualisieren
+                            {% elif lang == 'uk' %}
+                                Оновити статус
+                            {% else %}
+                                Update Status
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Customer Information -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if lang == 'de' %}
+                            Kundeninformationen
+                        {% elif lang == 'uk' %}
+                            Інформація про клієнта
+                        {% else %}
+                            Customer Information
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p>
+                                <strong>
+                                    {% if lang == 'de' %}
+                                        Name:
+                                    {% elif lang == 'uk' %}
+                                        Ім'я:
+                                    {% else %}
+                                        Name:
+                                    {% endif %}
+                                </strong><br>
+                                {{ order.first_name }} {{ order.last_name }}
+                            </p>
+                            <p>
+                                <strong>
+                                    {% if lang == 'de' %}
+                                        E-Mail:
+                                    {% elif lang == 'uk' %}
+                                        Електронна пошта:
+                                    {% else %}
+                                        Email:
+                                    {% endif %}
+                                </strong><br>
+                                <a href="mailto:{{ order.email }}">{{ order.email }}</a>
+                            </p>
+                            <p>
+                                <strong>
+                                    {% if lang == 'de' %}
+                                        Telefon:
+                                    {% elif lang == 'uk' %}
+                                        Телефон:
+                                    {% else %}
+                                        Phone:
+                                    {% endif %}
+                                </strong><br>
+                                {{ order.phone if order.phone else '-' }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p>
+                                <strong>
+                                    {% if lang == 'de' %}
+                                        Datum:
+                                    {% elif lang == 'uk' %}
+                                        Дата:
+                                    {% else %}
+                                        Date:
+                                    {% endif %}
+                                </strong><br>
+                                {{ order.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            </p>
+                            <p>
+                                <strong>
+                                    {% if lang == 'de' %}
+                                        IP-Adresse:
+                                    {% elif lang == 'uk' %}
+                                        IP-адреса:
+                                    {% else %}
+                                        IP Address:
+                                    {% endif %}
+                                </strong><br>
+                                {{ order.ip_address if order.ip_address else '-' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <!-- Order Items -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if lang == 'de' %}
+                            Bestellpositionen
+                        {% elif lang == 'uk' %}
+                            Елементи замовлення
+                        {% else %}
+                            Order Items
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Produkt
+                                        {% elif lang == 'uk' %}
+                                            Продукт
+                                        {% else %}
+                                            Product
+                                        {% endif %}
+                                    </th>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Anzahl
+                                        {% elif lang == 'uk' %}
+                                            Кількість
+                                        {% else %}
+                                            Quantity
+                                        {% endif %}
+                                    </th>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Preis
+                                        {% elif lang == 'uk' %}
+                                            Ціна
+                                        {% else %}
+                                            Price
+                                        {% endif %}
+                                    </th>
+                                    <th>
+                                        {% if lang == 'de' %}
+                                            Gesamt
+                                        {% elif lang == 'uk' %}
+                                            Всього
+                                        {% else %}
+                                            Total
+                                        {% endif %}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                <tr>
+                                    <td>
+                                        {% if item.product %}
+                                        <a href="{{ url_for('admin_shop.edit_product', product_id=item.product.id) }}">
+                                            {{ item.product_name }}
+                                        </a>
+                                        {% else %}
+                                        {{ item.product_name }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.price }}€</td>
+                                    <td>{{ item.total }}€</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-right font-weight-bold">
+                                        {% if lang == 'de' %}
+                                            Zwischensumme:
+                                        {% elif lang == 'uk' %}
+                                            Проміжна сума:
+                                        {% else %}
+                                            Subtotal:
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.subtotal }}€</td>
+                                </tr>
+                                {% if order.discount_amount and order.discount_amount > 0 %}
+                                <tr>
+                                    <td colspan="3" class="text-right font-weight-bold">
+                                        {% if lang == 'de' %}
+                                            Rabatt:
+                                        {% elif lang == 'uk' %}
+                                            Знижка:
+                                        {% else %}
+                                            Discount:
+                                        {% endif %}
+                                        {% if order.coupon %}
+                                        ({{ order.coupon.code }})
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-success">-{{ order.discount_amount }}€</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td colspan="3" class="text-right font-weight-bold">
+                                        {% if lang == 'de' %}
+                                            Gesamtbetrag:
+                                        {% elif lang == 'uk' %}
+                                            Загальна сума:
+                                        {% else %}
+                                            Total:
+                                        {% endif %}
+                                    </td>
+                                    <td class="font-weight-bold">{{ order.total }}€</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if lang == 'de' %}
+                            Anmerkungen
+                        {% elif lang == 'uk' %}
+                            Примітки
+                        {% else %}
+                            Notes
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="form-group">
+                            <textarea class="form-control" id="notes" rows="5">{{ order.notes if order.notes }}</textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary">
+                            {% if lang == 'de' %}
+                                Anmerkungen speichern
+                            {% elif lang == 'uk' %}
+                                Зберегти примітки
+                            {% else %}
+                                Save Notes
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Read order id from DOM to avoid Jinja inside JS
+    const orderId = document.getElementById('order-data').dataset.orderId;
+    // Update Order Status
+    $('#updateOrderStatus').on('click', function() {
+        const status = $('#orderStatus').val();
+        
+        $.ajax({
+            url: "{{ url_for('admin_shop.update_order_status') }}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                order_id: orderId,
+                status: status
+            }),
+            success: function(result) {
+                if (result.success) {
+                    // Reload page to reflect changes
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            },
+            error: function() {
+                alert('An error occurred while updating the order status.');
+            }
+        });
+    });
+    
+    // Update Payment Status
+    $('#updatePaymentStatus').on('click', function() {
+        const status = $('#paymentStatus').val();
+        
+        $.ajax({
+            url: "{{ url_for('admin_shop.update_payment_status') }}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                order_id: orderId,
+                status: status
+            }),
+            success: function(result) {
+                if (result.success) {
+                    // Reload page to reflect changes
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            },
+            error: function() {
+                alert('An error occurred while updating the payment status.');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
