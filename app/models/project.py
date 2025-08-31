@@ -89,7 +89,7 @@ class ProjectStage(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     # Dynamic FK target based on PROJECTS_SCHEMA
-    project_id = db.Column(db.Integer, db.ForeignKey('projects_schema.project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')

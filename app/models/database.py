@@ -116,9 +116,15 @@ def init_db(app):
             def set_search_path(dbapi_conn, conn_record):
                 try:
                     cursor = dbapi_conn.cursor()
-                    cursor.execute(f"SET search_path TO {search_path}")
+                    # Include projects_schema in search_path if it's configured
+                    projects_schema = app.config.get('PROJECTS_SCHEMA')
+                    if projects_schema and projects_schema not in search_path.split(','):
+                        full_search_path = f"{search_path},{projects_schema}"
+                    else:
+                        full_search_path = search_path
+                    cursor.execute(f"SET search_path TO {full_search_path}")
                     cursor.close()
-                    logger.info(f"Set search_path to {search_path} for connection {id(dbapi_conn)}")
+                    logger.info(f"Set search_path to {full_search_path} for connection {id(dbapi_conn)}")
                 except Exception as e:
                     logger.warning(f"Failed to set search_path '{search_path}': {e}")
                     # Don't raise exception to avoid breaking connection
@@ -171,11 +177,17 @@ def init_db(app):
 
                 # Use SQLAlchemy to create all tables (only create, don't drop in production)
                 with app.app_context():
-                    # Set search_path before creating tables
+                    # Set search_path before creating tables - include all schemas
+                    projects_schema = app.config.get('PROJECTS_SCHEMA')
+                    if projects_schema and projects_schema not in search_path.split(','):
+                        table_search_path = f"{search_path},{projects_schema}"
+                    else:
+                        table_search_path = search_path
+                    
                     with engine.begin() as conn:
                         try:
-                            conn.execute(text(f"SET search_path TO {search_path}"))
-                            logger.info(f"Set search_path to {search_path} for table creation")
+                            conn.execute(text(f"SET search_path TO {table_search_path}"))
+                            logger.info(f"Set search_path to {table_search_path} for table creation")
                         except Exception as e:
                             logger.warning(f"Failed to set search_path for table creation: {e}")
                     
@@ -183,6 +195,7 @@ def init_db(app):
                     if client_schema:
                         with engine.begin() as conn:
                             try:
+                                conn.execute(text(f"SET search_path TO {table_search_path}"))
                                 conn.execute(text(f"""
                                 CREATE TABLE IF NOT EXISTS {client_schema}.client_requests (
                                     id SERIAL PRIMARY KEY,
@@ -350,6 +363,22 @@ def init_db(app):
                     else:
                         logger.info("Production environment detected - creating tables in dependency order")
                         # In production, create tables individually to ensure correct dependency order
+                        
+                        # Ensure search_path includes projects_schema for table creation
+                        projects_schema = app.config.get('PROJECTS_SCHEMA')
+                        if projects_schema and projects_schema not in table_search_path.split(','):
+                            production_search_path = f"{table_search_path},{projects_schema}"
+                        else:
+                            production_search_path = table_search_path
+                        
+                        # Set search_path for the engine
+                        with engine.begin() as conn:
+                            try:
+                                conn.execute(text(f"SET search_path TO {production_search_path}"))
+                                logger.info(f"Set search_path to {production_search_path} for production table creation")
+                            except Exception as e:
+                                logger.warning(f"Failed to set search_path for production table creation: {e}")
+                        
                         from app.models.user import User
                         from app.models.product import Category, Product, ProductImage, ProductReview
                         from app.models.shop import Cart, CartItem
