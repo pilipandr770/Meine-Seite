@@ -94,15 +94,12 @@ class Config:
                 SSL_CONTEXT.verify_mode = ssl.CERT_NONE
                 SQLALCHEMY_ENGINE_OPTIONS['connect_args'] = {
                     'ssl_context': SSL_CONTEXT,
-                    'connect_timeout': 10,  # pg8000 supports this
                 }
                 logger.info("SSL context configured for pg8000")
             except Exception as e:
                 logger.warning(f"Failed to create SSL context: {e}")
                 # Fallback without SSL context
-                SQLALCHEMY_ENGINE_OPTIONS['connect_args'] = {
-                    'connect_timeout': 10,  # pg8000 supports this
-                }
+                SQLALCHEMY_ENGINE_OPTIONS['connect_args'] = {}
     else:
         # Fallback на SQLite для локальной разработки
         SQLALCHEMY_DATABASE_URI = database_uri or "sqlite:///instance/clients.db"
