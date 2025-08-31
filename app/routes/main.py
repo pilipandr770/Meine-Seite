@@ -21,22 +21,23 @@ def index():
     """Alias endpoint so url_for('main.index') works across the codebase."""
     return home()
 
-@main_bp.route('/health')
-def health_check():
-    """Health check endpoint for monitoring database connectivity."""
-    try:
-        from app.models.database import db
-        from sqlalchemy import text
-
-        # Test database connection
-        with db.engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-            db_status = "healthy"
-    except Exception as e:
-        db_status = f"unhealthy: {str(e)}"
-
-    return {
-        "status": "healthy" if db_status == "healthy" else "unhealthy",
-        "database": db_status,
-        "timestamp": "2025-08-31"
-    }, 200 if db_status == "healthy" else 500
+@main_bp.route('/set_language/<lang>')
+def set_language(lang):
+    """Set language preference and redirect back to current page"""
+    if lang in ['uk', 'de', 'en']:
+        session['lang'] = lang
+        session.modified = True  # Force session save
+        print(f"Language set to: {lang}")  # Debug logging
+    
+    # Get the referrer URL or default to home
+    referrer = request.referrer
+    print(f"Referrer: {referrer}")  # Debug logging
+    print(f"Request host: {request.host}")  # Debug logging
+    print(f"Request URL: {request.url}")  # Debug logging
+    
+    if referrer and request.host in referrer:
+        print(f"Redirecting to referrer: {referrer}")
+        return redirect(referrer)
+    else:
+        print("Redirecting to home")
+        return redirect(url_for('main.home'))

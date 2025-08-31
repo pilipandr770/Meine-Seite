@@ -63,12 +63,16 @@ def create_app():
 
     from flask_login import LoginManager, current_user
     from flask_wtf import CSRFProtect, csrf
+    from flask_session import Session
 
     # Initialize Flask-Login so `current_user` is available in templates
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
     login_manager.init_app(app)
+
+    # Initialize Flask-Session
+    Session(app)
 
     @login_manager.user_loader
     def load_user(user_id):

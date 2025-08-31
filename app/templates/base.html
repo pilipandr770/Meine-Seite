@@ -239,16 +239,33 @@
     <!-- Language Switcher Script -->
     <script>
         function changeLanguage() {
-            const lang = document.getElementById("language-switcher").value;
+            const selectElement = document.getElementById("language-switcher");
+            if (!selectElement) {
+                console.error("Language switcher element not found");
+                return;
+            }
+            
+            const lang = selectElement.value;
+            console.log("Changing language to:", lang);
+            
             // Устанавливаем язык как атрибут HTML тега для JavaScript
             document.documentElement.lang = lang;
+            
+            // Перенаправляем на маршрут смены языка
             window.location.href = "/set_language/" + lang;
         }
         
         // Устанавливаем язык при загрузке страницы
         document.addEventListener("DOMContentLoaded", function() {
             const currentLang = "{{ lang }}";
+            console.log("Current language:", currentLang);
             document.documentElement.lang = currentLang;
+            
+            // Убеждаемся, что переключатель языка имеет правильное значение
+            const selectElement = document.getElementById("language-switcher");
+            if (selectElement) {
+                selectElement.value = currentLang;
+            }
         });
     </script>
 

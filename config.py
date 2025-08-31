@@ -114,6 +114,12 @@ class Config:
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # Настройки сессии
+    SESSION_TYPE = 'filesystem'  # Используем файловую систему для хранения сессий
+    SESSION_PERMANENT = True
+    PERMANENT_SESSION_LIFETIME = 30 * 24 * 60 * 60  # 30 дней
+    SESSION_FILE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'flask_session')
+    
     # Другие настройки приложения
     SUPPORTED_LANGUAGES = ['uk', 'en', 'de']
     TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
