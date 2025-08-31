@@ -29,11 +29,17 @@ def set_language(lang):
         session.modified = True  # Force session save
         print(f"Language set to: {lang}")  # Debug logging
     
-    # Get the referrer URL or default to home
+    # Get the redirect URL from query parameter or referrer
+    redirect_url = request.args.get('redirect')
+    print(f"Redirect parameter: {redirect_url}")  # Debug logging
+    
+    if redirect_url:
+        print(f"Redirecting to parameter: {redirect_url}")
+        return redirect(redirect_url)
+    
+    # Fallback to referrer
     referrer = request.referrer
     print(f"Referrer: {referrer}")  # Debug logging
-    print(f"Request host: {request.host}")  # Debug logging
-    print(f"Request URL: {request.url}")  # Debug logging
     
     if referrer and request.host in referrer:
         print(f"Redirecting to referrer: {referrer}")

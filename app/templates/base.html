@@ -251,8 +251,11 @@
             // Устанавливаем язык как атрибут HTML тега для JavaScript
             document.documentElement.lang = lang;
             
-            // Перенаправляем на маршрут смены языка
-            window.location.href = "/set_language/" + lang;
+            // Получаем текущий URL без параметров запроса
+            const currentUrl = window.location.pathname + window.location.search;
+            
+            // Перенаправляем на маршрут смены языка с текущим URL
+            window.location.href = "/set_language/" + lang + "?redirect=" + encodeURIComponent(currentUrl);
         }
         
         // Устанавливаем язык при загрузке страницы
