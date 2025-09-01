@@ -20,7 +20,9 @@ def view_project(project_id):
     """Отображает детали проекта"""
     project = Project.query.get_or_404(project_id)
     stages = ProjectStage.query.filter_by(project_id=project_id).order_by(ProjectStage.order_number).all()
-    return render_template('projects/detail.html', project=project, stages=stages)
+    # Add the current datetime to the template context to fix the 'now' undefined error
+    now = datetime.now()
+    return render_template('projects/detail.html', project=project, stages=stages, now=now)
 
 @project_bp.route('/new', methods=['GET', 'POST'])
 @login_required

@@ -12,7 +12,8 @@ def register_media_blueprint(app):
         app: The Flask application instance
     """
     # Create the media blueprint with a unique name to avoid conflicts
-    category_media_bp = Blueprint('category_media', __name__)
+    # Note: use url_prefix to match the expected URL pattern /category_media/...
+    category_media_bp = Blueprint('category_media', __name__, url_prefix='/category_media')
     
     # Add the category image route
     category_media_bp = add_category_image_route(category_media_bp)
