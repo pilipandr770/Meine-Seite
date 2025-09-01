@@ -94,6 +94,7 @@ class ProjectForm(FlaskForm):
         Length(max=1000, message='Description cannot exceed 1000 characters')
     ])
     user_id = SelectField('User', coerce=int, validators=[DataRequired()])
+    client_id = SelectField('Client', coerce=int, validators=[Optional()], default=None)
     deadline = DateField('Deadline', validators=[Optional()], format='%Y-%m-%d')
 
 class EditProjectForm(FlaskForm):

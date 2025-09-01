@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 REQUESTS_SCHEMA = os.getenv('POSTGRES_SCHEMA_CLIENTS')
 BASE_SCHEMA = os.getenv('POSTGRES_SCHEMA')  # может быть None, тогда search_path
-PROJECTS_SCHEMA = os.getenv('POSTGRES_SCHEMA_PROJECTS', REQUESTS_SCHEMA or BASE_SCHEMA)
+PROJECTS_SCHEMA = os.getenv('POSTGRES_SCHEMA_PROJECTS') or REQUESTS_SCHEMA or BASE_SCHEMA
 
 # If the configured database isn't PostgreSQL, avoid using schema-qualified
 # table names because SQLite doesn't support schemas the same way.
@@ -21,6 +21,9 @@ if not ('postgres' in _db_url or 'postgresql' in _db_url):
     REQUESTS_SCHEMA = None
     BASE_SCHEMA = None
     PROJECTS_SCHEMA = None
+
+# Log schema configuration for debugging
+logger.info(f"Project model using schemas: BASE_SCHEMA={BASE_SCHEMA}, REQUESTS_SCHEMA={REQUESTS_SCHEMA}, PROJECTS_SCHEMA={PROJECTS_SCHEMA}")
 
 class Project(db.Model):
     """Модель проекта, связана с клиентом и заявкой (ClientRequest)."""
@@ -93,10 +96,10 @@ class ProjectStage(db.Model):
     __table_args__ = {'extend_existing': True, 'schema': PROJECTS_SCHEMA} if PROJECTS_SCHEMA else {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    # Using schema-qualified reference with conditional schema
+    # Use the same schema for both Project and ProjectStage
     project_id = db.Column(
         db.Integer, 
-        db.ForeignKey(f'{"projects_schema." if PROJECTS_SCHEMA else ""}project.id'), 
+        db.ForeignKey(f'{PROJECTS_SCHEMA + "." if PROJECTS_SCHEMA else ""}project.id'), 
         nullable=False
     )
     name = db.Column(db.String(100), nullable=False)

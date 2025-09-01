@@ -167,12 +167,18 @@ def init_db(app):
                         except Exception as e:
                             logger.error(f"Ошибка при создании схемы {shop_schema}: {e}")
                     # Create projects schema if configured
+                    projects_schema = app.config.get('PROJECTS_SCHEMA')
                     if projects_schema:
                         try:
                             conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {projects_schema}"))
                             logger.info(f"Схема {projects_schema} создана или уже существует")
                         except Exception as e:
                             logger.error(f"Ошибка при создании схемы {projects_schema}: {e}")
+                            # If projects_schema couldn't be created and differs from client_schema, fall back to client_schema
+                            if client_schema and projects_schema != client_schema:
+                                logger.warning(f"Использование {client_schema} в качестве запасного варианта для projects_schema")
+                                app.config['PROJECTS_SCHEMA'] = client_schema
+                                projects_schema = client_schema
                     # No explicit commit needed - engine.begin() handles transaction automatically
 
                 # Use SQLAlchemy to create all tables (only create, don't drop in production)

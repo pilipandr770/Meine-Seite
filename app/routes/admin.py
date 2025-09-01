@@ -331,10 +331,14 @@ def create_project():
     """Create new project"""
     form = ProjectForm()
     
-    # Populate user choices
+    # Populate user and client choices
     from app.models.user import User
+    from app.models.client import Client
+    
     users = User.query.all()
+    clients = Client.query.all()
     form.user_id.choices = [(user.id, f"{user.username} ({user.email})") for user in users]
+    form.client_id.choices = [(0, "-- No Client --")] + [(client.id, f"{client.name} ({client.email})") for client in clients]
     
     if form.validate_on_submit():
         try:
@@ -350,10 +354,14 @@ def create_project():
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             
+            # Handle client_id = 0 (no client)
+            client_id = form.client_id.data if form.client_id.data != 0 else None
+            
             project = Project(
                 name=form.name.data,
                 slug=slug,
                 user_id=form.user_id.data,
+                client_id=client_id,
                 description=form.description.data
             )
             
