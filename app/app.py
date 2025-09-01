@@ -42,6 +42,10 @@ def create_app():
     # Используем DATABASE_URI из конфига, который берется из переменной окружения
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     
+    # Register custom template filters
+    from app.utils.template_filters import register_template_filters
+    register_template_filters(app)
+    
     # Определение схемы для PostgreSQL в зависимости от окружения
     if os.environ.get('RENDER'):
         app.config['POSTGRES_SCHEMA'] = os.environ.get('POSTGRES_SCHEMA', 'render_schema')

@@ -1,5 +1,7 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, Markup
 import json
+from flask_login import login_required
+import os
 
 debug_bp = Blueprint('debug', __name__)
 
@@ -40,6 +42,38 @@ def debug_request():
         })
     except Exception as e:
         current_app.logger.error(f"Error in debug endpoint: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
+@debug_bp.route('/fix-templates', methods=['GET'])
+@login_required
+def fix_templates():
+    """Apply quick fixes to the template environment"""
+    if 'FLASK_ENV' not in os.environ or os.environ['FLASK_ENV'] != 'development':
+        # Only allow in development mode or with proper auth
+        if not request.args.get('auth_key') == os.environ.get('DEBUG_AUTH_KEY'):
+            return jsonify({
+                'success': False,
+                'message': 'Not authorized'
+            }), 403
+    
+    try:
+        # Add the nl2br filter to the template environment
+        @current_app.template_filter('nl2br')
+        def nl2br_filter(s):
+            if s is None:
+                return ""
+            return Markup(s.replace('\n', '<br>'))
+        
+        return jsonify({
+            'success': True,
+            'message': 'Template fixes applied successfully',
+            'fixes': ['nl2br filter added']
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error applying template fixes: {str(e)}")
         return jsonify({
             'success': False,
             'message': f'Error: {str(e)}'
