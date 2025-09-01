@@ -19,8 +19,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def save_image(file, subfolder='products', product_id=None):
-    current_app.logger.debug(f"save_image called with subfolder={subfolder}, product_id={product_id}")
+def save_image(file, subfolder='products', product_id=None, category_id=None):
+    current_app.logger.debug(f"save_image called with subfolder={subfolder}, product_id={product_id}, category_id={category_id}")
     if file and allowed_file(file.filename):
         current_app.logger.debug(f"File is valid: {file.filename}, mimetype: {file.mimetype}")
         filename = secure_filename(file.filename)
@@ -31,9 +31,33 @@ def save_image(file, subfolder='products', product_id=None):
         try:
             # Prefer storing image binary in DB for production portability
             from app.models.product import ProductImage, db
-
+            
+            # Check if it's a category image
+            if category_id is not None:
+                current_app.logger.debug(f"Storing image in DB for category_id={category_id}")
+                # Import Category to update its fields directly
+                from app.models.product import Category
+                
+                category = Category.query.get(category_id)
+                if not category:
+                    current_app.logger.error(f"Category with ID {category_id} not found")
+                    return None
+                
+                file.stream.seek(0)
+                binary = file.read()
+                current_app.logger.debug(f"Read {len(binary)} bytes from category file")
+                
+                # Store directly in Category model's new fields
+                category.image_data = binary
+                category.image_content_type = file.mimetype
+                category.image_filename = unique_filename
+                
+                # Update URL to point to the category image service route
+                db.session.flush()  # ensure category ID is available
+                return f'/media/category-image/{category.id}'
+                
             # Only store in DB if we have a product_id to satisfy NOT NULL constraint
-            if product_id is not None:
+            elif product_id is not None:
                 current_app.logger.debug(f"Storing image in DB for product_id={product_id}")
                 file.stream.seek(0)
                 binary = file.read()
@@ -52,7 +76,7 @@ def save_image(file, subfolder='products', product_id=None):
                 # do not commit here; caller may commit transaction
                 return url_for('media.serve_image', image_id=img.id)
             # if no product_id provided, fall back to filesystem below
-            current_app.logger.debug(f"No product_id provided, falling back to filesystem storage")
+            current_app.logger.debug(f"No product_id or category_id provided, falling back to filesystem storage")
         except Exception as e:
             current_app.logger.exception(f'Failed to save image to DB: {str(e)}, falling back to filesystem')
             
@@ -337,7 +361,12 @@ def add_category():
                     current_app.logger.info(f"Processing image upload for category: {name}")
                     # Make a clean copy of the file to avoid stream position issues
                     file.stream.seek(0)
-                    image_path = save_image(file, subfolder='categories')
+                    
+                    # Save to database - pass category_id = None since it's not created yet
+                    db.session.add(category)
+                    db.session.flush()  # To get the category ID
+                    
+                    image_path = save_image(file, subfolder='categories', category_id=category.id)
                     if image_path:
                         category.image = image_path
                         current_app.logger.info(f"Image path set for category: {image_path}")
@@ -384,7 +413,9 @@ def edit_category(category_id):
                     current_app.logger.info(f"Processing image upload for category update: {category.name}")
                     # Make a clean copy of the file to avoid stream position issues
                     file.stream.seek(0)
-                    image_path = save_image(file, subfolder='categories')
+                    
+                    # Save to database - pass the existing category.id
+                    image_path = save_image(file, subfolder='categories', category_id=category.id)
                     if image_path:
                         category.image = image_path
                         current_app.logger.info(f"Updated image path for category: {image_path}")

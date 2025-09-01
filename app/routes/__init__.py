@@ -12,6 +12,7 @@ from .shop import shop_bp  # Импортируем blueprint магазина
 from .stripe_webhooks import stripe_webhooks  # Импортируем blueprint для Stripe webhook'ов
 from .media import media  # Serve images stored in DB
 from .debug import debug_bp  # Debug routes
+from .media_routes import register_media_blueprint  # Import the new media routes registration function
 
 def register_routes(app):
     app.register_blueprint(main_bp)
@@ -27,4 +28,8 @@ def register_routes(app):
     app.register_blueprint(stripe_webhooks, url_prefix="/webhooks/stripe")  # Регистрируем маршруты Stripe webhook'ов
     app.register_blueprint(media)  # /media/image/<id>
     app.register_blueprint(debug_bp, url_prefix="/debug")  # Debug routes
+    
+    # Register the category image media routes
+    register_media_blueprint(app)
+    
     # ...інші блакитні принти
