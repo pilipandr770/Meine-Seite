@@ -74,7 +74,8 @@ def migrate_category_images():
                 category.image_filename = filename
                 
                 # Update the category's image URL to point to the new route
-                category.image = f'/media/category-image/{category.id}'
+                # Use the new blueprint name in the URL
+                category.image = f'/category_media/category-image/{category.id}'
                 
                 print(f"✅ Migrated image for category: {category.name}, ID: {category.id}")
                 migrated_count += 1

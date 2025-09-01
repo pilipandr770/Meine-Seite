@@ -62,7 +62,7 @@ def save_category_image(file, category=None):
             category.image_filename = unique_filename
             
             # Set the URL for accessing the image through the route
-            return f'/media/category-image/{category.id}'
+            return f'/category_media/category-image/{category.id}'
         
         # Return the binary data if no category provided (for further processing)
         return {

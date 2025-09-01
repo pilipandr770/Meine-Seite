@@ -54,7 +54,7 @@ def save_image(file, subfolder='products', product_id=None, category_id=None):
                 
                 # Update URL to point to the category image service route
                 db.session.flush()  # ensure category ID is available
-                return f'/media/category-image/{category.id}'
+                return f'/category_media/category-image/{category.id}'
                 
             # Only store in DB if we have a product_id to satisfy NOT NULL constraint
             elif product_id is not None:

@@ -18,7 +18,7 @@ def add_category_image_route(media_blueprint):
     Args:
         media_blueprint: The existing media Blueprint instance
     """
-    @media_blueprint.route('/media/category-image/<int:category_id>')
+    @media_blueprint.route('/category-image/<int:category_id>')
     def serve_category_image(category_id):
         try:
             logger.debug(f"Serving category image ID: {category_id}")
