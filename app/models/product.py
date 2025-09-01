@@ -20,6 +20,10 @@ class Category(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text)
     image = db.Column(db.String(255))
+    # New fields for storing image data directly in the database
+    image_data = db.Column(db.LargeBinary)
+    image_content_type = db.Column(db.String(100))
+    image_filename = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

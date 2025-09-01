@@ -28,15 +28,16 @@ def migrate_category_images():
             
             # Check if we need to add new columns
             needed_columns = {
-                'image_data': db.LargeBinary,
-                'image_content_type': db.String(100),
-                'image_filename': db.String(255)
+                'image_data': 'BYTEA',  # PostgreSQL type for binary data
+                'image_content_type': 'VARCHAR(100)',
+                'image_filename': 'VARCHAR(255)'
             }
             
             for col_name, col_type in needed_columns.items():
                 if col_name not in category_columns:
                     print(f"Adding column {col_name} to categories table")
-                    db.engine.execute(f"ALTER TABLE categories ADD COLUMN {col_name} {col_type.__visit_name__}")
+                    # Use proper PostgreSQL data types
+                    db.engine.execute(f"ALTER TABLE rozoom_shop.categories ADD COLUMN {col_name} {col_type}")
             
             print("✅ Schema updated successfully")
         except Exception as e:
