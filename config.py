@@ -49,21 +49,29 @@ class Config:
         # New: optional separate schema for projects data
         projects_schema = os.environ.get('POSTGRES_SCHEMA_PROJECTS')
 
-        # Build search_path: prefer client schema, then shop schema, then projects schema (if any), then base schema
+        # Build search_path: ALWAYS include projects_schema first (critical for relationships), 
+        # then client schema, then shop schema, then base schema
         parts = []
         logger.info(f"Building search_path - schema: {schema}, client_schema: {client_schema}, shop_schema: {shop_schema}, projects_schema: {projects_schema}")
         
-        if client_schema and client_schema != schema:
+        # Always include projects_schema first if it exists - this is critical for foreign key relationships
+        if projects_schema and projects_schema not in parts:
+            parts.append(projects_schema)
+            logger.info(f"Projects schema detected: {projects_schema}")
+            logger.info(f"Adding projects_schema to search_path FIRST: {projects_schema}")
+            
+        if client_schema and client_schema != schema and client_schema not in parts:
             parts.append(client_schema)
             logger.info(f"Additional client requests schema detected: {client_schema}")
+            
         if shop_schema and shop_schema != schema and shop_schema not in parts:
             parts.append(shop_schema)
             logger.info(f"Shop schema detected: {shop_schema}")
-        if projects_schema and projects_schema != schema and projects_schema not in parts:
-            parts.append(projects_schema)
-            logger.info(f"Projects schema detected: {projects_schema}")
-            logger.info(f"Adding projects_schema to search_path: {projects_schema}")
-        parts.append(schema)
+            
+        # Always include base schema last if not already included
+        if schema not in parts:
+            parts.append(schema)
+            
         combined_search_path = ','.join(parts)
         logger.info(f"Search path parts: {parts}")
         logger.info(f"Combined search_path: {combined_search_path}")

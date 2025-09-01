@@ -50,8 +50,13 @@ class Project(db.Model):
     request = db.relationship('ClientRequest', backref=db.backref('projects', lazy=True), 
                             primaryjoin="Project.request_id == ClientRequest.id",
                             foreign_keys=[request_id])
-    stages = db.relationship('ProjectStage', backref='project', lazy=True,
-                           foreign_keys='ProjectStage.project_id')
+    stages = db.relationship(
+        'ProjectStage', 
+        backref='project', 
+        lazy=True,
+        primaryjoin="Project.id == ProjectStage.project_id",
+        foreign_keys='ProjectStage.project_id'
+    )
     
     def __init__(self, name, client_id=None, request_id=None, description=None, slug=None, user_id=None):
         from app.utils.slug import generate_slug
@@ -88,8 +93,12 @@ class ProjectStage(db.Model):
     __table_args__ = {'extend_existing': True, 'schema': PROJECTS_SCHEMA} if PROJECTS_SCHEMA else {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    # Dynamic FK target based on PROJECTS_SCHEMA
-    project_id = db.Column(db.Integer, db.ForeignKey('projects_schema.project.id'), nullable=False)
+    # Using schema-qualified reference with conditional schema
+    project_id = db.Column(
+        db.Integer, 
+        db.ForeignKey(f'{"projects_schema." if PROJECTS_SCHEMA else ""}project.id'), 
+        nullable=False
+    )
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')
