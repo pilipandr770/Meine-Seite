@@ -321,15 +321,22 @@ def merge_carts(session_cart, user_cart):
     if 'cart_id' in session:
         session.pop('cart_id')
 
+# Import reconnect function at module level
+from app.models.database import reconnect_database
+
 # Shop routes
 @shop_bp.route('/')
 def index():
     """Shop homepage simplified to a single purchasable product (development hours)."""
     # We now show only ONE active product (e.g. consultation / development hours)
-    from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.exc import SQLAlchemyError, OperationalError
+    import ssl
     
     # Check and ensure order_items schema before proceeding
-    ensure_order_items_schema()
+    try:
+        ensure_order_items_schema()
+    except Exception as schema_err:
+        current_app.logger.warning(f"Schema check failed but continuing: {schema_err}")
     
     # Always ensure clean transaction state
     try:
@@ -359,6 +366,31 @@ def index():
             'shop/index.html',
             single_product=single_product
         )
+    except (OperationalError, ssl.SSLError) as network_err:
+        # Network-specific errors - try reconnecting
+        current_app.logger.error(f"Network error in shop index: {network_err}")
+        try:
+            reconnect_database(force_new_engine=True)
+            # Try once more with the new connection
+            try:
+                single_product = Product.query.filter(
+                    Product.is_active == True
+                ).order_by(Product.id.asc()).first()
+                if single_product:
+                    return render_template('shop/index.html', single_product=single_product)
+            except Exception:
+                pass
+        except Exception as reconnect_err:
+            current_app.logger.error(f"Reconnection failed: {reconnect_err}")
+        
+        # Fallback if reconnection fails
+        from app.models.product import Product
+        single_product = Product(
+            name="Development Hours", 
+            price=100.0,
+            short_description="Developer time (network error fallback)"
+        )
+        return render_template('shop/index.html', single_product=single_product)
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error in shop index: {e}")
         db.session.rollback()

@@ -55,12 +55,13 @@ def create_db_engine(uri=None, schema=None, engine_options=None):
 
     opts = engine_options.copy() if engine_options else {}
     
-    # Always enable connection pooling with aggressive recycle
+    # Always enable connection pooling with more aggressive settings for cloud environments
     opts.setdefault('pool_pre_ping', True)  # Test connections before use
-    opts.setdefault('pool_recycle', 300)    # Recycle connections after 5 minutes
-    opts.setdefault('pool_timeout', 30)     # Wait up to 30 seconds for connection
-    opts.setdefault('pool_size', 5)         # Keep up to 5 connections in the pool
-    opts.setdefault('max_overflow', 10)     # Allow up to 10 additional connections
+    opts.setdefault('pool_recycle', 180)    # Recycle connections after 3 minutes (reduced from 5)
+    opts.setdefault('pool_timeout', 15)     # Shorter timeout to fail fast
+    opts.setdefault('pool_size', 3)         # Smaller pool for cloud environments
+    opts.setdefault('max_overflow', 5)      # Fewer overflow connections
+    opts.setdefault('pool_reset_on_return', 'rollback')  # Always rollback on connection return
 
     connect_args = opts.pop('connect_args', {}) or {}
     # Если явно не передан ssl_context и драйвер pg8000 — добавим
@@ -89,16 +90,21 @@ def create_db_engine(uri=None, schema=None, engine_options=None):
         raise
     return engine
 
-def reconnect_database(app=None):
+def reconnect_database(app=None, force_new_engine=False):
     """Reset the database connection pool to recover from network issues.
     
     This function:
     1. Disposes the current engine (closes all connections)
     2. Creates a new engine with the same parameters
     3. Updates the Flask-SQLAlchemy session to use the new engine
+    
+    Args:
+        app: Flask application instance (or None to use current_app)
+        force_new_engine: If True, always create a new engine even if current one seems ok
     """
     from flask import current_app
     from sqlalchemy import text
+    import time
     
     try:
         app_to_use = app or current_app
@@ -108,26 +114,72 @@ def reconnect_database(app=None):
         engine_options = app_to_use.config.get('SQLALCHEMY_ENGINE_OPTIONS', {})
         schema = app_to_use.config.get('POSTGRES_SCHEMA')
         
-        # Dispose old engine
-        old_engine = db.get_engine(app_to_use)
-        old_engine.dispose()
+        # Log connection attempt
+        logger.info(f"Reconnecting database (force_new_engine={force_new_engine})")
         
-        # Create new engine
-        new_engine = create_db_engine(uri, schema, engine_options)
+        # Try to gracefully clean up existing session
+        try:
+            db.session.rollback()
+            db.session.remove()
+        except Exception as cleanup_e:
+            logger.warning(f"Session cleanup during reconnect failed: {cleanup_e}")
+            
+        # Dispose old engine with retries
+        max_retries = 2
+        for retry in range(max_retries):
+            try:
+                old_engine = db.get_engine(app_to_use)
+                old_engine.dispose()
+                break
+            except Exception as dispose_e:
+                if retry < max_retries - 1:
+                    logger.warning(f"Engine disposal attempt {retry+1} failed: {dispose_e}, retrying...")
+                    time.sleep(0.5)
+                else:
+                    logger.error(f"All engine disposal attempts failed: {dispose_e}")
+        
+        # Create new engine with slightly different options for better stability
+        if force_new_engine:
+            # For forced new engine, use more conservative settings
+            engine_options_copy = engine_options.copy() if engine_options else {}
+            # Reduce pool size for reliability
+            engine_options_copy.setdefault('pool_size', 2)  
+            engine_options_copy.setdefault('max_overflow', 3)
+            engine_options_copy.setdefault('pool_timeout', 10)
+            new_engine = create_db_engine(uri, schema, engine_options_copy)
+        else:
+            new_engine = create_db_engine(uri, schema, engine_options)
         
         # Replace the engine in the Flask-SQLAlchemy extension
+        original_get_engine = db.get_engine
         db.get_engine = lambda app=None: new_engine
         
         # Create new session
         db.session.remove()
         db.session = db.create_scoped_session()
         
-        # Test new connection
-        db.session.execute(text('SELECT 1'))
-        db.session.commit()
+        # Test new connection with timeout
+        start = time.time()
+        max_test_time = 5.0  # 5 second timeout for connection test
+        connection_success = False
         
-        logger.info("Successfully reconnected to database")
-        return True
+        while time.time() - start < max_test_time and not connection_success:
+            try:
+                db.session.execute(text('SELECT 1'))
+                db.session.commit()
+                connection_success = True
+            except Exception as test_e:
+                logger.warning(f"Connection test failed: {test_e}, retrying...")
+                time.sleep(0.5)
+                
+        if connection_success:
+            logger.info(f"Successfully reconnected to database in {time.time()-start:.2f}s")
+            return True
+        else:
+            # Restore original engine if reconnection failed
+            db.get_engine = original_get_engine
+            logger.error("Failed to establish connection with new engine")
+            return False
     except Exception as e:
         logger.error(f"Failed to reconnect to database: {e}")
         return False

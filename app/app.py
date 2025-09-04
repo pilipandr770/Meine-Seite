@@ -185,26 +185,67 @@ def create_app():
     def health_check():
         """Health check endpoint that verifies database connectivity"""
         from flask import jsonify
+        import time
         
         health_data = {
             "status": "ok",
             "database": "ok",
-            "details": {}
+            "details": {},
+            "pool": {},
+            "timestamp": int(time.time())
         }
+        
+        # Check engine stats
+        try:
+            engine = _db_session.get_engine()
+            if hasattr(engine.pool, "status"):
+                health_data["pool"]["checkedin"] = engine.pool.status().checkedin
+                health_data["pool"]["checkedout"] = engine.pool.status().checkedout
+                health_data["pool"]["size"] = engine.pool.size()
+                health_data["pool"]["overflow"] = engine.pool.overflow()
+            else:
+                health_data["pool"]["type"] = str(type(engine.pool))
+        except Exception as e:
+            health_data["details"]["pool_error"] = str(e)
         
         # Check database connection
         try:
             # Simple query to check db connection
+            start_time = time.time()
             result = _db_session.session.execute(text('SELECT 1 as test_value'))
             value = result.scalar()
+            query_time = time.time() - start_time
+            health_data["details"]["query_time_ms"] = round(query_time * 1000, 2)
+            
             if value != 1:
                 health_data["database"] = "error"
                 health_data["status"] = "error" 
                 health_data["details"]["database"] = "Unexpected query result"
+                
+            # Test connection stats
+            try:
+                stats_result = _db_session.session.execute(
+                    text("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()")
+                )
+                health_data["details"]["active_connections"] = stats_result.scalar()
+            except Exception as stats_e:
+                health_data["details"]["stats_error"] = str(stats_e)
+                
         except Exception as e:
             health_data["database"] = "error"
             health_data["status"] = "error"
             health_data["details"]["database"] = str(e)
+            
+            # Check if this is an SSL or BrokenPipe error
+            if "SSL" in str(e) or "Broken" in str(e) or "pipe" in str(e):
+                health_data["details"]["error_type"] = "network"
+                # Try to recover by disposing the engine
+                try:
+                    _db_session.get_engine().dispose()
+                    _db_session.session.remove()
+                    health_data["details"]["recovery"] = "attempted engine disposal"
+                except Exception as recovery_e:
+                    health_data["details"]["recovery_error"] = str(recovery_e)
         
         # Check for column existence in order_items
         try:
