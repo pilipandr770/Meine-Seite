@@ -156,48 +156,56 @@ shop_bp = Blueprint("shop", __name__)
 
 # Helper functions
 def get_cart():
-    """Get or create a cart for the current user/session"""
+    """Get or create a cart with resilient handling of aborted transactions (25P02).
+    Always rolls back before write after any previous failure in the same request cycle.
+    """
+    from sqlalchemy.exc import SQLAlchemyError
+    # If session is in pending rollback state, rollback first
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
     try:
         if current_user.is_authenticated:
-            # Get user's cart or create a new one
-            cart = Cart.query.filter_by(user_id=current_user.id, status='open').first()
-            if not cart:
-                # Always generate a unique session_id for new cart
-                cart = Cart(user_id=current_user.id, session_id=secrets.token_hex(16))
-                db.session.add(cart)
-                db.session.commit()
-            return cart
-        else:
-            # Get session cart or create a new one
-            cart_id = session.get('cart_id')
-            if cart_id:
-                try:
-                    cart = Cart.query.get(cart_id)
-                    if cart and cart.status == 'open':
-                        return cart
-                except Exception as e:
-                    current_app.logger.warning(f"Error retrieving cart from session, creating new one: {str(e)}")
-                    # Clear possibly corrupted session data
-                    session.pop('cart_id', None)
-                    
-            # Create new cart for guest user
-            cart = Cart(session_id=secrets.token_hex(16))
+            cart = (Cart.query
+                        .filter_by(user_id=current_user.id, status='open')
+                        .first())
+            if cart:
+                return cart
+            # Create new cart
+            cart = Cart(user_id=current_user.id, session_id=secrets.token_hex(16))
             db.session.add(cart)
             db.session.commit()
-            session['cart_id'] = cart.id
             return cart
-    except Exception as e:
-        current_app.logger.exception(f"Unexpected error in get_cart: {str(e)}")
-        # Last resort fallback - create an entirely new cart
+        # Guest cart path
+        cart_id = session.get('cart_id')
+        if cart_id:
+            cart = Cart.query.get(cart_id)
+            if cart and cart.status == 'open':
+                return cart
+            # stale or closed: drop id
+            session.pop('cart_id', None)
+        # create new guest cart
+        cart = Cart(session_id=secrets.token_hex(16))
+        db.session.add(cart)
+        db.session.commit()
+        session['cart_id'] = cart.id
+        return cart
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"SQLAlchemy error in get_cart: {e}")
         try:
-            cart = Cart(session_id=secrets.token_hex(16))
-            db.session.add(cart)
-            db.session.commit()
-            session['cart_id'] = cart.id
-            return cart
-        except:
-            # If all else fails, return an empty cart object (not persisted)
-            return Cart(session_id=secrets.token_hex(16))
+            db.session.rollback()
+        except Exception:
+            pass
+        # Return transient cart (not committed) to avoid total failure in templates
+        return Cart(session_id=secrets.token_hex(16))
+    except Exception as e:  # pragma: no cover
+        current_app.logger.exception(f"Unexpected error in get_cart: {e}")
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        return Cart(session_id=secrets.token_hex(16))
 
 def merge_carts(session_cart, user_cart):
     """Merge a session cart into a user cart"""
