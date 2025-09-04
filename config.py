@@ -112,6 +112,11 @@ class Config:
             'pool_timeout': 30,
             'connect_args': {}
         }
+    # NOTE:
+    # 1. pool_pre_ping + low pool_size mitigates stale socket / BrokenPipe bursts on Render.
+    # 2. If InterfaceError/BrokenPipe still noisy, consider lowering Gunicorn workers via
+    #    environment variable WEB_CONCURRENCY=4 (current logs show many workers spawning).
+    # 3. pool_recycle ensures periodic connection refresh before server closes idle sockets.
         if '+pg8000://' in database_uri:
             try:
                 SSL_CONTEXT = ssl.create_default_context()

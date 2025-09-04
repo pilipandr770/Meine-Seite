@@ -130,17 +130,23 @@ def init_db(app):
                     # Don't raise exception to avoid breaking connection
             
             # Функция для обработки отключений соединений
-            @event.listens_for(engine, 'checkout')
-            def ping_connection(dbapi_conn, conn_record, conn_proxy):
-                try:
-                    cursor = dbapi_conn.cursor()
-                    cursor.execute("SELECT 1")
-                    cursor.close()
-                except Exception as e:
-                    logger.warning(f"Connection ping failed: {e}")
-                    # Invalidate the connection so SQLAlchemy creates a new one
-                    conn_proxy.invalidate()
-                    raise
+            # NOTE: pool_pre_ping already enabled (see config.SQLALCHEMY_ENGINE_OPTIONS),
+            # so an additional manual 'checkout' ping is redundant and can amplify
+            # BrokenPipe / network error noise on ephemeral platforms (Render).
+            # Keep custom ping ONLY if pool_pre_ping is not set.
+            if not app.config.get('SQLALCHEMY_ENGINE_OPTIONS', {}).get('pool_pre_ping'):
+                @event.listens_for(engine, 'checkout')
+                def ping_connection(dbapi_conn, conn_record, conn_proxy):  # pragma: no cover - safety path
+                    try:
+                        cursor = dbapi_conn.cursor()
+                        cursor.execute("SELECT 1")
+                        cursor.close()
+                    except Exception as e:
+                        # Instead of raising (which surfaces as InvalidatePoolError + InterfaceError),
+                        # just invalidate and let SQLAlchemy transparently replace the connection.
+                        logger.warning(f"(fallback) connection ping failed, recycling: {e}")
+                        conn_proxy.invalidate()
+                        # Do NOT re-raise
             
             # Создание необходимых таблиц при инициализации
             try:
