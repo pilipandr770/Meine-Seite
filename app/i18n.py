@@ -34,6 +34,13 @@ translations = {
     'projects': {'en': 'Projects', 'de': 'Projekte', 'uk': 'Проєкти'},
     'logout': {'en': 'Logout', 'de': 'Abmelden', 'uk': 'Вийти'},
     'login': {'en': 'Login', 'de': 'Anmelden', 'uk': 'Увійти'},
+    # Navigation (site)
+    'home': {'en': 'Home', 'de': 'Startseite', 'uk': 'Головна'},
+    'shop': {'en': 'Shop', 'de': 'Shop', 'uk': 'Магазин'},
+    'contact': {'en': 'Contact', 'de': 'Kontakt', 'uk': 'Контакти'},
+    'my_projects': {'en': 'My Projects', 'de': 'Meine Projekte', 'uk': 'Мої проекти'},
+    'admin_panel': {'en': 'Admin Panel', 'de': 'Admin‑Panel', 'uk': 'Адмін-панель'},
+    'stop_animation': {'en': 'Stop animation', 'de': 'Animation stoppen', 'uk': 'Стоп анімація'},
 }
 
 SUPPORTED_LANGS = ('en', 'de', 'uk')

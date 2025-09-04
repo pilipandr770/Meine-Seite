@@ -161,13 +161,13 @@
     <div id="code-bg"></div>
     
     <!-- Кнопка остановки анимации -->
-    <button id="animationToggle" class="animation-toggle">{% if lang == 'uk' %}Стоп анімація{% elif lang == 'de' %}Animation stoppen{% else %}Stop animation{% endif %}</button>
+    <button id="animationToggle" class="animation-toggle">{{ t('stop_animation') }}</button>
 
     <div class="page-wrapper">
         <header>
             <nav class="header-nav">
                 <div class="nav-left">
-                    <a href="/" class="home-link">{% if lang == 'uk' %}Головна{% elif lang == 'de' %}Startseite{% else %}Home{% endif %}</a>
+                    <a href="/" class="home-link">{{ t('home') }}</a>
                 </div>
                 
                 <!-- Гамбургер меню для мобильных устройств -->
@@ -177,23 +177,23 @@
                 
                 <!-- Основное меню навигации -->
                 <ul class="nav-menu" id="navMenu">
-                    <li><a href="/shop">{% if lang == 'uk' %}Магазин{% elif lang == 'de' %}Shop{% else %}Shop{% endif %}</a></li>
-                    <li><a href="/contact">{% if lang == 'uk' %}Контакти{% elif lang == 'de' %}Kontakt{% else %}Contact{% endif %}</a></li>
+                    <li><a href="/shop">{{ t('shop') }}</a></li>
+                    <li><a href="/contact">{{ t('contact') }}</a></li>
                     {% if current_user.is_authenticated %}
-                        <li><a href="/projects/client/dashboard">{% if lang == 'uk' %}Мої проекти{% elif lang == 'de' %}Meine Projekte{% else %}My Projects{% endif %}</a></li>
-                        <li><a href="/auth/profile">{% if lang == 'uk' %}Профіль{% elif lang == 'de' %}Profil{% else %}Profile{% endif %}</a></li>
+                        <li><a href="/projects/client/dashboard">{{ t('my_projects') }}</a></li>
+                        <li><a href="{{ url_for('auth.profile') }}">{{ t('profile') }}</a></li>
                         {% if current_user.is_admin %}
-                            <li><a href="/admin">{% if lang == 'uk' %}Адмін-панель{% elif lang == 'de' %}Admin-Panel{% else %}Admin Panel{% endif %}</a></li>
+                            <li><a href="/admin">{{ t('admin_panel') }}</a></li>
                         {% endif %}
-                        <li><a href="/auth/logout">{% if lang == 'uk' %}Вихід{% elif lang == 'de' %}Abmelden{% else %}Logout{% endif %}</a></li>
+                        <li><a href="/auth/logout">{{ t('logout') }}</a></li>
                     {% else %}
-                        <li><a href="/auth/login">{% if lang == 'uk' %}Вхід{% elif lang == 'de' %}Anmelden{% else %}Login{% endif %}</a></li>
+                        <li><a href="/auth/login">{{ t('login') }}</a></li>
                     {% endif %}
                 </ul>
                 
                 <!-- Cart icon -->
                 <div class="nav-right">
-                    <a href="/shop/cart" title="{% if lang == 'uk' %}Корзина{% elif lang == 'de' %}Warenkorb{% else %}Cart{% endif %}" class="cart-link">
+                    <a href="/shop/cart" title="{{ t('cart') }}" class="cart-link">
                         <div class="cart-icon-container">
                             <img src="/static/icons/shopping-cart.svg" alt="Cart" class="cart-icon">
                             <span class="cart-count">{{ cart_count }}</span>
