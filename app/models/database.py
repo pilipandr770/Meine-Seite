@@ -376,6 +376,16 @@ def init_db(app):
                                 
                                 ProjectStage.__table__.create(db.engine, checkfirst=True)
                                 logger.info("✅ ProjectStage table created")
+                                # Ensure new columns exist (idempotent)
+                                try:
+                                    stage_table = f"{projects_schema + '.' if projects_schema else ''}project_stage"
+                                    with engine.begin() as conn:
+                                        conn.execute(text(f"ALTER TABLE {stage_table} ADD COLUMN IF NOT EXISTS estimated_hours INTEGER DEFAULT 0"))
+                                        conn.execute(text(f"ALTER TABLE {stage_table} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0"))
+                                        conn.execute(text(f"ALTER TABLE {stage_table} ADD COLUMN IF NOT EXISTS is_paid BOOLEAN DEFAULT FALSE"))
+                                    logger.info("✅ ProjectStage new columns ensured (estimated_hours, billed_hours, is_paid)")
+                                except Exception as ce:
+                                    logger.warning(f"Could not ensure ProjectStage new columns: {ce}")
                             except Exception as e:
                                 logger.warning(f"Error creating ProjectStage table: {e}")
                     else:
@@ -483,6 +493,16 @@ def init_db(app):
                             
                             ProjectStage.__table__.create(db.engine, checkfirst=True)
                             logger.info("✅ ProjectStage table created")
+                            # Ensure new columns exist (idempotent)
+                            try:
+                                stage_table = f"{projects_schema + '.' if projects_schema else ''}project_stage"
+                                with engine.begin() as conn:
+                                    conn.execute(text(f"ALTER TABLE {stage_table} ADD COLUMN IF NOT EXISTS estimated_hours INTEGER DEFAULT 0"))
+                                    conn.execute(text(f"ALTER TABLE {stage_table} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0"))
+                                    conn.execute(text(f"ALTER TABLE {stage_table} ADD COLUMN IF NOT EXISTS is_paid BOOLEAN DEFAULT FALSE"))
+                                logger.info("✅ ProjectStage new columns ensured (estimated_hours, billed_hours, is_paid)")
+                            except Exception as ce:
+                                logger.warning(f"Could not ensure ProjectStage new columns: {ce}")
                         except Exception as e:
                             logger.warning(f"Error creating ProjectStage table: {e}")
                         
