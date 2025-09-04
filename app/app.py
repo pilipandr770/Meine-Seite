@@ -35,6 +35,7 @@ if current_dir not in sys.path:
 # Import config
 sys.path.append(parent_dir)
 from config import Config
+from sqlalchemy import text
 
 def create_app():
     app = Flask(__name__)
@@ -129,6 +130,27 @@ def create_app():
 
     # Safety hook: rollback aborted transactions & remove session each request
     from app.models.database import db as _db_session
+
+    @app.before_request
+    def ensure_db_session_clean():
+        """Proactively clear aborted (25P02) transaction state or broken connection before handlers.
+        If a simple SELECT fails twice, dispose engine to force new connections."""
+        try:
+            _db_session.session.execute(text('SELECT 1'))
+        except Exception as e:
+            logger.warning(f"Pre-request DB check failed (will rollback): {e}")
+            try:
+                _db_session.session.rollback()
+            except Exception:
+                pass
+            try:
+                _db_session.session.execute(text('SELECT 1'))
+            except Exception as e2:
+                logger.error(f"DB still unhealthy; disposing engine: {e2}")
+                try:
+                    _db_session.get_engine().dispose()
+                except Exception:
+                    pass
     @app.teardown_request
     def cleanup_session(exc):  # exc is None if no exception
         try:
