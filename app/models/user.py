@@ -22,7 +22,8 @@ class User(db.Model, UserMixin):
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     
     # Relations
-    orders = db.relationship('Order', backref='user', lazy=True)
+    # Eager load with selectin to minimize per-order lazy queries while keeping separate SELECT
+    orders = db.relationship('Order', back_populates='user', lazy='selectin')
     cart = db.relationship('Cart', backref='user', lazy=True, uselist=False)
     projects = db.relationship('Project', backref='user', lazy=True, foreign_keys='Project.user_id')
     

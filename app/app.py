@@ -126,6 +126,23 @@ def create_app():
     
     from .i18n import register_i18n
     register_i18n(app)
+
+    # Safety hook: rollback aborted transactions & remove session each request
+    from app.models.database import db as _db_session
+    @app.teardown_request
+    def cleanup_session(exc):  # exc is None if no exception
+        try:
+            if exc is not None:
+                _db_session.session.rollback()
+            # If connection in invalid (e.g., 25P02) state, ensure rollback anyway
+            else:
+                # Test session transaction state lightly
+                if _db_session.session.get_bind() is not None:
+                    # No direct public flag for aborted; a safe rollback is idempotent
+                    _db_session.session.rollback()
+            _db_session.session.remove()
+        except Exception:
+            pass
     
     return app
 

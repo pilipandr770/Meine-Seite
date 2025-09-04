@@ -67,7 +67,9 @@ class Order(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
+    items = db.relationship('OrderItem', backref='order', lazy='selectin', cascade='all, delete-orphan')
+    # Back-populates for user relation (defined in User)
+    user = db.relationship('User', back_populates='orders')
     
     @property
     def country_name(self):

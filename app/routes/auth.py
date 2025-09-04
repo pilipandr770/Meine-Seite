@@ -1,10 +1,11 @@
 """Authentication routes for RoZoom website"""
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 import logging
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models.database import db
 from app.models.user import User
+from app.models.order import Order
 from app.forms.auth import LoginForm, RegistrationForm, PasswordResetForm, PasswordChangeForm
 
 auth_bp = Blueprint("auth", __name__)
@@ -180,5 +181,21 @@ def password_reset(token):
 @auth_bp.route('/profile', methods=['GET'])
 @login_required
 def profile():
-    """User profile page"""
-    return render_template('auth/profile.html')
+    """User profile page.
+    Avoid lazy-loading current_user.orders inside template to reduce risk of triggering
+    a query after a prior connection error (which leaves transaction aborted 25P02).
+    """
+    from app.models.database import db
+    orders = []
+    try:
+        orders = (Order.query
+                  .filter_by(user_id=current_user.id)
+                  .order_by(Order.created_at.desc())
+                  .all())
+    except Exception as e:  # broad catch to ensure rollback on 25P02 aborted tx
+        current_app.logger.error(f"Failed to load orders for profile: {e}")
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+    return render_template('auth/profile.html', orders=orders)
