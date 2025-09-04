@@ -329,6 +329,16 @@ def init_db(app):
                                 logger.info("✅ OrderItem table created")
                             except Exception as e:
                                 logger.warning(f"Error creating OrderItem table: {e}")
+                            # Ensure new staged billing columns exist on order_items (idempotent)
+                            try:
+                                from sqlalchemy import text as _text
+                                order_items_table = f"{shop_schema + '.' if shop_schema else ''}order_items"
+                                with engine.begin() as conn:
+                                    conn.execute(_text(f"ALTER TABLE {order_items_table} ADD COLUMN IF NOT EXISTS project_stage_id INTEGER"))
+                                    conn.execute(_text(f"ALTER TABLE {order_items_table} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0"))
+                                logger.info("✅ OrderItem new columns ensured (project_stage_id, billed_hours)")
+                            except Exception as ce:
+                                logger.warning(f"Could not ensure OrderItem staged billing columns: {ce}")
                             
                             try:
                                 Project.__table__.create(db.engine, checkfirst=True)
@@ -470,6 +480,16 @@ def init_db(app):
                             logger.info("✅ OrderItem table created")
                         except Exception as e:
                             logger.warning(f"Error creating OrderItem table: {e}")
+                        # Ensure new staged billing columns exist on order_items (idempotent)
+                        try:
+                            from sqlalchemy import text as _text
+                            order_items_table = f"{shop_schema + '.' if shop_schema else ''}order_items"
+                            with engine.begin() as conn:
+                                conn.execute(_text(f"ALTER TABLE {order_items_table} ADD COLUMN IF NOT EXISTS project_stage_id INTEGER"))
+                                conn.execute(_text(f"ALTER TABLE {order_items_table} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0"))
+                            logger.info("✅ OrderItem new columns ensured (project_stage_id, billed_hours)")
+                        except Exception as ce:
+                            logger.warning(f"Could not ensure OrderItem staged billing columns: {ce}")
                         
                         # Create Project BEFORE ProjectStage (dependency order)
                         try:

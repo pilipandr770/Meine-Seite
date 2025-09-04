@@ -1,4 +1,5 @@
 import os
+import logging
 from app.models.database import db
 
 _SHOP_SCHEMA = os.environ.get('POSTGRES_SCHEMA_SHOP')
@@ -183,13 +184,17 @@ class Payment(db.Model):
     def __repr__(self):
         return f'<Payment {self.id} for Order {self.order_id}>'
 
-# Runtime migrations for order_items new columns
-try:
-    from app.models.database import db as _db_for_order
-    engine = _db_for_order.get_engine()
-    with engine.connect() as conn:
-        table_name = f"{_SHOP_SCHEMA + '.' if _USE_SHOP_SCHEMA else ''}order_items"
-        conn.execute(_db_for_order.text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS project_stage_id INTEGER"))
-        conn.execute(_db_for_order.text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0"))
-except Exception:
-    pass
+logger = logging.getLogger(__name__)
+
+# Runtime safety migration (fallback) for order_items new columns.
+# This should normally be handled early in init_db(), but we keep a safety net.
+try:  # pragma: no cover - side-effect during import
+    from sqlalchemy import text as _text
+    engine = db.get_engine()
+    table_name = f"{_SHOP_SCHEMA + '.' if _USE_SHOP_SCHEMA else ''}order_items"
+    with engine.begin() as conn:
+        conn.execute(_text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS project_stage_id INTEGER"))
+        conn.execute(_text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0"))
+    logger.info("(runtime) Ensured order_items staged billing columns present")
+except Exception as e:  # pragma: no cover
+    logger.debug(f"(runtime) Skipped ensuring order_items columns (likely before engine ready): {e}")
