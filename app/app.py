@@ -124,6 +124,9 @@ def create_app():
     from app.routes import register_routes
     register_routes(app)
     
+    from .i18n import register_i18n
+    register_i18n(app)
+    
     return app
 
 if __name__ == "__main__":

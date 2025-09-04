@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-
+{% block title %}{{ t('development_hours_title') }}{% endblock %}
 {% block content %}
 <section class="shop-hero single">
     <div class="shop-hero-content">
-        <h1>{% if lang == 'uk' %}Години розробки{% elif lang == 'de' %}Entwicklungsstunden{% else %}Development / Consulting Hours{% endif %}</h1>
-        <p>{% if lang == 'uk' %}Придбайте пакет годин для роботи над вашим проєктом{% elif lang == 'de' %}Kaufen Sie Stundenpakete für Ihr Projekt{% else %}Purchase service hours to work on your project{% endif %}</p>
+        <h1>{{ t('development_hours_title') }}</h1>
+        <p>{{ t('development_hours_subtitle') }}</p>
     </div>
 </section>
 
@@ -31,21 +31,21 @@
             </div>
             <div class="actions">
                 <button class="btn btn-primary" id="addHoursBtn" data-product-id="{{ single_product.id }}">
-                    {% if lang == 'uk' %}Замовити{% elif lang == 'de' %}Bestellen{% else %}Order{% endif %}
+                    {{ t('order') }}
                 </button>
                 <a href="{{ url_for('shop.product_detail', slug=single_product.slug) }}" class="btn btn-outline">
-                    {% if lang == 'uk' %}Деталі{% elif lang == 'de' %}Details{% else %}Details{% endif %}
+                    {{ t('details') }}
                 </a>
                 <!-- Fixed: endpoint name is 'shop.cart' (function cart) not 'shop.cart_view' -->
                 <a href="{{ url_for('shop.cart') }}" class="btn btn-outline">
-                    {% if lang == 'uk' %}Кошик{% elif lang == 'de' %}Warenkorb{% else %}Cart{% endif %}
+                    {{ t('cart') }}
                 </a>
             </div>
         </div>
     </div>
     {% else %}
         <div class="no-product-single">
-            <p>{% if lang == 'uk' %}Товар відсутній{% elif lang == 'de' %}Produkt nicht verfügbar{% else %}Product not available{% endif %}</p>
+            <p>{{ t('product_not_available') }}</p>
         </div>
     {% endif %}
 </section>
