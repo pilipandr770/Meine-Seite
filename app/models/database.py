@@ -54,6 +54,13 @@ def create_db_engine(uri=None, schema=None, engine_options=None):
         uri = get_postgres_uri()
 
     opts = engine_options.copy() if engine_options else {}
+    
+    # Always enable connection pooling with aggressive recycle
+    opts.setdefault('pool_pre_ping', True)  # Test connections before use
+    opts.setdefault('pool_recycle', 300)    # Recycle connections after 5 minutes
+    opts.setdefault('pool_timeout', 30)     # Wait up to 30 seconds for connection
+    opts.setdefault('pool_size', 5)         # Keep up to 5 connections in the pool
+    opts.setdefault('max_overflow', 10)     # Allow up to 10 additional connections
 
     connect_args = opts.pop('connect_args', {}) or {}
     # Если явно не передан ssl_context и драйвер pg8000 — добавим
@@ -81,6 +88,49 @@ def create_db_engine(uri=None, schema=None, engine_options=None):
         logger.error(f"Initial DB connection failed: {e}")
         raise
     return engine
+
+def reconnect_database(app=None):
+    """Reset the database connection pool to recover from network issues.
+    
+    This function:
+    1. Disposes the current engine (closes all connections)
+    2. Creates a new engine with the same parameters
+    3. Updates the Flask-SQLAlchemy session to use the new engine
+    """
+    from flask import current_app
+    from sqlalchemy import text
+    
+    try:
+        app_to_use = app or current_app
+        
+        # Get current engine settings
+        uri = app_to_use.config['SQLALCHEMY_DATABASE_URI']
+        engine_options = app_to_use.config.get('SQLALCHEMY_ENGINE_OPTIONS', {})
+        schema = app_to_use.config.get('POSTGRES_SCHEMA')
+        
+        # Dispose old engine
+        old_engine = db.get_engine(app_to_use)
+        old_engine.dispose()
+        
+        # Create new engine
+        new_engine = create_db_engine(uri, schema, engine_options)
+        
+        # Replace the engine in the Flask-SQLAlchemy extension
+        db.get_engine = lambda app=None: new_engine
+        
+        # Create new session
+        db.session.remove()
+        db.session = db.create_scoped_session()
+        
+        # Test new connection
+        db.session.execute(text('SELECT 1'))
+        db.session.commit()
+        
+        logger.info("Successfully reconnected to database")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to reconnect to database: {e}")
+        return False
 
 # Глобальный экземпляр SQLAlchemy для совместимости со стандартным кодом Flask-SQLAlchemy
 

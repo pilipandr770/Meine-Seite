@@ -141,15 +141,29 @@ def create_app():
             logger.warning(f"Pre-request DB check failed (will rollback): {e}")
             try:
                 _db_session.session.rollback()
+            except Exception as e_inner:
+                logger.warning(f"Failed to rollback: {e_inner}")
+                pass
+        
+            # Try a new session entirely
+            try:
+                _db_session.session.remove()
             except Exception:
                 pass
+            
             try:
+                # Second attempt with fresh session
                 _db_session.session.execute(text('SELECT 1'))
             except Exception as e2:
                 logger.error(f"DB still unhealthy; disposing engine: {e2}")
                 try:
-                    _db_session.get_engine().dispose()
-                except Exception:
+                    # Force all connections to be recycled
+                    engine = _db_session.get_engine()
+                    engine.dispose()
+                    # Create a fresh session
+                    _db_session.session = _db_session.create_scoped_session()
+                except Exception as e3:
+                    logger.error(f"Failed to dispose engine: {e3}")
                     pass
     @app.teardown_request
     def cleanup_session(exc):  # exc is None if no exception
@@ -165,6 +179,47 @@ def create_app():
             _db_session.session.remove()
         except Exception:
             pass
+            
+    # Add health check endpoint
+    @app.route('/health')
+    def health_check():
+        """Health check endpoint that verifies database connectivity"""
+        from flask import jsonify
+        
+        health_data = {
+            "status": "ok",
+            "database": "ok",
+            "details": {}
+        }
+        
+        # Check database connection
+        try:
+            # Simple query to check db connection
+            result = _db_session.session.execute(text('SELECT 1 as test_value'))
+            value = result.scalar()
+            if value != 1:
+                health_data["database"] = "error"
+                health_data["status"] = "error" 
+                health_data["details"]["database"] = "Unexpected query result"
+        except Exception as e:
+            health_data["database"] = "error"
+            health_data["status"] = "error"
+            health_data["details"]["database"] = str(e)
+        
+        # Check for column existence in order_items
+        try:
+            # Check if the column exists in a non-intrusive way
+            result = _db_session.session.execute(
+                text("SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'order_items' AND column_name = 'project_stage_id'")
+            )
+            if result.scalar() == 0:
+                health_data["details"]["order_items_column"] = "missing project_stage_id column"
+                health_data["status"] = "warning"
+        except Exception as e:
+            health_data["details"]["schema_check"] = str(e)
+        
+        status_code = 200 if health_data["status"] == "ok" else 500
+        return jsonify(health_data), status_code
     
     return app
 

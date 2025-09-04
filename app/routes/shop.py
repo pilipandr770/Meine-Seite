@@ -11,6 +11,8 @@ import stripe
 import secrets
 import datetime
 import logging
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError, OperationalError, ProgrammingError
 
 # Create a custom handler to intercept warnings about insufficient stock
 class StockWarningFilter(logging.Filter):
@@ -155,21 +157,101 @@ def get_shop_text(key, lang=None):
 shop_bp = Blueprint("shop", __name__)
 
 # Helper functions
+def ensure_order_items_schema():
+    """Ensures that the order_items table has the required columns.
+    This is a fail-safe to prevent 42703 errors (column does not exist).
+    """
+    try:
+        db.session.rollback()  # Start clean
+        
+        # Check if the column exists first to avoid unnecessary ALTER TABLE
+        try:
+            result = db.session.execute(text(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                "WHERE table_name = 'order_items' AND column_name = 'project_stage_id'"
+            ))
+            if result.scalar() > 0:
+                # Column exists, nothing to do
+                return True
+        except Exception as e:
+            current_app.logger.error(f"Error checking order_items schema: {e}")
+            db.session.rollback()
+        
+        # Ensure column exists (if not already)
+        try:
+            # Get correct schema prefix for order_items table
+            shop_schema = current_app.config.get('SHOP_SCHEMA', '')
+            table_name = f"{shop_schema + '.' if shop_schema else ''}order_items"
+            
+            db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS project_stage_id INTEGER"))
+            db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0"))
+            db.session.commit()
+            current_app.logger.info(f"✅ Added missing columns to {table_name}")
+            return True
+        except Exception as e:
+            current_app.logger.error(f"Failed to ensure order_items schema: {e}")
+            db.session.rollback()
+            return False
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error in ensure_order_items_schema: {e}")
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        return False
 def get_cart():
     """Get or create a cart with resilient handling of aborted transactions (25P02).
     Always rolls back before write after any previous failure in the same request cycle.
     """
     from sqlalchemy.exc import SQLAlchemyError
-    # If session is in pending rollback state, rollback first
+    from sqlalchemy import text
+    
+    # Always rollback first to ensure clean transaction state
     try:
         db.session.rollback()
-    except Exception:
-        pass
+        # Test if database connection is alive with simple query
+        db.session.execute(text('SELECT 1'))
+    except Exception as e:
+        current_app.logger.warning(f"Database connection issue in get_cart initial check: {e}")
+        try:
+            # Last resort - dispose engine to force new connections
+            db.get_engine().dispose()
+            db.session.rollback()
+        except Exception:
+            pass
+    
     try:
-        if current_user.is_authenticated:
-            cart = (Cart.query
+        # Get cart with retry logic
+        def get_authenticated_cart():
+            if not current_user.is_authenticated:
+                return None
+            try:
+                return (Cart.query
                         .filter_by(user_id=current_user.id, status='open')
                         .first())
+            except SQLAlchemyError as e:
+                current_app.logger.warning(f"Error getting authenticated cart: {e}")
+                db.session.rollback()
+                return None
+        
+        def get_session_cart():
+            cart_id = session.get('cart_id')
+            if not cart_id:
+                return None
+            try:
+                cart = Cart.query.get(cart_id)
+                if cart and cart.status == 'open':
+                    return cart
+                session.pop('cart_id', None)  # stale or closed: drop id
+                return None
+            except SQLAlchemyError as e:
+                current_app.logger.warning(f"Error getting session cart: {e}")
+                db.session.rollback()
+                return None
+        
+        # Try to get existing cart
+        if current_user.is_authenticated:
+            cart = get_authenticated_cart()
             if cart:
                 return cart
             # Create new cart
@@ -177,20 +259,18 @@ def get_cart():
             db.session.add(cart)
             db.session.commit()
             return cart
-        # Guest cart path
-        cart_id = session.get('cart_id')
-        if cart_id:
-            cart = Cart.query.get(cart_id)
-            if cart and cart.status == 'open':
+        else:
+            # Guest cart path
+            cart = get_session_cart()
+            if cart:
                 return cart
-            # stale or closed: drop id
-            session.pop('cart_id', None)
-        # create new guest cart
-        cart = Cart(session_id=secrets.token_hex(16))
-        db.session.add(cart)
-        db.session.commit()
-        session['cart_id'] = cart.id
-        return cart
+            # create new guest cart
+            cart = Cart(session_id=secrets.token_hex(16))
+            db.session.add(cart)
+            db.session.commit()
+            session['cart_id'] = cart.id
+            return cart
+            
     except SQLAlchemyError as e:
         current_app.logger.error(f"SQLAlchemy error in get_cart: {e}")
         try:
@@ -246,15 +326,53 @@ def merge_carts(session_cart, user_cart):
 def index():
     """Shop homepage simplified to a single purchasable product (development hours)."""
     # We now show only ONE active product (e.g. consultation / development hours)
-    single_product = Product.query.filter(
-        Product.is_active == True,
-        Product.slug != None,
-        Product.slug != ''
-    ).order_by(Product.id.asc()).first()
-    return render_template(
-        'shop/index.html',
-        single_product=single_product
-    )
+    from sqlalchemy.exc import SQLAlchemyError
+    
+    # Check and ensure order_items schema before proceeding
+    ensure_order_items_schema()
+    
+    # Always ensure clean transaction state
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+        
+    try:
+        single_product = Product.query.filter(
+            Product.is_active == True,
+            Product.slug != None,
+            Product.slug != ''
+        ).order_by(Product.id.asc()).first()
+        
+        # Use a default product if the query fails or returns None
+        if not single_product:
+            current_app.logger.warning("No active product found for shop index")
+            # Create a transient placeholder product for the template
+            from app.models.product import Product
+            single_product = Product(
+                name="Development Hours", 
+                price=100.0,
+                short_description="Developer time (fallback product)"
+            )
+            
+        return render_template(
+            'shop/index.html',
+            single_product=single_product
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in shop index: {e}")
+        db.session.rollback()
+        # Create fallback product for the template to avoid 500 errors
+        from app.models.product import Product
+        single_product = Product(
+            name="Development Hours", 
+            price=100.0,
+            short_description="Developer time (error fallback product)"
+        )
+        return render_template(
+            'shop/index.html',
+            single_product=single_product
+        )
 
 @shop_bp.route('/products')
 def products():
@@ -911,15 +1029,46 @@ def payment_cancel():
 @login_required
 def orders():
     """User order history"""
-    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
-    return render_template('shop/orders.html', orders=orders)
+    # Ensure schema is correct
+    ensure_order_items_schema()
+    
+    # Always ensure clean transaction state
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+    
+    try:
+        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
+        return render_template('shop/orders.html', orders=orders)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in orders view: {e}")
+        db.session.rollback()
+        # Return empty orders list rather than 500 error
+        return render_template('shop/orders.html', orders=[])
 
 @shop_bp.route('/orders/<int:order_id>')
 @login_required
 def order_detail(order_id):
     """Order detail page"""
-    order = Order.query.filter_by(id=order_id, user_id=current_user.id).first_or_404()
-    return render_template('shop/order_detail.html', order=order)
+    # Ensure schema is correct
+    ensure_order_items_schema()
+    
+    # Always ensure clean transaction state
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+    
+    try:
+        order = Order.query.filter_by(id=order_id, user_id=current_user.id).first_or_404()
+        return render_template('shop/order_detail.html', order=order)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in order_detail view: {e}")
+        db.session.rollback()
+        # Redirect to orders list if there's an error
+        flash(get_shop_text('order_not_found'), 'warning')
+        return redirect(url_for('shop.orders'))
 
 # Webhook for Stripe events
 @shop_bp.route('/webhook', methods=['POST'])
