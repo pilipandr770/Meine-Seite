@@ -235,12 +235,17 @@ def merge_carts(session_cart, user_cart):
 # Shop routes
 @shop_bp.route('/')
 def index():
-    """Shop homepage with featured products"""
-    categories = Category.query.all()
-    featured_products = Product.query.filter_by(is_featured=True, is_active=True).all()
-    return render_template('shop/index.html', 
-                          categories=categories, 
-                          featured_products=featured_products)
+    """Shop homepage simplified to a single purchasable product (development hours)."""
+    # We now show only ONE active product (e.g. consultation / development hours)
+    single_product = Product.query.filter(
+        Product.is_active == True,
+        Product.slug != None,
+        Product.slug != ''
+    ).order_by(Product.id.asc()).first()
+    return render_template(
+        'shop/index.html',
+        single_product=single_product
+    )
 
 @shop_bp.route('/products')
 def products():
