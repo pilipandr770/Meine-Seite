@@ -116,10 +116,12 @@
                                 <thead>
                                     <tr>
                                         <th style="width: 5%">#</th>
-                                        <th style="width: 30%">Название</th>
-                                        <th style="width: 20%">Статус</th>
-                                        <th style="width: 25%">Даты</th>
-                                        <th style="width: 20%">Действия</th>
+                                        <th style="width: 25%">Название</th>
+                                        <th style="width: 10%">Часы</th>
+                                        <th style="width: 15%">Статус</th>
+                                        <th style="width: 20%">Даты</th>
+                                        <th style="width: 10%">Оплата</th>
+                                        <th style="width: 10%">Действия</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -132,6 +134,7 @@
                                             <br><small class="text-muted">{{ stage.description }}</small>
                                             {% endif %}
                                         </td>
+                                        <td>{{ stage.estimated_hours or 0 }}</td>
                                         <td>
                                             <select class="form-select form-select-sm stage-status" data-stage-id="{{ stage.id }}">
                                                 <option value="pending" {% if stage.status == 'pending' %}selected{% endif %}>Ожидает</option>
@@ -149,9 +152,20 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary edit-stage-btn" data-stage-id="{{ stage.id }}" 
-                                                    data-stage-name="{{ stage.name }}" data-stage-description="{{ stage.description }}"
-                                                    data-stage-order="{{ stage.order_number }}">
+                                            <small>
+                                                Оплачено: {{ stage.billed_hours or 0 }} / {{ stage.estimated_hours or 0 }}<br>
+                                                {% set remaining = (stage.estimated_hours or 0) - (stage.billed_hours or 0) %}
+                                                {% if remaining > 0 %}
+                                                    <button class="btn btn-sm btn-success pay-stage-btn mt-1" data-stage-id="{{ stage.id }}" data-remaining="{{ remaining }}">Оплатить</button>
+                                                {% else %}
+                                                    <span class="badge bg-success">Оплачено</span>
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                        <td>
+                        <button class="btn btn-sm btn-outline-primary edit-stage-btn" data-stage-id="{{ stage.id }}" 
+                            data-stage-name="{{ stage.name }}" data-stage-description="{{ stage.description }}"
+                            data-stage-order="{{ stage.order_number }}" data-stage-estimated="{{ stage.estimated_hours or 0 }}">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         </td>
@@ -314,6 +328,10 @@
                         <input type="number" class="form-control" id="order_number" name="order_number" 
                                value="{{ stages|length + 1 }}" min="1">
                     </div>
+                    <div class="mb-3">
+                        <label for="estimated_hours" class="form-label">Оценка часов</label>
+                        <input type="number" class="form-control" id="estimated_hours" name="estimated_hours" min="0" value="0">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
@@ -345,6 +363,10 @@
                     <div class="mb-3">
                         <label for="edit_order_number" class="form-label">Порядковый номер</label>
                         <input type="number" class="form-control" id="edit_order_number" name="order_number" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_estimated_hours" class="form-label">Оценка часов</label>
+                        <input type="number" class="form-control" id="edit_estimated_hours" name="estimated_hours" min="0">
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -502,15 +524,41 @@
                 const stageName = this.getAttribute('data-stage-name');
                 const stageDesc = this.getAttribute('data-stage-description') || '';
                 const stageOrder = this.getAttribute('data-stage-order');
+                const stageEstimated = this.getAttribute('data-stage-estimated');
                 
                 document.getElementById('edit_stage_name').value = stageName;
                 document.getElementById('edit_stage_description').value = stageDesc;
                 document.getElementById('edit_order_number').value = stageOrder;
+                document.getElementById('edit_estimated_hours').value = stageEstimated;
                 
                 document.getElementById('editStageForm').action = `/projects/stages/${stageId}/update`;
                 
                 const editStageModal = new bootstrap.Modal(document.getElementById('editStageModal'));
                 editStageModal.show();
+            });
+        });
+
+        // Оплата этапа
+        document.querySelectorAll('.pay-stage-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const stageId = this.getAttribute('data-stage-id');
+                const remaining = this.getAttribute('data-remaining');
+                if (!confirm(`Добавить в корзину оставшиеся часы (${remaining}) для оплаты?`)) return;
+                fetch(`/projects/stages/${stageId}/add_to_cart`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hours: remaining })
+                })
+                .then(r=>r.json())
+                .then(d=>{
+                    if(d.success){
+                        alert('Этап добавлен в корзину');
+                        window.location.href = '/shop/cart';
+                    } else {
+                        alert(d.message||'Ошибка');
+                    }
+                })
+                .catch(err=>{console.error(err); alert('Ошибка добавления в корзину');});
             });
         });
         

@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, current_app, flash, redirect, url_for
 from app.models.client import ClientRequest, db, Client
 from app.models.project import create_project_from_request, Project, ProjectStage
+from app.models.product import Product
+from app.models.shop import Cart, CartItem
 from app.models.user import User
 from datetime import datetime
 import logging
@@ -115,6 +117,13 @@ def add_stage(project_id):
             description=data.get('description'),
             order_number=int(data.get('order_number', 1))
         )
+        # Оценка часов
+        est = data.get('estimated_hours')
+        if est:
+            try:
+                stage.estimated_hours = int(est)
+            except ValueError:
+                stage.estimated_hours = 0
         
         db.session.add(stage)
         db.session.commit()
@@ -135,6 +144,11 @@ def update_stage(stage_id):
         stage.description = data.get('description', stage.description)
         stage.status = data.get('status', stage.status)
         stage.order_number = int(data.get('order_number', stage.order_number))
+        if 'estimated_hours' in data:
+            try:
+                stage.estimated_hours = int(data.get('estimated_hours') or 0)
+            except ValueError:
+                pass
         
         if data.get('start_date'):
             stage.start_date = datetime.strptime(data.get('start_date'), '%Y-%m-%d')
@@ -149,6 +163,63 @@ def update_stage(stage_id):
     except Exception as e:
         db.session.rollback()
         logger.error(f"Ошибка при обновлении стадии: {e}")
+        return jsonify({"success": False, "message": f"Ошибка: {str(e)}"}), 500
+
+@project_bp.route('/stages/<int:stage_id>/add_to_cart', methods=['POST'])
+@login_required
+def add_stage_to_cart(stage_id):
+    """Добавить не оплаченную часть этапа в корзину как часы разработки."""
+    try:
+        stage = ProjectStage.query.get_or_404(stage_id)
+        project = Project.query.get(stage.project_id)
+        if not project or project.user_id != current_user.id:
+            return jsonify({"success": False, "message": "Нет доступа"}), 403
+
+        remaining = max(0, (stage.estimated_hours or 0) - (stage.billed_hours or 0))
+        # Разрешим частичную оплату (hours параметр) иначе оплачиваем остаток
+        hours_param = request.form.get('hours') or request.json.get('hours') if request.is_json else None
+        if hours_param:
+            try:
+                hours_to_bill = int(hours_param)
+            except ValueError:
+                hours_to_bill = remaining
+            hours_to_bill = max(1, min(hours_to_bill, remaining))
+        else:
+            hours_to_bill = remaining
+
+        if hours_to_bill <= 0:
+            return jsonify({"success": False, "message": "Этап уже полностью оплачен"}), 400
+
+        # Получаем продукт часов (первый активный или по slug)
+        product = Product.query.filter_by(is_active=True).order_by(Product.id.asc()).first()
+        if not product:
+            return jsonify({"success": False, "message": "Продукт для часов не найден"}), 500
+
+        # Получаем/создаем корзину
+        cart = Cart.query.filter_by(user_id=current_user.id, status='open').first()
+        if not cart:
+            cart = Cart(user_id=current_user.id)
+            db.session.add(cart)
+            db.session.flush()
+
+        # Добавляем позицию (кол-во = часы)
+        price = float(product.sale_price or product.price or 0)
+        if price <= 0:
+            return jsonify({"success": False, "message": "Цена продукта не задана"}), 500
+
+        cart_item = CartItem(
+            cart_id=cart.id,
+            product_id=product.id,
+            quantity=hours_to_bill,
+            price=price,
+            project_stage_id=stage.id
+        )
+        db.session.add(cart_item)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Этап добавлен в корзину", "cart_count": sum(i.quantity for i in cart.items)})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Ошибка при добавлении этапа в корзину: {e}")
         return jsonify({"success": False, "message": f"Ошибка: {str(e)}"}), 500
 
 @project_bp.route('/from_request/<int:request_id>', methods=['POST'])

@@ -106,6 +106,12 @@ class ProjectStage(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='pending')
     order_number = db.Column(db.Integer, nullable=False)
+    # Оценка требуемых часов для этапа (для поэтапной оплаты)
+    estimated_hours = db.Column(db.Integer, default=0)
+    # Фактически оплаченные/выставленные часы
+    billed_hours = db.Column(db.Integer, default=0)
+    # Пометка что этап полностью оплачен (billed_hours >= estimated_hours)
+    is_paid = db.Column(db.Boolean, default=False)
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -125,6 +131,9 @@ class ProjectStage(db.Model):
             "description": self.description,
             "status": self.status,
             "order_number": self.order_number,
+            "estimated_hours": self.estimated_hours,
+            "billed_hours": self.billed_hours,
+            "is_paid": self.is_paid,
             "start_date": self.start_date.strftime("%Y-%m-%d %H:%M:%S") if self.start_date else None,
             "end_date": self.end_date.strftime("%Y-%m-%d %H:%M:%S") if self.end_date else None,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
@@ -213,3 +222,24 @@ def create_project_from_request(client_request):
         db.session.rollback()
         logger.error(f"Ошибка при создании проекта: {e}")
         return None
+
+# --- Lightweight runtime migration helpers ---
+def _ensure_column_exists(table_name: str, column_name: str, ddl: str):
+    """Пытаемся добавить недостающий столбец (idempotent). Работает для PostgreSQL.
+    ddl пример: 'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS estimated_hours INTEGER DEFAULT 0'
+    """
+    try:
+        engine = db.get_engine()
+        with engine.connect() as conn:
+            conn.execute(db.text(ddl.format(table=table_name)))
+    except Exception as ex:
+        logger.debug(f"Skip column ensure {table_name}.{column_name}: {ex}")
+
+try:
+    # Добавляем столбец estimated_hours если его нет
+    tbl = f"{PROJECTS_SCHEMA + '.' if PROJECTS_SCHEMA else ''}project_stage"
+    _ensure_column_exists(tbl, 'estimated_hours', f"ALTER TABLE {tbl} ADD COLUMN IF NOT EXISTS estimated_hours INTEGER DEFAULT 0")
+    _ensure_column_exists(tbl, 'billed_hours', f"ALTER TABLE {tbl} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0")
+    _ensure_column_exists(tbl, 'is_paid', f"ALTER TABLE {tbl} ADD COLUMN IF NOT EXISTS is_paid BOOLEAN DEFAULT FALSE")
+except Exception as _e:
+    logger.debug(f"Runtime migration for estimated_hours failed: {_e}")

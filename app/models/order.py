@@ -155,6 +155,9 @@ class OrderItem(db.Model):
     price_per_unit = db.Column(db.Float, nullable=False)
     quantity = db.Column(db.Integer, default=1)
     total_price = db.Column(db.Float, nullable=False)
+    # Для поэтапной оплаты проектов
+    project_stage_id = db.Column(db.Integer, nullable=True, index=True)
+    billed_hours = db.Column(db.Integer, default=0)
     
     def __repr__(self):
         return f'<OrderItem {self.id} for Order {self.order_id}>'
@@ -177,3 +180,14 @@ class Payment(db.Model):
 
     def __repr__(self):
         return f'<Payment {self.id} for Order {self.order_id}>'
+
+# Runtime migrations for order_items new columns
+try:
+    from app.models.database import db as _db_for_order
+    engine = _db_for_order.get_engine()
+    with engine.connect() as conn:
+        table_name = f"{_SHOP_SCHEMA + '.' if _USE_SHOP_SCHEMA else ''}order_items"
+        conn.execute(_db_for_order.text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS project_stage_id INTEGER"))
+        conn.execute(_db_for_order.text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS billed_hours INTEGER DEFAULT 0"))
+except Exception:
+    pass

@@ -58,6 +58,8 @@ class CartItem(db.Model):
     quantity = db.Column(db.Integer, default=1)
     # Store price at time of adding to cart so totals don't change if product price updates
     price = db.Column(db.Numeric(10, 2), nullable=False)
+    # Связка с этапом проекта (без FK из-за разных схем) для поэтапной оплаты
+    project_stage_id = db.Column(db.Integer, nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -74,3 +76,12 @@ class CartItem(db.Model):
     def subtotal(self):
         """Compatibility property used by checkout and templates."""
         return self.line_total()
+
+# Runtime migration helper for cart_items new column
+try:
+    engine = db.get_engine()
+    with engine.connect() as conn:
+        table_name = f"{_SHOP_SCHEMA + '.' if _USE_SHOP_SCHEMA else ''}cart_items"
+        conn.execute(db.text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS project_stage_id INTEGER"))
+except Exception as _e:
+    pass

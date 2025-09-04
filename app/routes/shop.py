@@ -5,6 +5,7 @@ from app.models.database import db
 from app.models.product import Category, Product
 from app.models.shop import Cart, CartItem
 from app.models.order import Order, OrderItem, Payment
+from app.models.project import ProjectStage
 from app.models.user import User
 import stripe
 import secrets
@@ -726,7 +727,9 @@ def checkout():
                 product_duration=getattr(item.product, 'duration', None),
                 price_per_unit=item.price,
                 quantity=item.quantity,
-                total_price=item.subtotal
+                total_price=item.subtotal,
+                project_stage_id=getattr(item, 'project_stage_id', None),
+                billed_hours=item.quantity if getattr(item, 'project_stage_id', None) else 0
             )
             db.session.add(order_item)
             
@@ -855,6 +858,19 @@ def payment_success():
     if 'cart_id' in session:
         session.pop('cart_id')
         
+    # Обновляем стадии проекта если оплачивались часы
+    try:
+        stage_items = [oi for oi in order.items if getattr(oi, 'project_stage_id', None)]
+        for oi in stage_items:
+            stage = ProjectStage.query.get(oi.project_stage_id)
+            if stage:
+                stage.billed_hours = (stage.billed_hours or 0) + (oi.billed_hours or oi.quantity or 0)
+                if stage.billed_hours >= (stage.estimated_hours or 0):
+                    stage.is_paid = True
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(f"Stage billing update failed: {e}")
+        db.session.rollback()
     return render_template('shop/payment_success.html', order=order)
 
 @shop_bp.route('/payment/cancel')
